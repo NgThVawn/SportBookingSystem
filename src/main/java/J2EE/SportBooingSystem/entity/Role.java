@@ -2,12 +2,15 @@ package J2EE.SportBooingSystem.entity;
 
 import J2EE.SportBooingSystem.enums.RoleName;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
 @Table(name = "roles")
 @Data
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

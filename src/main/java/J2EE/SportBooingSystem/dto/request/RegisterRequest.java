@@ -1,24 +1,28 @@
 package J2EE.SportBooingSystem.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
 public class RegisterRequest {
-    @NotBlank(message = "Họ tên không được để trống")
-    @Size(min = 2, max = 100)
+
+    @NotBlank(message = "Full name is required")
+    @Size(min = 2, max = 100, message = "Name must be 2–100 characters")
     private String fullName;
 
-    @NotBlank
-    @Email(message = "Email không hợp lệ")
+    @NotBlank(message = "Email is required")
+    @Email(message = "Please enter a valid email")
     private String email;
 
-    @NotBlank
-    @Size(min = 8, message = "Mật khẩu tối thiểu 8 ký tự")
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
-    @NotBlank(message = "Số điện thoại không được để trống")
+    @NotBlank(message = "Please confirm your password")
+    private String confirmPassword;
+
+    @Pattern(regexp = "^\\+?[0-9]{9,15}$", message = "Invalid phone number")
     private String phone;
+
+    private boolean registerAsOwner = false;
 }
