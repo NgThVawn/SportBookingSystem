@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<header th:fragment="navbar" class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl no-border bg-surface-container-low shadow-none">
+    <nav class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+
+        <a th:href="@{/}" class="text-2xl font-black italic tracking-tighter text-orange-600 dark:text-orange-500 font-['Epilogue'] text-decoration-none">
+            ARENA KINETIC
+        </a>
+
+        <div class="hidden md:flex items-center gap-8">
+        </div>
+
+        <a th:href="@{/auth/register}" class="bg-primary-container text-on-primary-container px-6 py-2 rounded-xl font-bold font-headline tracking-tight active:scale-95 duration-150 transition-all shadow-lg shadow-primary/20 text-decoration-none">
+            Sign Up
+        </a>
+
+    </nav>
+</header>
+
+</body>
+</html>
