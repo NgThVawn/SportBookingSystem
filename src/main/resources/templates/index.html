@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::#home-content})}">
+<head>
+    <title>Trang chủ | Arena Kinetic</title>
+</head>
+<body>
+
+<div id="home-content">
+
+    <section class="relative min-h-[870px] flex items-center overflow-hidden bg-zinc-950">
+        <div class="absolute inset-0 opacity-40">
+            <img class="w-full h-full object-cover" alt="Sân vận động chuyên nghiệp" th:src="@{/images/homepage.png}">
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/60 to-transparent"></div>
+        <div class="relative w-full max-w-screen-2xl mx-auto px-6 py-24 z-10">
+            <div class="max-w-3xl">
+                <span class="inline-block py-1 px-4 rounded-full bg-primary/20 text-primary-container font-label text-sm font-bold tracking-widest uppercase mb-6">CHỈ CÁC CƠ SỞ CHUYÊN NGHIỆP</span>
+                <h1 class="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 italic font-headline">
+                    SỰ CHÍNH XÁC<br><span class="text-primary-container">NĂNG ĐỘNG.</span>
+                </h1>
+                <p class="text-xl text-zinc-300 font-body max-w-xl mb-10 leading-relaxed">
+                    Nâng tầm kỹ năng của bạn trong môi trường đẳng cấp. Đặt sân thể thao cao cấp với tính khả dụng theo thời gian thực.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="relative z-20 -mt-12 px-6">
+        <form th:action="@{/facilities}" method="get" class="max-w-screen-xl mx-auto bg-surface-container-lowest p-4 rounded-2xl shadow-2xl flex flex-wrap lg:flex-nowrap items-center gap-4 border border-outline-variant/30">
+
+            <div class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 bg-surface-container rounded-xl">
+                <span class="material-symbols-outlined text-zinc-400">location_on</span>
+                <div class="flex flex-col w-full">
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-label">ĐỊA ĐIỂM</span>
+                    <input name="city" class="bg-transparent border-none p-0 text-sm font-semibold focus:ring-0 w-full outline-none" placeholder="Nhập khu vực..." type="text">
+                </div>
+            </div>
+
+            <div class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 bg-surface-container rounded-xl">
+                <span class="material-symbols-outlined text-zinc-400">search</span>
+                <div class="flex flex-col w-full">
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-label">TÊN SÂN</span>
+                    <input name="name" class="bg-transparent border-none p-0 text-sm font-semibold focus:ring-0 w-full outline-none" placeholder="Tìm tên sân cụ thể" type="text">
+                </div>
+            </div>
+
+            <div class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 bg-surface-container rounded-xl relative cursor-pointer" id="custom-sport-select">
+                <span class="material-symbols-outlined text-primary/70">sports_soccer</span>
+
+                <div class="flex flex-col w-full relative">
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-label mb-0.5">Môn thể thao</span>
+
+                    <div id="sport-display-box" class="flex justify-between items-center w-full">
+                        <span id="sport-selected-text" class="text-base font-bold text-zinc-800 truncate">Tất cả các môn</span>
+                        <span id="sport-arrow" class="material-symbols-outlined text-zinc-400 text-[20px] transition-transform duration-200">expand_more</span>
+                    </div>
+
+                    <input type="hidden" name="sport" id="sport-hidden-input" value="">
+
+                    <ul id="sport-dropdown-menu" class="absolute z-50 top-full left-[-45px] mt-5 w-[250px] bg-white rounded-2xl shadow-xl border border-outline-variant/30 py-2 hidden opacity-0 translate-y-2 transition-all duration-200 list-none pl-0">
+
+                        <li class="sport-option px-4 py-3 hover:bg-orange-50 cursor-pointer text-sm font-semibold text-zinc-700 hover:text-primary transition-colors flex items-center gap-3" data-value="" data-text="Tất cả các môn">
+                            <span class="material-symbols-outlined text-[18px] text-zinc-400">apps</span> Tất cả các môn
+                        </li>
+
+                        <li th:each="s : ${sportTypes}"
+                            th:id="'sport-item-' + ${s.name()}"
+                            class="sport-option px-4 py-3 hover:bg-orange-50 cursor-pointer text-sm font-semibold text-zinc-700 hover:text-primary transition-colors flex items-center gap-3"
+                            th:data-value="${s.name()}"
+                            th:data-text="${s.displayName}">
+
+                            <span class="sport-item-icon material-symbols-outlined text-[18px] text-primary/70"></span>
+
+                            <span th:text="${s.displayName}">Tên môn</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const selectContainer = document.getElementById('custom-sport-select');
+                    const displayBox = document.getElementById('sport-display-box');
+                    const dropdownMenu = document.getElementById('sport-dropdown-menu');
+                    const hiddenInput = document.getElementById('sport-hidden-input');
+                    const selectedText = document.getElementById('sport-selected-text');
+                    const arrow = document.getElementById('sport-arrow');
+                    const options = document.querySelectorAll('.sport-option');
+
+                    // Bật/tắt menu khi click vào box
+                    displayBox.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Ngăn click lan ra ngoài
+                        const isHidden = dropdownMenu.classList.contains('hidden');
+
+                        if (isHidden) {
+                            dropdownMenu.classList.remove('hidden');
+                            // Timeout nhỏ để CSS animation chạy mượt mà
+                            setTimeout(() => {
+                                dropdownMenu.classList.remove('opacity-0', 'translate-y-2');
+                                arrow.classList.add('rotate-180');
+                            }, 10);
+                        } else {
+                            closeMenu();
+                        }
+                    });
+
+                    // Xử lý khi chọn một môn thể thao
+                    options.forEach(option => {
+                        option.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            // Lấy giá trị từ data-attribute
+                            const value = this.getAttribute('data-value');
+                            const text = this.getAttribute('data-text');
+
+                            // Cập nhật input ẩn và hiển thị ra ngoài
+                            hiddenInput.value = value;
+                            selectedText.textContent = text;
+                            selectedText.classList.add('text-primary'); // Đổi màu xíu cho nổi bật
+
+                            closeMenu();
+                        });
+                    });
+
+                    // Đóng menu nếu click ra ngoài khoảng trắng
+                    document.addEventListener('click', function(e) {
+                        if (!selectContainer.contains(e.target)) {
+                            closeMenu();
+                        }
+                    });
+
+                    // Hàm đóng menu có hiệu ứng
+                    function closeMenu() {
+                        dropdownMenu.classList.add('opacity-0', 'translate-y-2');
+                        arrow.classList.remove('rotate-180');
+                        setTimeout(() => {
+                            dropdownMenu.classList.add('hidden');
+                        }, 200); // Đợi animation CSS 200ms xong mới ẩn hẳn
+                    }
+                });
+                document.addEventListener('DOMContentLoaded', function() {
+
+                    // 1. Định nghĩa "Bảng Ánh Xạ" Icon (MAPPING)
+                    // Đây là chỗ bạn có thể thay đổi icon theo ý thích!
+                    // Tên Icon lấy tại: https://fonts.google.com/icons?selected=Material+Symbols
+                    const sportIconMap = {
+                        'FOOTBALL': 'sports_soccer',      // Quả bóng đá
+                        'TENNIS': 'sports_tennis',        // Vợt + bóng tennis
+                        'BADMINTON': 'badminton',         // Quả cầu lông
+                        'BASKETBALL': 'sports_basketball',// Rổ + bóng rổ
+                        'VOLLEYBALL': 'sports_volleyball',// Lưới + bóng chuyền
+                        'PICKLEBALL': 'pickleball',    // (Vợt Pickleball) Hoặc 'sports_paddle' nếu Material có
+
+                        // Icon mặc định nếu không tìm thấy môn phù hợp
+                        'DEFAULT': 'sports_score'
+                    };
+
+                    // 2. Tự động chèn Icon vào danh sách Dropdown
+                    const sportItems = document.querySelectorAll('[id^="sport-item-"]');
+
+                    sportItems.forEach(item => {
+                        // Lấy giá trị của môn thể thao (ví dụ: 'FOOTBALL') từ data-value
+                        const sportValue = item.getAttribute('data-value');
+                        const iconSpan = item.querySelector('.sport-item-icon');
+
+                        // Tìm tên Icon trong bảng Mapping, nếu không có thì lấy DEFAULT
+                        const iconName = sportIconMap[sportValue] || sportIconMap['DEFAULT'];
+
+                        // Chèn tên Icon vào thẻ span
+                        iconSpan.textContent = iconName;
+                    });
+                });
+            </script>
+
+            <button type="submit" class="kinetic-gradient bg-secondary text-white px-8 py-4 rounded-xl font-bold font-headline flex items-center gap-2 hover:bg-secondary/90 transition-all active:scale-95">
+                <span class="material-symbols-outlined">search</span>
+                TÌM SÂN
+            </button>
+        </form>
+    </section>
+
+    <section class="py-24 bg-surface-container-low px-6 mt-12">
+        <div class="max-w-screen-2xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl font-black tracking-tighter text-zinc-900 mb-4 uppercase italic font-headline">SÂN ĐẤU HÀNG ĐẦU</h2>
+                <p class="text-zinc-500 max-w-2xl mx-auto font-body text-lg">Trải nghiệm những đấu trường nơi các nhà vô địch ra đời. Được cộng đồng đánh giá cao nhất.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" th:if="${facilities != null and !facilities.isEmpty()}">
+
+                <div th:each="f, iterStat : ${facilities.content}"
+                     th:if="${iterStat.index < 3}"
+                     th:classappend="${iterStat.index == 0 ? 'md:col-span-2' : ''}"
+                     class="group relative h-[500px] rounded-3xl overflow-hidden shadow-xl bg-white cursor-pointer">
+
+                    <img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                         th:src="${f.primaryImageUrl != null ? f.primaryImageUrl : 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1000&auto=format&fit=crop'}" alt="Hình ảnh sân">
+
+                    <div class="absolute top-6 left-6 flex gap-2">
+                        <span th:if="${iterStat.index == 0}" class="bg-primary text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest font-label flex items-center gap-1 shadow-lg">
+                            <span class="material-symbols-outlined text-sm">star</span> CAO CẤP
+                        </span>
+                        <span class="bg-white/90 backdrop-blur-md text-zinc-900 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest font-label shadow-md flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> ĐANG CÓ SÂN
+                        </span>
+                    </div>
+
+                    <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent">
+                        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            <div>
+                                <h3 class="text-3xl md:text-4xl font-black text-white mb-2 font-headline italic uppercase" th:text="${f.name}">TÊN SÂN ĐẤU</h3>
+                                <div class="flex items-center gap-4 text-zinc-300 text-sm font-label">
+                                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">location_on</span> <span th:text="${f.city}">Thành phố</span></span>
+                                    <span class="flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm">star</span>
+                                        <span th:text="${f.avgRating != null ? f.avgRating : '5.0'}">5.0</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div th:if="${iterStat.index == 0}" class="bg-white p-4 rounded-2xl flex items-center gap-6 shadow-2xl">
+                                <a th:href="@{/facilities/{id}(id=${f.id})}" class="bg-primary text-white px-8 py-3 rounded-xl font-bold font-headline hover:bg-orange-700 transition-all text-decoration-none whitespace-nowrap">ĐẶT SÂN</a>
+                            </div>
+
+                            <a th:if="${iterStat.index > 0}" th:href="@{/facilities/{id}(id=${f.id})}" class="bg-white text-zinc-900 w-12 h-12 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+                                <span class="material-symbols-outlined">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 px-6 relative overflow-hidden bg-white border-t border-outline-variant/20">
+        <div class="max-w-screen-xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+            <div class="lg:w-1/2">
+                <h2 class="text-5xl font-black tracking-tighter text-zinc-900 mb-8 uppercase italic leading-none font-headline">KHÔNG TRỞ NGẠI.<br>TỐI ĐA TRẢI NGHIỆM.</h2>
+                <p class="text-zinc-600 text-lg mb-12 font-body leading-relaxed">Chúng tôi đã loại bỏ sự phức tạp của việc đặt sân truyền thống. Ba bước giữa bạn và hiệu suất cao nhất của bạn.</p>
+                <div class="space-y-12">
+                    <div class="flex gap-6 group">
+                        <div class="w-14 h-14 shrink-0 rounded-2xl bg-zinc-100 flex items-center justify-center text-primary font-black text-2xl font-headline group-hover:bg-primary group-hover:text-white transition-all shadow-sm">1</div>
+                        <div>
+                            <h4 class="text-xl font-black text-zinc-900 uppercase italic mb-2 font-headline">TÌM KIẾM SÂN</h4>
+                            <p class="text-zinc-500 font-body">Duyệt qua hình ảnh chất lượng cao và đánh giá đã xác thực của người chơi để tìm sân hoàn hảo cho đội của bạn.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 group">
+                        <div class="w-14 h-14 shrink-0 rounded-2xl bg-zinc-100 flex items-center justify-center text-primary font-black text-2xl font-headline group-hover:bg-primary group-hover:text-white transition-all shadow-sm">2</div>
+                        <div>
+                            <h4 class="text-xl font-black text-zinc-900 uppercase italic mb-2 font-headline">KHÓA SÂN TỨC THÌ</h4>
+                            <p class="text-zinc-500 font-body">Đồng bộ thời gian thực đảm bảo bạn không bao giờ mất lượt. Đặt sân trong vài giây với hệ thống thanh toán an toàn.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 group">
+                        <div class="w-14 h-14 shrink-0 rounded-2xl bg-zinc-100 flex items-center justify-center text-primary font-black text-2xl font-headline group-hover:bg-primary group-hover:text-white transition-all shadow-sm">3</div>
+                        <div>
+                            <h4 class="text-xl font-black text-zinc-900 uppercase italic mb-2 font-headline">BẮT ĐẦU TRẬN ĐẤU</h4>
+                            <p class="text-zinc-500 font-body">Xuất trình thông tin tại sân. Theo dõi số liệu thống kê của bạn và thăng hạng trên bảng xếp hạng ARENAKINETIC.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:w-1/2 relative">
+                <div class="absolute -top-10 -right-10 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+                <div class="relative rounded-3xl overflow-hidden shadow-2xl rotate-3 translate-x-4 border border-outline-variant/30">
+                    <img class="w-full" alt="Giao diện App" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop">
+                </div>
+                <div class="absolute -bottom-6 -left-6 bg-secondary text-white p-8 rounded-2xl shadow-xl -rotate-3 z-10">
+                    <span class="material-symbols-outlined text-4xl mb-4">speed</span>
+                    <p class="text-2xl font-black italic font-headline">45 GIÂY</p>
+                    <p class="text-xs font-bold uppercase tracking-widest text-zinc-300 font-label">Thời gian đặt sân trung bình</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+</body>
+</html>
