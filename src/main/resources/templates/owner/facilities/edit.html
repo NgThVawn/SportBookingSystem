@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Facility</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            margin: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; 
+        }
+        /* Style riêng cho checkbox để nó không bị kéo dài 100% */
+        input[type="checkbox"] {
+            width: auto;
+            margin-top: 0;
+            cursor: pointer;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #007BFF;
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .message {
+            margin-top: 10px;
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        a.back {
+            display: inline-block;
+            margin-top: 15px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a.back:hover {
+            text-decoration: underline;
+        }
+        
+        /* CSS CHO KHUNG ẢNH VÀ NÚT XÓA */
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .image-item {
+            width: 120px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 8px; 
+        }
+        .image-item img {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+        }
+        .image-item label.delete-btn {
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: normal;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #dc3545; 
+        }
+        .no-images {
+            color: #777;
+            font-size: 14px;
+            font-style: italic;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Edit Facility</h2>
+
+<p th:if="${successMsg}" class="message" th:text="${successMsg}"></p>
+<p th:if="${errorMsg}" class="error" th:text="${errorMsg}"></p>
+
+<form th:action="@{/owner/facilities/{id}/edit(id=${facility.id})}" 
+      th:object="${facilityRequest}" method="post" enctype="multipart/form-data">
+
+    <label>Current Images (Check box to delete)</label>
+    <div class="image-gallery" th:unless="${#lists.isEmpty(facility.images)}">
+        <div class="image-item" th:each="img : ${facility.images}">
+            <img th:src="${img.imageUrl}" alt="Facility Image" />
+            <label class="delete-btn">
+                <input type="checkbox" name="deletedImageIds" th:value="${img.id}" />
+                Delete
+            </label>
+        </div>
+    </div>
+    <div class="no-images" th:if="${#lists.isEmpty(facility.images)}">
+        No images uploaded yet.
+    </div>
+
+    <label for="images">Upload Additional Images (Optional)</label>
+    <input type="file" name="images" id="images" multiple="multiple" accept="image/*" />
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+
+    <label for="name">Name</label>
+    <input type="text" th:field="*{name}" id="name" />
+
+    <label for="description">Description</label>
+    <textarea th:field="*{description}" id="description" rows="3"></textarea>
+
+    <label for="address">Address</label>
+    <input type="text" th:field="*{address}" id="address" />
+
+    <label for="city">City</label>
+    <input type="text" th:field="*{city}" id="city" />
+
+    <label for="district">District</label>
+    <input type="text" th:field="*{district}" id="district" />
+
+    <label for="phone">Phone</label>
+    <input type="text" th:field="*{phone}" id="phone" />
+
+    <label for="email">Email</label>
+    <input type="email" th:field="*{email}" id="email" />
+
+    <label for="openTime">Open Time</label>
+    <input type="time" th:field="*{openTime}" id="openTime" />
+
+    <label for="closeTime">Close Time</label>
+    <input type="time" th:field="*{closeTime}" id="closeTime" />
+
+    <button type="submit">Update Facility</button>
+</form>
+
+<a th:href="@{/owner/facilities}" class="back">← Back to Facilities</a>
+
+</body>
+</html>

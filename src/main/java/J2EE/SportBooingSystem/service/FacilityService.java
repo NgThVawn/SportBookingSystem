@@ -17,4 +17,5 @@ public interface FacilityService {
     List<Facility> findByOwner(String ownerEmail);
     void toggleActive(Long id, String ownerEmail);
     long count();
+    void delete(Long id, String ownerEmail);
 }

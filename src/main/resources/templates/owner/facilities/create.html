@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Create Facility</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            margin: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; 
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #28a745; 
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .message {
+            margin-top: 10px;
+            color: green;
+        }
+        .error-msg {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .field-error {
+            color: red;
+            font-size: 13px;
+            margin-top: 3px;
+            display: block;
+        }
+        a.back {
+            display: inline-block;
+            margin-top: 15px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a.back:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Create New Facility</h2>
+
+<p th:if="${errorMsg}" class="error-msg" th:text="${errorMsg}"></p>
+<p th:if="${successMsg}" class="message" th:text="${successMsg}"></p>
+
+<form th:action="@{/owner/facilities/create}" method="post" th:object="${facilityRequest}" enctype="multipart/form-data">
+
+    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+    <label for="name">Facility Name <span style="color:red">*</span></label>
+    <input type="text" th:field="*{name}" id="name" placeholder="Enter facility name..." />
+    <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+
+    <label for="description">Description</label>
+    <textarea th:field="*{description}" id="description" rows="3" placeholder="Brief description of the facility..."></textarea>
+    <span class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+
+    <label for="address">Address <span style="color:red">*</span></label>
+    <input type="text" th:field="*{address}" id="address" placeholder="Street address..." />
+    <span class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
+
+    <label for="city">City <span style="color:red">*</span></label>
+    <input type="text" th:field="*{city}" id="city" />
+    <span class="field-error" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></span>
+
+    <label for="district">District</label>
+    <input type="text" th:field="*{district}" id="district" />
+
+    <label for="phone">Phone Number</label>
+    <input type="text" th:field="*{phone}" id="phone" placeholder="+84..." />
+    <span class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+
+    <label for="email">Email</label>
+    <input type="email" th:field="*{email}" id="email" />
+    <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+
+    <label for="openTime">Open Time <span style="color:red">*</span></label>
+    <input type="time" th:field="*{openTime}" id="openTime" />
+    <span class="field-error" th:if="${#fields.hasErrors('openTime')}" th:errors="*{openTime}"></span>
+
+    <label for="closeTime">Close Time <span style="color:red">*</span></label>
+    <input type="time" th:field="*{closeTime}" id="closeTime" />
+    <span class="field-error" th:if="${#fields.hasErrors('closeTime')}" th:errors="*{closeTime}"></span>
+
+    <label for="images">Upload Images</label>
+    <input type="file" name="images" id="images" multiple="multiple" accept="image/*" />
+
+    <button type="submit">Create Facility</button>
+</form>
+
+<a th:href="@{/owner/facilities}" class="back">← Back to Facilities</a>
+
+</body>
+</html>

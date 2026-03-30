@@ -3,8 +3,11 @@ package J2EE.SportBooingSystem.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.List;
+
 
 @Data
 public class FacilityRequest {
@@ -35,9 +38,13 @@ public class FacilityRequest {
     @Email(message = "Invalid email")
     private String email;
 
-    @NotNull(message = "Open time required")
+    @NotBlank(message = "Open time required")
     private String openTime;
 
-    @NotNull(message = "Close time required")
+    @NotBlank(message = "Close time required")
     private String closeTime;
+
+    private List<MultipartFile> images;
+
+    private List<Long> deletedImageIds;
 }
