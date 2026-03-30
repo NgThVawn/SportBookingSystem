@@ -48,13 +48,13 @@
                 Bạn đã đăng xuất thành công.
             </div>
 
-            <form th:action="@{/login}" method="post" class="space-y-6">
+            <form th:action="@{/auth/login}" method="post" class="space-y-6">
 
                 <div class="space-y-2">
-                    <label class="font-label font-semibold text-sm text-on-surface tracking-wide" for="username">ĐỊA CHỈ EMAIL</label>
+                    <label class="font-label font-semibold text-sm text-on-surface tracking-wide" for="email">ĐỊA CHỈ EMAIL</label>
                     <div class="relative group">
                         <input class="w-full bg-surface-container-highest border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 px-0 py-3 text-on-surface placeholder:text-on-surface-variant/50 transition-all font-body"
-                               id="username" name="username" placeholder="name@example.com" type="email" required/>
+                               id="email" name="email" placeholder="name@example.com" type="email" required/>
                     </div>
                 </div>
 

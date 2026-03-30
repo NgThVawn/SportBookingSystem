@@ -2,22 +2,90 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
-<header th:fragment="navbar" class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl no-border bg-surface-container-low shadow-none">
-    <nav class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+<nav th:fragment="navbar" class="fixed top-0 w-full z-50 bg-zinc-100/90 dark:bg-zinc-950/95 backdrop-blur-xl shadow-sm transition-all duration-300 border-b border-outline-variant/30">
+    <div class="flex justify-between items-center px-6 h-20 w-full max-w-screen-2xl mx-auto">
 
-        <a th:href="@{/}" class="text-2xl font-black italic tracking-tighter text-orange-600 dark:text-orange-500 font-['Epilogue'] text-decoration-none">
-            ARENA KINETIC
-        </a>
+        <div class="flex items-center gap-8">
+            <a th:href="@{/}" class="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter font-headline italic text-decoration-none">ARENAKINETIC</a>
 
-        <div class="hidden md:flex items-center gap-8">
+            <div class="hidden md:flex gap-6 items-center" sec:authorize="isAuthenticated()">
+                <a th:href="@{/facilities}" class="text-primary font-bold border-b-2 border-primary font-headline tracking-tight py-2 text-decoration-none">Sân đấu</a>
+                <a th:href="@{/tournaments}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Giải đấu</a>
+                <a th:href="@{/clubs}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Câu lạc bộ</a>
+            </div>
         </div>
 
-        <a th:href="@{/auth/register}" class="bg-primary-container text-on-primary-container px-6 py-2 rounded-xl font-bold font-headline tracking-tight active:scale-95 duration-150 transition-all shadow-lg shadow-primary/20 text-decoration-none">
-            Sign Up
-        </a>
+        <div class="flex items-center gap-4">
 
-    </nav>
-</header>
+            <th:block sec:authorize="!isAuthenticated()">
+
+                <style id="nav-dynamic-style"></style>
+                <script>
+                    (function() {
+                        const path = window.location.pathname;
+                        const styleTag = document.getElementById('nav-dynamic-style');
+                        // Bơm CSS thẳng vào trình duyệt trước khi nó kịp hiển thị nút
+                        if (path.includes('/auth/login')) {
+                            styleTag.innerHTML = '#nav-btn-login { display: none !important; }';
+                        } else if (path.includes('/auth/register')) {
+                            styleTag.innerHTML = '#nav-btn-register { display: none !important; }';
+                        }
+                    })();
+                </script>
+
+                <a th:href="@{/auth/login}" id="nav-btn-login"
+                   class="hidden sm:block bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-6 py-2.5 rounded-xl font-bold transition-colors text-decoration-none font-headline border border-zinc-200 shadow-sm">
+                    Đăng nhập
+                </a>
+
+                <a th:href="@{/auth/register}" id="nav-btn-register"
+                   class="kinetic-gradient text-white px-6 py-2.5 rounded-xl font-bold font-headline tracking-tight hover:shadow-lg hover:shadow-primary/30 transition-all text-decoration-none active:scale-95 border-none">
+                    Đăng ký ngay
+                </a>
+            </th:block>
+
+            <th:block sec:authorize="isAuthenticated()">
+                <a th:href="@{/notifications}" class="material-symbols-outlined text-zinc-600 hover:text-primary transition-colors text-decoration-none mt-1">notifications</a>
+
+                <div class="relative group cursor-pointer ml-2">
+
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border-2 border-outline-variant group-hover:border-primary transition-colors shadow-sm">
+                            <img th:src="@{/images/default-avatar.png}" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+
+                        <span class="hidden sm:block font-bold text-sm text-zinc-800 font-headline truncate max-w-[120px]" sec:authentication="name">User</span>
+
+                        <span class="material-symbols-outlined text-zinc-400 text-[20px] group-hover:rotate-180 transition-transform duration-300">expand_more</span>
+                    </div>
+
+                    <div class="absolute right-0 top-full mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-outline-variant/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-3 group-hover:translate-y-0 overflow-hidden z-50">
+                        <div class="py-2">
+                            <a th:href="@{/profile}" class="px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-primary transition-colors text-decoration-none flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[20px]">person</span> Thông tin cá nhân
+                            </a>
+                            <a th:href="@{/booking/history}" class="px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-primary transition-colors text-decoration-none flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[20px]">history</span> Lịch sử đặt sân
+                            </a>
+
+                            <hr class="my-1 border-zinc-100">
+
+                            <form th:action="@{/auth/logout}" method="post" class="m-0">
+                                <button type="submit" class="w-full text-left px-5 py-3 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors border-none bg-transparent cursor-pointer flex items-center gap-3 font-headline">
+                                    <span class="material-symbols-outlined text-[20px]">logout</span> Đăng xuất
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </th:block>
+
+            <button class="md:hidden material-symbols-outlined text-zinc-800 bg-transparent border-none text-[28px]">menu</button>
+        </div>
+
+    </div>
+
+</nav>
 
 </body>
 </html>

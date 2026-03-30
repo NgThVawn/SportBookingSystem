@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800;900&amp;family=Inter:wght@400;500;600&amp;family=Lexend:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link th:href="@{/css/app.css}" rel="stylesheet"/>
     <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
@@ -79,7 +80,7 @@
 
 <div th:replace="~{fragments/header :: navbar}"></div>
 
-<main class="flex-grow-1">
+<main class="flex-grow flex flex-col pt-20">
     <div th:replace="${content}"></div>
 </main>
 
