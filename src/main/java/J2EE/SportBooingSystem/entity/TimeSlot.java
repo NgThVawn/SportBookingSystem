@@ -61,11 +61,13 @@ public class TimeSlot {
 
     public BigDecimal getEffectivePrice() {
         if (priceOverride != null) return priceOverride;
-        BigDecimal hourlyRate = field.getPricePerSlot() != null
-                ? field.getPricePerSlot()
-                : field.getPricePerHour().multiply(
-                BigDecimal.valueOf(field.getSlotDuration()).divide(BigDecimal.valueOf(60))
+
+
+        BigDecimal hourlyRate = field.getPricePerHour().multiply(
+                BigDecimal.valueOf(field.getSlotDuration())
+                        .divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP)
         );
+
         return hourlyRate;
     }
 }

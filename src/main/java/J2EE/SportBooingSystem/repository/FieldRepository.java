@@ -17,4 +17,5 @@ public interface FieldRepository extends JpaRepository<Field, Long> {
     List<Field> findByFacilityAndStatus(Facility facility, FieldStatus status);
 
     List<Field> findBySportTypeAndStatus(SportType sportType, FieldStatus status);
+
 }

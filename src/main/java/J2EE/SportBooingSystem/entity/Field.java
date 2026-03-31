@@ -46,10 +46,7 @@ public class Field {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal pricePerHour;
-
-    @Column(precision = 12, scale = 2)
-    private BigDecimal pricePerSlot;
-
+    
     @Column(nullable = false)
     @Builder.Default
     private Integer slotDuration = 60;
