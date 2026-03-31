@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Field</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; padding: 20px; }
+        .container { max-width: 600px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #333; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn-update { background: #007bff; color: white; border: none; padding: 12px; width: 100%; margin-top: 25px; cursor: pointer; border-radius: 4px; font-size: 16px; font-weight: bold; }
+        .btn-update:hover { background: #0069d9; }
+        .error-msg { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
+        .field-error { color: #dc3545; font-size: 13px; margin-top: 5px; }
+        .back-link { display: inline-block; margin-top: 20px; color: #6c757d; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Edit Field: <span th:text="${field.name}"></span></h2>
+
+    <div class="error-msg" th:if="${errorMsg}" th:text="${errorMsg}"></div>
+    
+    <form th:action="@{/owner/facilities/{facId}/fields/{fieldId}/edit(facId=${facility.id}, fieldId=${field.id})}" 
+          th:object="${fieldRequest}" method="post">
+        
+        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        
+        <label>Field Name *</label>
+        <input th:field="*{name}" />
+        <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+
+        <label>Sport Type *</label>
+        <select th:field="*{sportType}">
+            <option th:each="s : ${sportTypes}" th:value="${s}" th:text="${s.displayName}"></option>
+        </select>
+        <p class="field-error" th:if="${#fields.hasErrors('sportType')}" th:errors="*{sportType}"></p>
+
+        <label>Surface Type</label>
+        <input th:field="*{surfaceType}" placeholder="Cỏ nhân tạo, Sân gạch..." />
+
+        <div style="display: flex; gap: 15px;">
+            <div style="flex: 1;">
+                <label>Price Per Hour (VNĐ) *</label>
+                <input type="number" th:field="*{pricePerHour}" />
+                <p class="field-error" th:if="${#fields.hasErrors('pricePerHour')}" th:errors="*{pricePerHour}"></p>
+            </div>
+            <div style="flex: 1;">
+                <label>Slot Duration (Min) *</label>
+                <input type="number" th:field="*{slotDuration}" />
+                <p class="field-error" th:if="${#fields.hasErrors('slotDuration')}" th:errors="*{slotDuration}"></p>
+            </div>
+        </div>
+
+        <label>Description</label>
+        <textarea th:field="*{description}" rows="3"></textarea>
+
+        <button type="submit" class="btn-update">Update Field Information</button>
+    </form>
+    
+    <br/>
+    <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="back-link">← Back to Fields Management</a>
+</div>
+
+</body>
+</html>

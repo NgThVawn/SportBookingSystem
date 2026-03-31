@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Add Field</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f9f9f9; padding: 20px; }
+        .container { max-width: 600px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn-submit { background: #28a745; color: white; border: none; padding: 12px; width: 100%; margin-top: 25px; cursor: pointer; border-radius: 4px; font-size: 16px; font-weight: bold; }
+        .btn-submit:hover { background: #218838; }
+        .error-main { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
+        .error-field { color: #dc3545; font-size: 13px; margin-top: 5px; display: block; }
+        .back-link { display: inline-block; margin-top: 20px; color: #007bff; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 th:text="'Add Field to: ' + ${facility.name}">Add Field</h2>
+
+    <div class="error-main" th:if="${errorMsg}" th:text="${errorMsg}"></div>
+    
+    <form th:action="@{/owner/facilities/{id}/fields/create(id=${facility.id})}" th:object="${fieldRequest}" method="post">
+        
+        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <label for="name">Field Name *</label>
+        <input th:field="*{name}" id="name" placeholder="e.g. Sân A1, Court 1..." />
+        <span class="error-field" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+
+        <label for="sportType">Sport Type *</label>
+        <select th:field="*{sportType}" id="sportType">
+            <option value="">-- Select Sport --</option>
+            <option th:each="s : ${sportTypes}" th:value="${s}" th:text="${s.displayName}"></option>
+        </select>
+        <span class="error-field" th:if="${#fields.hasErrors('sportType')}" th:errors="*{sportType}"></span>
+
+        <label for="surfaceType">Surface Type</label>
+        <input th:field="*{surfaceType}" id="surfaceType" placeholder="e.g. Cỏ nhân tạo, Sân gỗ..." />
+
+        <div style="display: flex; gap: 15px;">
+            <div style="flex: 1;">
+                <label for="pricePerHour">Price Per Hour (VNĐ) *</label>
+                <input type="number" th:field="*{pricePerHour}" id="pricePerHour" />
+                <span class="error-field" th:if="${#fields.hasErrors('pricePerHour')}" th:errors="*{pricePerHour}"></span>
+            </div>
+            <div style="flex: 1;">
+                <label for="slotDuration">Slot Duration (Min) *</label>
+                <input type="number" th:field="*{slotDuration}" id="slotDuration" />
+                <span class="error-field" th:if="${#fields.hasErrors('slotDuration')}" th:errors="*{slotDuration}"></span>
+            </div>
+        </div>
+
+        <label for="description">Description</label>
+        <textarea th:field="*{description}" id="description" rows="3"></textarea>
+
+        <button type="submit" class="btn-submit">Create Field</button>
+    </form>
+    
+    <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="back-link">← Back to Fields List</a>
+</div>
+
+</body>
+</html>

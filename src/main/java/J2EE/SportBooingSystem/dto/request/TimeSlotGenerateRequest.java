@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -29,4 +30,6 @@ public class TimeSlotGenerateRequest {
     @NotNull(message = "Day end time is required")
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     private LocalTime dayEndTime;
+
+    private BigDecimal priceOverride;
 }

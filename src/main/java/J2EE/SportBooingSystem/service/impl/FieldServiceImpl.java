@@ -30,6 +30,8 @@ public class FieldServiceImpl implements FieldService {
         }
         Field field = mapToEntity(new Field(), req);
         field.setFacility(facility);
+        // Set mặc định khi tạo mới là OPEN
+        if (field.getStatus() == null) field.setStatus(FieldStatus.OPEN);
         return fieldRepository.save(field);
     }
 
@@ -62,7 +64,23 @@ public class FieldServiceImpl implements FieldService {
         if (!field.getFacility().getOwner().getEmail().equals(ownerEmail)) {
             throw new SecurityException("Not authorized");
         }
-        field.setStatus(FieldStatus.valueOf(status.toUpperCase()));
+        try {
+            field.setStatus(FieldStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid status: " + status);
+        }
+    }
+
+    
+    @Override
+    public void delete(Long fieldId, String ownerEmail) {
+        Field field = findById(fieldId);
+
+        if (!field.getFacility().getOwner().getEmail().equals(ownerEmail)) {
+            throw new SecurityException("Not authorized to delete this field");
+        }
+        
+        fieldRepository.delete(field);
     }
 
     private Field mapToEntity(Field field, FieldRequest req) {
@@ -72,7 +90,6 @@ public class FieldServiceImpl implements FieldService {
         field.setSurfaceType(req.getSurfaceType());
         field.setCapacity(req.getCapacity());
         field.setPricePerHour(req.getPricePerHour());
-        field.setPricePerSlot(req.getPricePerSlot());
         field.setSlotDuration(req.getSlotDuration() != null ? req.getSlotDuration() : 60);
         return field;
     }
