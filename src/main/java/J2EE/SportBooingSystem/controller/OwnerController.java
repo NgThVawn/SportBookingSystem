@@ -7,9 +7,11 @@ import J2EE.SportBooingSystem.enums.SportType;
 import J2EE.SportBooingSystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -31,6 +33,7 @@ public class OwnerController {
     private final FacilityService facilityService;
     private final FieldService fieldService;
     private final TimeSlotService timeSlotService;
+    private final UserService userService;
 
     // ─── FACILITY ─────────────────────────
 
@@ -313,5 +316,44 @@ public class OwnerController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+    @GetMapping("")
+    public String ownerDashboard(Model model, Authentication authentication) {
+        // 1. Lấy thông tin Chủ sân đang đăng nhập hiện tại
+        String email = authentication.getName();
+        User currentOwner = userService.findByEmail(email);
+
+        // 2. LẤY CÁC CON SỐ THỐNG KÊ (Dùng cho các thẻ Card ở trên cùng trang)
+        // Giả sử bạn có các hàm này trong Service, nếu chưa có thì nhờ Backend viết thêm nhé
+//        long totalFacilities = facilityService.countByOwnerId(currentOwner.getId());
+//        long pendingBookings = bookingService.countPendingBookingsByOwnerId(currentOwner.getId());
+//        double monthlyRevenue = bookingService.calculateMonthlyRevenueByOwnerId(currentOwner.getId());
+
+        // 3. LẤY DANH SÁCH SÂN CỦA RIÊNG CHỦ SÂN NÀY (Để hiển thị bảng quản lý nhanh)
+        // Sắp xếp sân mới tạo lên đầu, lấy 5 sân để giao diện không bị quá dài
+//        var myFacilities = facilityService.findByOwnerId(
+//                currentOwner.getId(),
+//                PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
+//        );
+
+        // 4. LẤY DANH SÁCH LỊCH ĐẶT SÂN MỚI NHẤT (Để duyệt/từ chối nhanh)
+//        var recentBookings = bookingService.findRecentBookingsByOwnerId(
+//                currentOwner.getId(),
+//                PageRequest.of(0, 5)
+//        );
+
+//        // 5. Đẩy toàn bộ dữ liệu ra View (Thymeleaf)
+//        model.addAttribute("totalFacilities", totalFacilities);
+//        model.addAttribute("pendingBookings", pendingBookings);
+//        model.addAttribute("monthlyRevenue", monthlyRevenue);
+//
+//        model.addAttribute("myFacilities", myFacilities);
+//        model.addAttribute("recentBookings", recentBookings);
+
+        // Vẫn giữ lại SportType nếu form Thêm Sân Nhanh (Modal) trên Dashboard cần dùng
+        model.addAttribute("sportTypes", SportType.values());
+
+        // Trả về file HTML (Lưu ý: Bỏ dấu gạch chéo ở đầu đi để Thymeleaf chạy chuẩn nhất)
+        return "owner/index";
     }
 }

@@ -75,7 +75,7 @@ public class Facility {
     @Builder.Default
     private Boolean isActive = true;
 
-    @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<FacilityImage> images = new ArrayList<>();
 
