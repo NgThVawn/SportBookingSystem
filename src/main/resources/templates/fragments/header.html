@@ -9,9 +9,9 @@
             <a th:href="@{/}" class="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter font-headline italic text-decoration-none">ARENAKINETIC</a>
 
             <div class="hidden md:flex gap-6 items-center" sec:authorize="isAuthenticated()">
-                <a th:href="@{/facilities}" class="text-primary font-bold border-b-2 border-primary font-headline tracking-tight py-2 text-decoration-none">Sân đấu</a>
-                <a th:href="@{/tournaments}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Giải đấu</a>
-                <a th:href="@{/clubs}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Câu lạc bộ</a>
+                <a th:href="@{/facilities}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Sân yêu thích</a>
+                <a th:href="@{/tournaments}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Tìm đối thủ</a>
+                <a th:href="@{/clubs}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Đội-Nhóm</a>
             </div>
         </div>
 
@@ -50,11 +50,24 @@
                 <div class="relative group cursor-pointer ml-2">
 
                     <div class="flex items-center gap-2">
-                        <div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border-2 border-outline-variant group-hover:border-primary transition-colors shadow-sm">
-                            <img th:src="@{/images/default-avatar.png}" alt="Avatar" class="w-full h-full object-cover">
+
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-highest overflow-hidden border-2 border-outline-variant group-hover:border-primary transition-colors shadow-sm">
+
+                            <img th:if="${user?.avatarUrl != null}"
+                                 th:src="${user.avatarUrl}"
+                                 alt="Avatar" class="w-full h-full object-cover">
+
+                            <span th:unless="${user?.avatarUrl != null}"
+                                  class="font-headline font-black text-primary text-lg"
+                                  th:text="${user?.fullName != null ? #strings.substring(user.fullName, 0, 1).toUpperCase() : 'U'}">
+                                U
+                            </span>
                         </div>
 
-                        <span class="hidden sm:block font-bold text-sm text-zinc-800 font-headline truncate max-w-[120px]" sec:authentication="name">User</span>
+                        <span class="hidden sm:block font-bold text-sm text-zinc-800 font-headline truncate max-w-[120px]"
+                              th:text="${user?.fullName != null ? user.fullName : #authentication.name}">
+                            User
+                        </span>
 
                         <span class="material-symbols-outlined text-zinc-400 text-[20px] group-hover:rotate-180 transition-transform duration-300">expand_more</span>
                     </div>
