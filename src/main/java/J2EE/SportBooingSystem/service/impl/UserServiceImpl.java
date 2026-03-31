@@ -14,7 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -95,19 +100,56 @@ public class UserServiceImpl implements UserService {
         user.setBanReason(null);
     }
 
+
     @Override
-    public void changePassword(String email, String oldPassword, String newPassword) {
+    public void updateProfile(String email, String fullName, String phone, MultipartFile avatar) {
+
         User user = findByEmail(email);
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Current password is incorrect");
+
+        user.setFullName(fullName);
+        user.setPhone(phone);
+
+        if (avatar != null && !avatar.isEmpty()) {
+            try {
+                String fileName = System.currentTimeMillis() + "_" + avatar.getOriginalFilename();
+
+                Path uploadDir = Paths.get("uploads");
+
+                if (!Files.exists(uploadDir)) {
+                    Files.createDirectories(uploadDir);
+                }
+
+                Path filePath = uploadDir.resolve(fileName);
+
+                Files.copy(avatar.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                user.setAvatarUrl("/uploads/" + fileName);
+
+            } catch (Exception e) {
+                throw new RuntimeException("Upload avatar failed");
+            }
         }
-        user.setPassword(passwordEncoder.encode(newPassword));
+
+        userRepository.save(user);
     }
 
     @Override
-    public void updateProfile(String email, String fullName, String phone) {
+    public User getCurrentUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    public void changePassword(String email, String oldPassword, String newPassword) {
         User user = findByEmail(email);
-        user.setFullName(fullName);
-        user.setPhone(phone);
+
+        // 1. Kiểm tra mật khẩu cũ có khớp với mật khẩu trong DB không
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Mật khẩu hiện tại không chính xác");
+        }
+
+        // 2. Mã hóa mật khẩu mới và lưu lại
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

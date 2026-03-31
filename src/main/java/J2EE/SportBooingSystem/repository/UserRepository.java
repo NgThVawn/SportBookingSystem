@@ -14,6 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
+
+
     @Query("SELECT COUNT(u) FROM User u WHERE u.isBanned = false AND u.isActive = true")
     long countActiveUsers();
 }
