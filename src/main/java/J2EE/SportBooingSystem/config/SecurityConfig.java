@@ -49,15 +49,15 @@ public class SecurityConfig {
                 .requestMatchers("/", "/facilities/**", "/css/**", "/js/**",
                                  "/images/**", "/error/**", "/uploads/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
-
+                // VNPay callbacks không cần auth
+                .requestMatchers("/payment/vnpay-return", "/payment/vnpay-ipn").permitAll()
+                // Owner area
                 .requestMatchers("/owner/**").hasAnyRole("OWNER", "ADMIN", "SUPER_ADMIN")
-
+                // Admin area
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-
-
+                // REST APIs
                 .requestMatchers("/api/v1/facilities/**",
-                                 "/api/v1/fields/**",
-                                 "/api/v1/slots/**").permitAll()
+                                 "/api/v1/fields/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
 
 
@@ -81,8 +81,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                
-                .ignoringRequestMatchers("/api/**") 
+                    .ignoringRequestMatchers("/api/**", "/payment/vnpay-ipn")
             )
             .sessionManagement(session -> session
                 .maximumSessions(1)

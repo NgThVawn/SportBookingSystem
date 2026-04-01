@@ -5,7 +5,6 @@ import J2EE.SportBooingSystem.dto.response.PriceCalculationResponse;
 import J2EE.SportBooingSystem.dto.response.PriceCalculationResponse.PriceSegment;
 import J2EE.SportBooingSystem.entity.Field;
 import J2EE.SportBooingSystem.entity.PriceRule;
-import J2EE.SportBooingSystem.enums.DayType;
 import J2EE.SportBooingSystem.exception.ForbiddenException;
 import J2EE.SportBooingSystem.repository.FieldRepository;
 import J2EE.SportBooingSystem.repository.PriceRuleRepository;

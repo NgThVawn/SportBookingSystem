@@ -16,9 +16,37 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Optional<Booking> findByBookingCode(String bookingCode);
 
-    List<Booking> findByUserOrderByCreatedAtDesc(User user);
+    /** Eager load user + field + facility — dùng cho PaymentController và BookingResponse.from() */
+    @Query("""
+        SELECT b FROM Booking b
+        JOIN FETCH b.user
+        JOIN FETCH b.field f
+        JOIN FETCH f.facility
+        WHERE b.bookingCode = :code
+    """)
+    Optional<Booking> findByBookingCodeEager(@Param("code") String code);
 
-    List<Booking> findByFieldAndBookingDateOrderByStartTime(Field field, LocalDate date);
+    @Query("""
+        SELECT b FROM Booking b
+        JOIN FETCH b.user
+        JOIN FETCH b.field f
+        JOIN FETCH f.facility
+        WHERE b.user = :user
+        ORDER BY b.createdAt DESC
+    """)
+    List<Booking> findByUserOrderByCreatedAtDesc(@Param("user") User user);
+
+    @Query("""
+        SELECT b FROM Booking b
+        JOIN FETCH b.user
+        JOIN FETCH b.field f
+        JOIN FETCH f.facility
+        WHERE b.field = :field
+          AND b.bookingDate = :date
+        ORDER BY b.startTime ASC
+    """)
+    List<Booking> findByFieldAndBookingDateOrderByStartTime(@Param("field") Field field,
+                                                            @Param("date") LocalDate date);
 
     /** Kiểm tra xung đột thời gian: tìm booking đã tồn tại trùng khung giờ */
     @Query("""
@@ -53,8 +81,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Lấy danh sách booking của owner (qua field → facility) */
     @Query("""
         SELECT b FROM Booking b
-        JOIN b.field f
-        JOIN f.facility fc
+        JOIN FETCH b.user
+        JOIN FETCH b.field f
+        JOIN FETCH f.facility fc
         WHERE fc.owner.email = :ownerEmail
         ORDER BY b.bookingDate DESC, b.startTime ASC
     """)
@@ -62,8 +91,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("""
         SELECT b FROM Booking b
-        JOIN b.field f
-        JOIN f.facility fc
+        JOIN FETCH b.user
+        JOIN FETCH b.field f
+        JOIN FETCH f.facility fc
         WHERE fc.owner.email = :ownerEmail
           AND b.bookingDate = :date
         ORDER BY b.startTime ASC

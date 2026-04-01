@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head><title>Thanh toán</title></head>
+<body>
+<th:block th:fragment="content">
+    <div class="container py-4" style="max-width: 640px">
+
+        <h3 class="mb-1">Xác nhận thanh toán</h3>
+        <p class="text-muted mb-4">Kiểm tra thông tin đơn hàng trước khi chuyển sang VNPay</p>
+
+        <!-- Thông tin đặt sân -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Thông tin đặt sân</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-5 text-muted">Mã đặt sân</div>
+                    <div class="col-7 fw-semibold" th:text="${booking.bookingCode}"></div>
+
+                    <div class="col-5 text-muted">Cơ sở</div>
+                    <div class="col-7" th:text="${booking.facilityName}"></div>
+
+                    <div class="col-5 text-muted">Sân</div>
+                    <div class="col-7" th:text="${booking.fieldName}"></div>
+
+                    <div class="col-5 text-muted">Loại hình</div>
+                    <div class="col-7" th:text="${booking.sportType}"></div>
+
+                    <div class="col-5 text-muted">Ngày</div>
+                    <div class="col-7"
+                         th:text="${#temporals.format(booking.bookingDate, 'dd/MM/yyyy')}"></div>
+
+                    <div class="col-5 text-muted">Giờ</div>
+                    <div class="col-7"
+                         th:text="${booking.startTime + ' – ' + booking.endTime}"></div>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <span class="text-muted">Tổng thanh toán</span>
+                <span class="fs-4 fw-bold text-danger"
+                      th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+      </span>
+            </div>
+        </div>
+
+        <!-- Nút hành động -->
+        <form th:action="@{/payment/vnpay}" method="post">
+            <input type="hidden" name="bookingCode" th:value="${booking.bookingCode}">
+            <button type="submit" class="btn btn-danger w-100 py-3 fs-5 mb-3">
+                <img src="https://vnpay.vn/s1/statics/img/logo-icon.7e1e72d6.svg"
+                     alt="VNPay" height="28" class="me-2">
+                Thanh toán qua VNPay
+            </button>
+        </form>
+
+        <a href="/bookings" class="btn btn-outline-secondary w-100">
+            Để sau (thanh toán trong 30 phút)
+        </a>
+
+        <div class="alert alert-warning mt-3 small">
+            <strong>Lưu ý:</strong> Đơn đặt sân sẽ tự động bị hủy nếu không thanh toán trong vòng
+            <strong>30 phút</strong>.
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

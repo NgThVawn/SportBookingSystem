@@ -43,9 +43,13 @@ public class BookingController {
     @GetMapping("/new")
     public String newBookingPage(@RequestParam Long fieldId,
                                  @RequestParam String date,
+                                 @RequestParam(required = false) String start,
+                                 @RequestParam(required = false) String end,
                                  Model model) {
         model.addAttribute("fieldId", fieldId);
         model.addAttribute("date", date);
+        model.addAttribute("start", start);
+        model.addAttribute("end", end);
         model.addAttribute("bookingRequest", new BookingRequest());
         return "booking/create";
     }
@@ -71,9 +75,9 @@ public class BookingController {
         }
         try {
             Booking b = bookingService.createBooking(req, ud.getUsername());
-            ra.addFlashAttribute("success", "Đặt sân thành công! Mã booking: " + b.getBookingCode());
-            return "redirect:/bookings";
-        } catch (Exception e) {
+            // Redirect tới trang checkout để thanh toán VNPay
+            return "redirect:/payment/checkout?bookingCode=" + b.getBookingCode();
+        }  catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("fieldId", req.getFieldId());
             return "booking/create";
