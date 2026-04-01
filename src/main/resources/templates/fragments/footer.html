@@ -2,26 +2,86 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<footer th:fragment="footer" class="w-full py-12 px-6 mt-auto bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
-    <div class="flex flex-col md:flex-row justify-between items-center gap-6 max-w-7xl mx-auto">
+<footer th:fragment="footer" class="w-full bg-zinc-950 dark:bg-black pt-16 pb-8 border-t border-zinc-800 mt-auto">
 
-        <div class="text-lg font-bold text-slate-900 dark:text-white font-headline">
-            ARENA KINETIC
+    <div class="flex flex-col items-center w-full px-8 max-w-screen-2xl mx-auto">
+
+        <div class="w-full flex flex-col md:flex-row justify-between items-start gap-12 mb-16">
+
+            <div class="max-w-xs">
+                <span class="text-xl font-black text-white font-headline tracking-tighter block mb-6 uppercase">
+                    ARENAKINETIC
+                </span>
+
+                <p class="text-zinc-500 font-body text-sm leading-relaxed mb-6">
+                    Định nghĩa lại mối quan hệ giữa vận động viên và sân tập của họ thông qua việc đặt chỗ chính xác và truy cập mạng lưới ưu tú.
+                </p>
+
+                <div class="flex gap-4">
+                    <a class="text-white hover:text-orange-500 transition-colors" href="#">
+                        <span class="material-symbols-outlined">language</span>
+                    </a>
+                    <a class="text-white hover:text-orange-500 transition-colors" href="#">
+                        <span class="material-symbols-outlined">hub</span>
+                    </a>
+                    <a class="text-white hover:text-orange-500 transition-colors" href="#">
+                        <span class="material-symbols-outlined">share</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-12 flex-1 md:ml-12 lg:ml-24">
+
+                <div>
+                    <h5 class="text-white font-black uppercase text-xs tracking-widest mb-6 italic font-headline">
+                        Nền tảng
+                    </h5>
+                    <ul class="space-y-4">
+                        <li><a th:href="@{/venues}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Sân đấu</a></li>
+                        <li><a th:href="@{/tournaments}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Tìm đối thủ</a></li>
+                        <li><a th:href="@{/pricing}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Đội nhóm</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-white font-black uppercase text-xs tracking-widest mb-6 italic font-headline">
+                        Hỗ trợ
+                    </h5>
+                    <ul class="space-y-4">
+                        <li><a th:href="@{/support}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Trung tâm trợ giúp</a></li>
+                        <li><a th:href="@{/partners}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Hợp tác với chúng tôi</a></li>
+                        <li><a th:href="@{/careers}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Tuyển dụng</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-white font-black uppercase text-xs tracking-widest mb-6 italic font-headline">
+                        Pháp lý
+                    </h5>
+                    <ul class="space-y-4">
+                        <li><a th:href="@{/privacy}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Chính sách bảo mật</a></li>
+                        <li><a th:href="@{/terms}" class="text-zinc-500 hover:text-orange-500 text-sm font-body transition-colors text-decoration-none">Điều khoản dịch vụ</a></li>
+                    </ul>
+                </div>
+
+            </div>
         </div>
 
-        <div class="flex flex-wrap justify-center gap-8">
-            <a th:href="@{/terms}" class="text-slate-500 hover:text-orange-500 font-['Inter'] text-sm tracking-wide transition-all opacity-80 hover:opacity-100">Terms of Service</a>
-            <a th:href="@{/privacy}" class="text-slate-500 hover:text-orange-500 font-['Inter'] text-sm tracking-wide transition-all opacity-80 hover:opacity-100">Privacy Policy</a>
-            <a th:href="@{/support}" class="text-slate-500 hover:text-orange-500 font-['Inter'] text-sm tracking-wide transition-all opacity-80 hover:opacity-100">Contact Support</a>
-            <a th:href="@{/partners}" class="text-slate-500 hover:text-orange-500 font-['Inter'] text-sm tracking-wide transition-all opacity-80 hover:opacity-100">Venue Partners</a>
-        </div>
+        <div class="w-full pt-8 border-t border-zinc-900 flex flex-col md:flex-row justify-between items-center gap-4">
 
-        <div class="text-slate-500 font-['Inter'] text-xs tracking-wide opacity-60">
-            &copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2026</span> ARENA KINETIC. PRECISION IN MOTION.
-        </div>
+            <p class="text-zinc-500 text-sm font-body">
+                © <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2026</span>
+                ARENAKINETIC. Hiệu Suất Chính Xác Năng Động.
+            </p>
 
+            <div class="flex gap-8">
+                <span class="text-white text-sm font-bold font-body cursor-pointer hover:text-orange-500 transition-colors">Tiếng Việt (VN)</span>
+                <span class="text-white text-sm font-bold font-body cursor-pointer hover:text-orange-500 transition-colors">VND (đ)</span>
+            </div>
+
+        </div>
     </div>
-</footer>
 
+</footer>
 </body>
 </html>
