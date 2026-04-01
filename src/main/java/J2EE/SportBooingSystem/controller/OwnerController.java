@@ -4,13 +4,13 @@ import J2EE.SportBooingSystem.dto.request.*;
 import J2EE.SportBooingSystem.dto.response.BookingResponse;
 import J2EE.SportBooingSystem.entity.*;
 import J2EE.SportBooingSystem.enums.DayType;
+import J2EE.SportBooingSystem.enums.FacilityStatus;
 import J2EE.SportBooingSystem.enums.SportType;
 import J2EE.SportBooingSystem.exception.ForbiddenException;
 import J2EE.SportBooingSystem.repository.BookingRepository;
 import J2EE.SportBooingSystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,12 +22,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import J2EE.SportBooingSystem.dto.request.BlockedTimeRequest;
-import J2EE.SportBooingSystem.dto.request.PriceRuleRequest;
-import J2EE.SportBooingSystem.entity.BlockedTime;
-import J2EE.SportBooingSystem.entity.PriceRule;
 import J2EE.SportBooingSystem.repository.BlockedTimeRepository;
-import J2EE.SportBooingSystem.service.PriceRuleService;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -83,8 +79,14 @@ public class OwnerController {
     }
 
     @GetMapping("/facilities/{id}/edit")
-    public String editFacility(@PathVariable Long id, Model model) {
+    public String editFacility(@PathVariable Long id, Model model, RedirectAttributes ra) {
         Facility f = facilityService.findById(id);
+        
+        if (f.getStatus() == FacilityStatus.PENDING_APPROVAL || f.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Không thể chỉnh sửa thông tin khi cơ sở đang chờ duyệt hoặc bị khóa!");
+            return "redirect:/owner/facilities";
+        }
+
         FacilityRequest req = new FacilityRequest();
         req.setName(f.getName());
         req.setDescription(f.getDescription());
@@ -110,14 +112,20 @@ public class OwnerController {
             Model model,
             RedirectAttributes ra) {
 
+        Facility f = facilityService.findById(id);
+        if (f.getStatus() == FacilityStatus.PENDING_APPROVAL || f.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Hành động bị chặn do trạng thái cơ sở không cho phép!");
+            return "redirect:/owner/facilities";
+        }
+
         if (result.hasErrors()) {
-            model.addAttribute("facility", facilityService.findById(id));
+            model.addAttribute("facility", f);
             return "owner/facilities/edit";
         }
 
         try {
             facilityService.update(id, request, ud.getUsername());
-            ra.addFlashAttribute("successMsg", "Updated successfully!");
+            ra.addFlashAttribute("successMsg", "Cập nhật thông tin thành công!");
             return "redirect:/owner/facilities";
         } catch (Exception e) {
             model.addAttribute("errorMsg", e.getMessage());
@@ -139,15 +147,18 @@ public class OwnerController {
         return "redirect:/owner/facilities";
     }
 
-    @PostMapping("/facilities/{id}/toggle")
+    @PostMapping("/facilities/{id}/status")
     @ResponseBody
-    public ResponseEntity<?> toggleFacility(
+    public ResponseEntity<?> changeFacilityStatus(
             @PathVariable Long id,
+            @RequestParam String status,
             @AuthenticationPrincipal UserDetails ud) {
         try {
-            facilityService.toggleActive(id, ud.getUsername());
-            Facility f = facilityService.findById(id);
-            return ResponseEntity.ok(Map.of("success", true, "isActive", f.getIsActive()));
+            J2EE.SportBooingSystem.enums.FacilityStatus newStatus = 
+                J2EE.SportBooingSystem.enums.FacilityStatus.valueOf(status.toUpperCase());
+                
+            facilityService.changeStatus(id, newStatus, ud.getUsername());
+            return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
@@ -163,8 +174,15 @@ public class OwnerController {
     }
 
     @GetMapping("/facilities/{facilityId}/fields/create")
-    public String createFieldPage(@PathVariable Long facilityId, Model model) {
-        model.addAttribute("facility", facilityService.findById(facilityId));
+    public String createFieldPage(@PathVariable Long facilityId, Model model, RedirectAttributes ra) {
+        Facility f = facilityService.findById(facilityId);
+        
+        if (f.getStatus() == FacilityStatus.PENDING_APPROVAL || f.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Bạn cần đợi Admin duyệt cơ sở trước khi tạo sân tập con!");
+            return "redirect:/owner/facilities/" + facilityId + "/fields";
+        }
+
+        model.addAttribute("facility", f);
         model.addAttribute("fieldRequest", new FieldRequest());
         model.addAttribute("sportTypes", SportType.values());
         return "owner/fields/create";
@@ -179,26 +197,38 @@ public class OwnerController {
             Model model,
             RedirectAttributes ra) {
 
+        Facility f = facilityService.findById(facilityId);
+        
+        if (f.getStatus() == FacilityStatus.PENDING_APPROVAL || f.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Hành động không hợp lệ!");
+            return "redirect:/owner/facilities/" + facilityId + "/fields";
+        }
+
         if (result.hasErrors()) {
-            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("facility", f);
             model.addAttribute("sportTypes", SportType.values());
             return "owner/fields/create";
         }
-
         try {
             fieldService.create(facilityId, request, ud.getUsername());
-            ra.addFlashAttribute("successMsg", "Field created successfully!");
+            ra.addFlashAttribute("successMsg", "Tạo sân tập thành công!");
             return "redirect:/owner/facilities/" + facilityId + "/fields";
         } catch (Exception e) {
             model.addAttribute("errorMsg", e.getMessage());
-            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("facility", f);
             model.addAttribute("sportTypes", SportType.values());
             return "owner/fields/create";
         }
     }
 
     @GetMapping("/facilities/{facilityId}/fields/{id}/edit")
-    public String editField(@PathVariable Long facilityId, @PathVariable Long id, Model model) {
+    public String editField(@PathVariable Long facilityId, @PathVariable Long id, Model model, RedirectAttributes ra) {
+        Facility facility = facilityService.findById(facilityId);
+        if (facility.getStatus() == FacilityStatus.PENDING_APPROVAL || facility.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Bạn không thể chỉnh sửa khi cơ sở chưa được duyệt!");
+            return "redirect:/owner/facilities/" + facilityId + "/fields";
+        }
+
         Field f = fieldService.findById(id);
 
         FieldRequest req = new FieldRequest();
@@ -209,7 +239,7 @@ public class OwnerController {
         req.setCapacity(f.getCapacity());
         req.setPricePerHour(f.getPricePerHour());
 
-        model.addAttribute("facility", facilityService.findById(facilityId));
+        model.addAttribute("facility", facility);
         model.addAttribute("field", f);
         model.addAttribute("fieldRequest", req);
         model.addAttribute("sportTypes", SportType.values());
@@ -225,8 +255,15 @@ public class OwnerController {
             @AuthenticationPrincipal UserDetails ud,
             Model model,
             RedirectAttributes ra) {
+        
+        Facility facility = facilityService.findById(facilityId);
+        if (facility.getStatus() == FacilityStatus.PENDING_APPROVAL || facility.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Hành động bị chặn!");
+            return "redirect:/owner/facilities/" + facilityId + "/fields";
+        }
+
         if (result.hasErrors()) {
-            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("facility", facility);
             model.addAttribute("field", fieldService.findById(id));
             model.addAttribute("sportTypes", SportType.values());
             return "owner/fields/edit";
@@ -237,14 +274,13 @@ public class OwnerController {
             return "redirect:/owner/facilities/" + facilityId + "/fields";
         } catch (Exception e) {
             model.addAttribute("errorMsg", e.getMessage());
-            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("facility", facility);
             model.addAttribute("field", fieldService.findById(id));
             model.addAttribute("sportTypes", SportType.values());
             return "owner/fields/edit";
         }
     }
 
-    // API đổi trạng thái Field (AJAX)
     @PostMapping("/facilities/{facilityId}/fields/{id}/status")
     @ResponseBody
     public ResponseEntity<?> changeFieldStatus(
@@ -259,7 +295,6 @@ public class OwnerController {
         }
     }
 
-    // Xóa Field
     @PostMapping("/facilities/{facilityId}/fields/{id}/delete")
     public String deleteField(
             @PathVariable Long facilityId,
@@ -281,8 +316,12 @@ public class OwnerController {
     public String priceRules(@PathVariable Long facilityId,
                              @PathVariable Long fieldId,
                              @AuthenticationPrincipal UserDetails ud,
-                             Model model) {
+                             Model model, RedirectAttributes ra) {
         Facility facility = facilityService.findById(facilityId);
+        if (facility.getStatus() == FacilityStatus.PENDING_APPROVAL || facility.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Bạn không thể quản lý giá khi cơ sở chưa được phê duyệt!");
+            return "redirect:/owner/facilities";
+        }
         Field field = fieldService.findById(fieldId);
         List<PriceRule> rules = priceRuleService.getRulesByField(fieldId);
         model.addAttribute("facility", facility);
@@ -300,6 +339,12 @@ public class OwnerController {
                                   BindingResult br,
                                   @AuthenticationPrincipal UserDetails ud,
                                   RedirectAttributes ra) {
+        Facility facility = facilityService.findById(facilityId);
+        if (facility.getStatus() == FacilityStatus.PENDING_APPROVAL || facility.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("error", "Không được phép!");
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
+        }
+
         if (br.hasErrors()) {
             ra.addFlashAttribute("error", "Dữ liệu không hợp lệ");
             return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
@@ -336,11 +381,17 @@ public class OwnerController {
                                @RequestParam(required = false)
                                @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
                                @AuthenticationPrincipal UserDetails ud,
-                               Model model) {
+                               Model model, RedirectAttributes ra) {
+        Facility facility = facilityService.findById(facilityId);
+        if (facility.getStatus() == FacilityStatus.PENDING_APPROVAL || facility.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("errorMsg", "Cơ sở chưa sẵn sàng!");
+            return "redirect:/owner/facilities";
+        }
+
         if (date == null) date = LocalDate.now();
         Field field = fieldService.findById(fieldId);
         List<BlockedTime> blocks = blockedRepo.findByFieldAndDateOrderByStartTime(field, date);
-        model.addAttribute("facility", facilityService.findById(facilityId));
+        model.addAttribute("facility", facility);
         model.addAttribute("field", field);
         model.addAttribute("blocks", blocks);
         model.addAttribute("selectedDate", date);
@@ -355,13 +406,18 @@ public class OwnerController {
                                     BindingResult br,
                                     @AuthenticationPrincipal UserDetails ud,
                                     RedirectAttributes ra) {
+        Facility facility = facilityService.findById(facilityId);
+        if (facility.getStatus() == FacilityStatus.PENDING_APPROVAL || facility.getStatus() == FacilityStatus.BLOCKED) {
+            ra.addFlashAttribute("error", "Không được phép!");
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
+        }
+
         if (br.hasErrors()) {
             ra.addFlashAttribute("error", "Dữ liệu không hợp lệ");
             return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
         }
         try {
             Field field = fieldService.findById(fieldId);
-            // Xác nhận owner
             if (!field.getFacility().getOwner().getEmail().equals(ud.getUsername()))
                 throw new ForbiddenException("Không có quyền");
             if (bookingRepo.existsConflict(field, req.getDate(), req.getStartTime(), req.getEndTime()))
@@ -428,41 +484,9 @@ public class OwnerController {
     }
     @GetMapping("")
     public String ownerDashboard(Model model, Authentication authentication) {
-        // 1. Lấy thông tin Chủ sân đang đăng nhập hiện tại
         String email = authentication.getName();
         User currentOwner = userService.findByEmail(email);
-
-        // 2. LẤY CÁC CON SỐ THỐNG KÊ (Dùng cho các thẻ Card ở trên cùng trang)
-        // Giả sử bạn có các hàm này trong Service, nếu chưa có thì nhờ Backend viết thêm nhé
-//        long totalFacilities = facilityService.countByOwnerId(currentOwner.getId());
-//        long pendingBookings = bookingService.countPendingBookingsByOwnerId(currentOwner.getId());
-//        double monthlyRevenue = bookingService.calculateMonthlyRevenueByOwnerId(currentOwner.getId());
-
-        // 3. LẤY DANH SÁCH SÂN CỦA RIÊNG CHỦ SÂN NÀY (Để hiển thị bảng quản lý nhanh)
-        // Sắp xếp sân mới tạo lên đầu, lấy 5 sân để giao diện không bị quá dài
-//        var myFacilities = facilityService.findByOwnerId(
-//                currentOwner.getId(),
-//                PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
-//        );
-
-        // 4. LẤY DANH SÁCH LỊCH ĐẶT SÂN MỚI NHẤT (Để duyệt/từ chối nhanh)
-//        var recentBookings = bookingService.findRecentBookingsByOwnerId(
-//                currentOwner.getId(),
-//                PageRequest.of(0, 5)
-//        );
-
-//        // 5. Đẩy toàn bộ dữ liệu ra View (Thymeleaf)
-//        model.addAttribute("totalFacilities", totalFacilities);
-//        model.addAttribute("pendingBookings", pendingBookings);
-//        model.addAttribute("monthlyRevenue", monthlyRevenue);
-//
-//        model.addAttribute("myFacilities", myFacilities);
-//        model.addAttribute("recentBookings", recentBookings);
-
-        // Vẫn giữ lại SportType nếu form Thêm Sân Nhanh (Modal) trên Dashboard cần dùng
         model.addAttribute("sportTypes", SportType.values());
-
-        // Trả về file HTML (Lưu ý: Bỏ dấu gạch chéo ở đầu đi để Thymeleaf chạy chuẩn nhất)
         return "owner/index";
     }
 }

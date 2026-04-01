@@ -21,10 +21,7 @@ public class AvailabilityApiController {
     private final BookingService bookingService;
     private final PriceRuleService priceRuleService;
 
-    /**
-     * GET /api/v1/fields/{fieldId}/availability?date=2024-12-31
-     * Trả về giờ mở cửa, đóng cửa và các khung đã bị chiếm
-     */
+  
     @GetMapping("/availability")
     public ApiResponse<AvailabilityResponse> getAvailability(
             @PathVariable Long fieldId,
@@ -32,10 +29,7 @@ public class AvailabilityApiController {
         return ApiResponse.success(bookingService.getAvailability(fieldId, date));
     }
 
-    /**
-     * GET /api/v1/fields/{fieldId}/price?date=2024-12-31&start=08:00&end=10:00
-     * Tính giá tạm thời để hiển thị trước khi đặt
-     */
+   
     @GetMapping("/price")
     public ApiResponse<PriceCalculationResponse> calculatePrice(
             @PathVariable Long fieldId,

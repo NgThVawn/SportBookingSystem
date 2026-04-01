@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Quản lý Cơ sở | Arena Kinetic Owner</title>
-
+    <title>Quản lý Cơ sở - Owner</title>
+    
     <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
     <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
 
@@ -35,236 +33,212 @@
         }
     </script>
     <style>
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 { margin-bottom: 20px; color: #333; }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 6px 14px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn:hover { opacity: 0.8; }
+
+        .btn-create { background-color: #28a745; color: white; }
+        .btn-edit { background-color: #007bff; color: white; }
+        .btn-field { background-color: #6c757d; color: white; }
+        .btn-delete { background-color: #dc3545; color: white; }
+
+        /* Style cho nút bị vô hiệu hóa */
+        .btn-disabled {
+            background-color: #bdc3c7 !important;
+            color: #7f8c8d !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        th { background-color: #343a40; color: white; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+
+        .status-select {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .actions { white-space: nowrap; }
+
+        .facility-img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .no-img { color: #999; font-size: 12px; font-style: italic; }
+        
+        .warning-text {
+            display: block;
+            margin-top: 6px;
+            line-height: 1.4;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body class="bg-surface font-body text-on-surface antialiased">
 
-<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
+<h2>Facility List</h2>
 
-<main class="ml-64 min-h-screen relative flex flex-col">
-
-    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10 shrink-0">
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 text-sm font-medium">
-                <span class="text-slate-400">Arena Manager</span>
-                <span class="text-slate-300">/</span>
-                <span class="text-slate-800 font-bold">Danh sách Cơ sở</span>
-            </div>
-        </div>
-        <div class="flex items-center gap-6">
-            <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
-                <div class="text-right">
-                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${user?.fullName != null ? user.fullName : #authentication.name}">Chủ Sân</p>
-                    <p class="text-[10px] text-slate-500 font-label tracking-wide uppercase">Elite Manager</p>
-                </div>
-                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
-                    <img th:if="${user?.avatarUrl != null}" th:src="${user.avatarUrl}" class="w-full h-full object-cover">
-                    <span th:unless="${user?.avatarUrl != null}" th:text="${user?.fullName != null ? #strings.substring(user.fullName, 0, 1).toUpperCase() : 'O'}"></span>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <div class="p-8 flex-1">
-
-        <div th:if="${successMsg}" id="alertSuccess" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm transition-opacity duration-500 opacity-100">
-            <span class="material-symbols-outlined">check_circle</span>
-            <span class="font-bold text-sm" th:text="${successMsg}"></span>
-        </div>
-        <div th:if="${errorMsg}" id="alertError" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm transition-opacity duration-500 opacity-100">
-            <span class="material-symbols-outlined">error</span>
-            <span class="font-bold text-sm" th:text="${errorMsg}"></span>
-        </div>
-
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h2 class="font-headline font-black text-3xl text-slate-900 tracking-tight">Quản lý Cơ sở</h2>
-                <p class="text-slate-500 text-sm mt-1">Xem, tìm kiếm và chỉnh sửa các sân thể thao của bạn.</p>
-            </div>
-
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <div class="relative w-full md:w-72">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-                    <input type="text" id="searchInput" oninput="searchFacilities()" placeholder="Tìm tên sân, địa chỉ..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none shadow-sm">
-                </div>
-
-                <a th:href="@{/owner/facilities/create}" class="shrink-0 px-5 py-2.5 bg-orange-600 text-white font-bold text-sm rounded-xl flex items-center gap-2 hover:bg-orange-700 hover:shadow-lg hover:shadow-orange-600/20 transition-all active:scale-95 text-decoration-none">
-                    <span class="material-symbols-outlined text-[18px]">add</span>
-                    <span class="hidden sm:inline">Thêm cơ sở</span>
-                </a>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead>
-                    <tr class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 font-bold font-label">
-                        <th class="px-6 py-4">Cơ sở</th>
-                        <th class="px-6 py-4">Địa chỉ</th>
-                        <th class="px-6 py-4">Liên hệ & Giờ</th>
-                        <th class="px-6 py-4 text-center">Trạng thái</th>
-                        <th class="px-6 py-4 text-right">Thao tác</th>
-                    </tr>
-                    </thead>
-                    <tbody id="tableBody" class="text-sm font-medium text-slate-700 divide-y divide-slate-50">
-
-                    <tr th:if="${facilities == null or facilities.isEmpty()}">
-                        <td colspan="5" class="px-6 py-16 text-center text-slate-400">
-                            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="material-symbols-outlined text-4xl text-slate-300">stadium</span>
-                            </div>
-                            <p class="text-base font-bold text-slate-600">Bạn chưa có cơ sở nào!</p>
-                            <p class="text-sm mt-1">Hãy bấm nút "Thêm cơ sở" ở góc trên để bắt đầu.</p>
-                        </td>
-                    </tr>
-
-                    <tr id="noResultsRow" style="display: none;">
-                        <td colspan="5" class="px-6 py-16 text-center text-slate-400">
-                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="material-symbols-outlined text-3xl text-slate-300">search_off</span>
-                            </div>
-                            <p class="text-base font-bold text-slate-600">Không tìm thấy cơ sở nào!</p>
-                            <p class="text-sm mt-1">Vui lòng thử lại với từ khóa khác.</p>
-                        </td>
-                    </tr>
-
-                    <tr th:each="f : ${facilities}" class="facility-row hover:bg-slate-50/80 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
-                                    <img th:if="${f.getPrimaryImageUrl() != null}" th:src="${f.getPrimaryImageUrl()}" alt="Hình ảnh" class="w-full h-full object-cover">
-                                    <div th:unless="${f.getPrimaryImageUrl() != null}" class="w-full h-full flex items-center justify-center text-slate-300">
-                                        <span class="material-symbols-outlined text-[20px]">image_not_supported</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-900 text-base facility-name" th:text="${f.name}"></p>
-                                </div>
-                            </div>
-                        </td>
-
-                        <td class="px-6 py-4">
-                            <p class="text-slate-800 font-bold text-sm max-w-[200px] truncate facility-address" th:text="${f.address}"></p>
-                            <p class="text-slate-500 text-xs flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[12px]">location_on</span> <span class="facility-city" th:text="${f.city}"></span></p>
-                        </td>
-
-                        <td class="px-6 py-4 text-slate-600">
-                            <p class="text-sm flex items-center gap-1 mb-1"><span class="material-symbols-outlined text-[16px] text-slate-400">call</span> <span th:text="${f.phone}"></span></p>
-                            <p class="text-xs text-slate-500 flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-slate-400">schedule</span> <span th:text="${f.openTime + ' - ' + f.closeTime}"></span></p>
-                        </td>
-
-                        <td class="px-6 py-4 text-center status-cell">
-                            <span th:if="${f.isActive}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hoạt động
-                            </span>
-                            <span th:if="${!f.isActive}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Tạm nghỉ
-                            </span>
-                        </td>
-
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex items-center justify-end gap-1.5">
-
-                                <button type="button" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors tooltip border-none bg-transparent cursor-pointer" title="Bật/Tắt hoạt động" th:onclick="'toggleFacility(' + ${f.id} + ', this)'">
-                                    <span class="material-symbols-outlined text-[20px]">power_settings_new</span>
-                                </button>
-
-                                <a th:href="@{/owner/facilities/{id}/fields(id=${f.id})}" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors tooltip text-decoration-none" title="Quản lý sân con">
-                                    <span class="material-symbols-outlined text-[18px]">grid_view</span>
-                                </a>
-
-                                <a th:href="@{/owner/facilities/{id}/edit(id=${f.id})}" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-colors tooltip text-decoration-none" title="Chỉnh sửa">
-                                    <span class="material-symbols-outlined text-[18px]">edit</span>
-                                </a>
-
-                                <form th:action="@{/owner/facilities/{id}/delete(id=${f.id})}" method="post" class="m-0" th:data-name="${f.name}" onsubmit="openDeleteModal(event, this)">
-                                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                    <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border-none bg-transparent cursor-pointer tooltip" title="Xóa cơ sở">
-                                        <span class="material-symbols-outlined text-[18px]">delete</span>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="paginationContainer" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 hidden">
-                <span class="text-sm text-slate-500">
-                    Đang hiển thị <span id="pageInfo" class="font-bold text-slate-800"></span>
-                </span>
-
-                <div class="flex items-center gap-1">
-                    <button id="btnPrev" type="button" onclick="changePage(-1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
-                        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
-                    </button>
-
-                    <div id="pageNumbers" class="flex gap-1"></div>
-
-                    <button id="btnNext" type="button" onclick="changePage(1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
-                        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</main>
-
-<div id="deleteModal" class="fixed inset-0 z-[100] hidden items-center justify-center">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-sm p-6 transform transition-all duration-200 scale-95 opacity-0" id="deleteModalContent">
-        <div class="flex flex-col items-center text-center">
-            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-                <span class="material-symbols-outlined text-4xl">warning</span>
-            </div>
-            <h3 class="text-xl font-headline font-black text-slate-900 mb-2">Xác nhận xóa cơ sở</h3>
-            <p class="text-slate-500 text-sm mb-6 leading-relaxed">
-                Bạn có chắc chắn muốn xóa cơ sở <span id="deleteFacilityName" class="font-bold text-slate-900 text-base"></span> không? Toàn bộ sân nhỏ, hình ảnh và dữ liệu liên quan sẽ bị <span class="text-red-600 font-bold">xóa vĩnh viễn</span>.
-            </p>
-            <div class="flex w-full gap-3">
-                <button type="button" onclick="closeDeleteModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors border-none cursor-pointer">
-                    Hủy bỏ
-                </button>
-                <button type="button" onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/20 transition-all border-none cursor-pointer">
-                    Xóa vĩnh viễn
-                </button>
-            </div>
-        </div>
-    </div>
+<div class="top-bar">
+    <div></div>
+    <a th:href="@{/owner/facilities/create}" class="btn btn-create">+ Create New Facility</a>
 </div>
 
+<div class="message success" th:if="${successMsg}" th:text="${successMsg}"></div>
+<div class="message error" th:if="${errorMsg}" th:text="${errorMsg}"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>City</th>
+            <th>Phone</th>
+            <th>Open Time</th>
+            <th>Close Time</th>
+            <th>Status</th>
+            <th style="width: 280px;">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr th:each="f : ${facilities}">
+            <td>
+                <img th:if="${f.getPrimaryImageUrl() != null}" th:src="${f.getPrimaryImageUrl()}" alt="Image" class="facility-img" />
+                <span th:unless="${f.getPrimaryImageUrl() != null}" class="no-img">No Image</span>
+            </td>
+            
+            <td th:text="${f.name}"></td>
+            <td th:text="${f.address}"></td>
+            <td th:text="${f.city}"></td>
+            <td th:text="${f.phone}"></td>
+            <td th:text="${f.openTime}"></td>
+            <td th:text="${f.closeTime}"></td>
+
+            <td>
+                <select class="status-select" 
+                        th:data-original-value="${f.status.name()}"
+                        th:onchange="'changeStatus(' + ${f.id} + ', this)'"
+                        th:disabled="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'}">
+                    
+                    <option th:if="${f.status.name() == 'PENDING_APPROVAL'}" value="PENDING_APPROVAL" selected disabled>Đang chờ duyệt</option>
+                    <option th:if="${f.status.name() == 'BLOCKED'}" value="BLOCKED" selected disabled>Đã bị khóa</option>
+
+                    <th:block th:if="${f.status.name() != 'PENDING_APPROVAL' and f.status.name() != 'BLOCKED'}">
+                        <option value="OPEN" th:selected="${f.status.name() == 'OPEN'}">Đang hoạt động</option>
+                        <option value="CLOSED" th:selected="${f.status.name() == 'CLOSED'}">Tạm đóng cửa</option>
+                        <option value="MAINTENANCE" th:selected="${f.status.name() == 'MAINTENANCE'}">Đang bảo trì</option>
+                    </th:block>
+                </select>
+                
+                <div style="margin-top: 5px;">
+                    <span th:if="${f.status.name() == 'PENDING_APPROVAL'}" class="warning-text" style="color: #f2994a;">
+                        ⚠️ Vui lòng đợi Admin kiểm tra thông tin.
+                    </span>
+                    <span th:if="${f.status.name() == 'BLOCKED'}" class="warning-text" style="color: #e74c3c; font-weight: bold;">
+                        🚫 Cơ sở đã bị khóa. Vui lòng liên hệ hỗ trợ.
+                    </span>
+                </div>
+            </td>
+
+            <td class="actions">
+                <a th:href="@{/owner/facilities/{id}/edit(id=${f.id})}" 
+                   class="btn btn-edit"
+                   th:classappend="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'btn-disabled' : ''"
+                   th:onclick="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'return false;' : ''">Edit</a>
+
+                <a th:href="@{/owner/facilities/{id}/fields(id=${f.id})}" 
+                   class="btn btn-field"
+                   th:classappend="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'btn-disabled' : ''"
+                   th:onclick="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'return false;' : ''">Fields</a>
+
+                <form th:action="@{/owner/facilities/{id}/delete(id=${f.id})}" method="post" 
+                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa cơ sở này không?');"
+                      style="display: inline-block;">
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="btn btn-delete">Delete</button>
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
 <script th:inline="javascript">
-
-    // --- 0. TỰ ĐỘNG ẨN THÔNG BÁO ---
-    document.addEventListener('DOMContentLoaded', function() {
-        const successAlert = document.getElementById('alertSuccess');
-        const errorAlert = document.getElementById('alertError');
-
-        function autoHideAlert(alertElement) {
-            if (alertElement) {
-                setTimeout(() => {
-                    alertElement.classList.remove('opacity-100');
-                    alertElement.classList.add('opacity-0');
-                    setTimeout(() => { alertElement.style.display = 'none'; }, 500);
-                }, 3000);
-            }
-        }
-        autoHideAlert(successAlert);
-        autoHideAlert(errorAlert);
-    });
-
-    // --- 1. LOGIC TOGGLE SÂN ---
-    function toggleFacility(facilityId, btnElement) {
+    function changeStatus(facilityId, selectElement) {
+        const newStatus = selectElement.value;
+        const originalStatus = selectElement.getAttribute('data-original-value'); 
+        
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
 
-        fetch('/owner/facilities/' + facilityId + '/toggle', {
+        const formData = new URLSearchParams();
+        formData.append('status', newStatus);
+
+        fetch('/owner/facilities/' + facilityId + '/status', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken }
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                [csrfHeader]: csrfToken
+            },
+            body: formData
         })
         .then(response => {
             if (!response.ok) throw new Error('Network response was not ok');
@@ -272,167 +246,18 @@
         })
         .then(data => {
             if (data.success) {
-                const row = btnElement.closest('tr');
-                const statusCell = row.querySelector('.status-cell');
-                if (data.isActive) {
-                    statusCell.innerHTML = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hoạt động</span>`;
-                } else {
-                    statusCell.innerHTML = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Tạm nghỉ</span>`;
-                }
+                selectElement.setAttribute('data-original-value', newStatus);
+                alert("Cập nhật trạng thái thành công!");
             } else {
                 alert("Lỗi: " + (data.message || "Lỗi không xác định"));
+                selectElement.value = originalStatus; 
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert("Không thể chuyển đổi trạng thái.");
+            alert("Thao tác thất bại. Vui lòng thử lại sau.");
+            selectElement.value = originalStatus; 
         });
-    }
-
-    // --- 2. LOGIC MODAL XÓA SÂN ---
-    let formToSubmit = null;
-    const deleteModal = document.getElementById('deleteModal');
-    const deleteModalContent = document.getElementById('deleteModalContent');
-
-    function openDeleteModal(event, formElement) {
-        event.preventDefault();
-        formToSubmit = formElement;
-        const facilityName = formElement.getAttribute('data-name');
-        document.getElementById('deleteFacilityName').textContent = '"' + facilityName + '"';
-
-        deleteModal.classList.remove('hidden');
-        deleteModal.classList.add('flex');
-        setTimeout(() => {
-            deleteModalContent.classList.remove('scale-95', 'opacity-0');
-            deleteModalContent.classList.add('scale-100', 'opacity-100');
-        }, 10);
-    }
-
-    function closeDeleteModal() {
-        deleteModalContent.classList.remove('scale-100', 'opacity-100');
-        deleteModalContent.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            deleteModal.classList.remove('flex');
-            deleteModal.classList.add('hidden');
-            formToSubmit = null;
-        }, 200);
-    }
-
-    function confirmDelete() {
-        if (formToSubmit) formToSubmit.submit();
-    }
-
-    // --- 3. LOGIC TÌM KIẾM & PHÂN TRANG (TÍCH HỢP) ---
-    const itemsPerPage = 5;
-    let currentPage = 1;
-    let allRows = Array.from(document.querySelectorAll('.facility-row'));
-    let filteredRows = [...allRows]; // Mặc định hiển thị tất cả
-    let totalPages = Math.ceil(filteredRows.length / itemsPerPage);
-    const paginationContainer = document.getElementById('paginationContainer');
-    const noResultsRow = document.getElementById('noResultsRow');
-
-    // Hàm Tìm kiếm
-    function searchFacilities() {
-        const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
-
-        // Lọc mảng
-        filteredRows = allRows.filter(row => {
-            // Tìm trong chữ của dòng (Tên, Địa chỉ, Thành phố)
-            const textContent = row.textContent.toLowerCase();
-            return textContent.includes(keyword);
-        });
-
-        // Tính lại số trang
-        currentPage = 1;
-        totalPages = Math.ceil(filteredRows.length / itemsPerPage) || 1;
-
-        displayRows();
-    }
-
-    // Hàm in ra dòng theo trang
-    function displayRows() {
-        // 1. Giấu TẤT CẢ các dòng đi trước
-        allRows.forEach(row => row.style.display = 'none');
-
-        // 2. Nếu tìm không ra cái nào
-        if (filteredRows.length === 0) {
-            noResultsRow.style.display = ''; // Hiện bảng "Không tìm thấy"
-            paginationContainer.classList.add('hidden');
-            return;
-        }
-
-        // 3. Có kết quả thì tính toán cắt 5 dòng
-        noResultsRow.style.display = 'none'; // Giấu bảng "Không tìm thấy"
-        paginationContainer.classList.remove('hidden');
-
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-
-        filteredRows.forEach((row, index) => {
-            if (index >= start && index < end) {
-                row.style.display = ''; // Hiện những dòng thuộc trang này
-            }
-        });
-
-        // 4. In thông số
-        const currentEnd = end > filteredRows.length ? filteredRows.length : end;
-        document.getElementById('pageInfo').innerHTML = `${start + 1} - ${currentEnd} trong số <span class="text-primary">${filteredRows.length}</span> cơ sở`;
-
-        updatePaginationUI();
-    }
-
-    // Hàm vẽ nút Phân trang
-    function updatePaginationUI() {
-        const btnPrev = document.getElementById('btnPrev');
-        const btnNext = document.getElementById('btnNext');
-
-        btnPrev.disabled = currentPage === 1;
-        btnPrev.className = currentPage === 1
-            ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
-            : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
-
-        btnNext.disabled = currentPage === totalPages;
-        btnNext.className = currentPage === totalPages
-            ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
-            : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
-
-        const pageNumbersContainer = document.getElementById('pageNumbers');
-        pageNumbersContainer.innerHTML = '';
-
-        for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.innerText = i;
-            btn.type = 'button';
-            btn.onclick = () => {
-                currentPage = i;
-                displayRows();
-            };
-
-            if (i === currentPage) {
-                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-white bg-orange-600 font-bold text-sm shadow-md border-none cursor-pointer';
-            } else {
-                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 font-bold text-sm transition-colors cursor-pointer border-none bg-transparent';
-            }
-            pageNumbersContainer.appendChild(btn);
-        }
-
-        // Giấu phân trang nếu chỉ có 1 trang
-        if (totalPages <= 1) {
-            paginationContainer.classList.add('hidden');
-        } else {
-            paginationContainer.classList.remove('hidden');
-        }
-    }
-
-    // Hàm chuyển trang khi bấm nút Next/Prev
-    function changePage(direction) {
-        currentPage += direction;
-        displayRows();
-    }
-
-    // Kích hoạt ngay khi load trang
-    if (allRows.length > 0) {
-        displayRows();
     }
 </script>
 

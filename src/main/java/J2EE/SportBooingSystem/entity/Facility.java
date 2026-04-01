@@ -1,5 +1,6 @@
 package J2EE.SportBooingSystem.entity;
 
+import J2EE.SportBooingSystem.enums.FacilityStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -71,9 +72,10 @@ public class Facility {
     @Builder.Default
     private Integer reviewCount = 0;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     @Builder.Default
-    private Boolean isActive = true;
+    private FacilityStatus status = FacilityStatus.PENDING_APPROVAL;
 
     @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default

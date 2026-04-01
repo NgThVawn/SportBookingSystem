@@ -45,20 +45,22 @@ public class SecurityConfig {
         http
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
-                // Public resources
+
                 .requestMatchers("/", "/facilities/**", "/css/**", "/js/**",
                                  "/images/**", "/error/**", "/uploads/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
-                // Owner area
-                .requestMatchers("/owner/**").hasAnyRole("OWNER", "ADMIN")
-                // Admin area
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                // REST APIs
+
+                .requestMatchers("/owner/**").hasAnyRole("OWNER", "ADMIN", "SUPER_ADMIN")
+
+                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+
+
                 .requestMatchers("/api/v1/facilities/**",
                                  "/api/v1/fields/**",
                                  "/api/v1/slots/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
-                // Everything else requires login
+
+
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
@@ -66,7 +68,8 @@ public class SecurityConfig {
                 .loginProcessingUrl("/auth/login")
                 .usernameParameter("email")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/", true)
+
+                .defaultSuccessUrl("/", true) 
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
             )
@@ -78,7 +81,8 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**")
+                
+                .ignoringRequestMatchers("/api/**") 
             )
             .sessionManagement(session -> session
                 .maximumSessions(1)
