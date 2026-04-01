@@ -23,7 +23,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import J2EE.SportBooingSystem.repository.BlockedTimeRepository;
-
+import J2EE.SportBooingSystem.repository.FieldRepository;
+import J2EE.SportBooingSystem.repository.PriceRuleRepository;
+import J2EE.SportBooingSystem.service.PriceRuleService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +39,10 @@ public class OwnerController {
     private final FacilityService facilityService;
     private final FieldService fieldService;
     private final PriceRuleService priceRuleService;
+    private final PriceRuleRepository priceRuleRepository;
     private final BlockedTimeRepository blockedRepo;
     private final BookingRepository bookingRepo;
+    private final FieldRepository fieldRepo;
     private final BookingService bookingService;
     private final UserService userService;
 
@@ -358,6 +362,62 @@ public class OwnerController {
         return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
     }
 
+    @GetMapping("/facilities/{facilityId}/fields/{fieldId}/price-rules/{ruleId}/edit")
+    public String editPriceRule(@PathVariable Long facilityId,
+                                @PathVariable Long fieldId,
+                                @PathVariable Long ruleId,
+                                Model model) {
+        Facility facility = facilityService.findById(facilityId);
+        Field field = fieldService.findById(fieldId);
+        PriceRule rule = priceRuleRepository.findById(ruleId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy quy tắc giá"));
+
+        if (!rule.getField().getId().equals(fieldId)) {
+            throw new IllegalArgumentException("Quy tắc giá không thuộc sân này");
+        }
+
+        PriceRuleRequest req = new PriceRuleRequest();
+        req.setName(rule.getName());
+        req.setDayType(rule.getDayType());
+        req.setStartTime(rule.getStartTime());
+        req.setEndTime(rule.getEndTime());
+        req.setPricePerHour(rule.getPricePerHour());
+        req.setPriority(rule.getPriority());
+
+        model.addAttribute("facility", facility);
+        model.addAttribute("field", field);
+        model.addAttribute("rule", rule);
+        model.addAttribute("dayTypes", DayType.values());
+        model.addAttribute("editRule", req);
+        return "owner/price-rules/edit";
+    }
+
+    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/price-rules/{ruleId}/edit")
+    public String updatePriceRule(@PathVariable Long facilityId,
+                                  @PathVariable Long fieldId,
+                                  @PathVariable Long ruleId,
+                                  @Valid @ModelAttribute("editRule") PriceRuleRequest req,
+                                  BindingResult br,
+                                  @AuthenticationPrincipal UserDetails ud,
+                                  RedirectAttributes ra,
+                                  Model model) {
+        if (br.hasErrors()) {
+            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("field", fieldService.findById(fieldId));
+            model.addAttribute("rule", priceRuleRepository.findById(ruleId).orElse(null));
+            model.addAttribute("dayTypes", DayType.values());
+            return "owner/price-rules/edit";
+        }
+
+        try {
+            priceRuleService.updateRule(ruleId, req, ud.getUsername());
+            ra.addFlashAttribute("success", "Cập nhật quy tắc giá thành công");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
+    }
+
     @PostMapping("/facilities/{facilityId}/fields/{fieldId}/price-rules/{ruleId}/delete")
     public String deletePriceRule(@PathVariable Long facilityId,
                                   @PathVariable Long fieldId,
@@ -380,6 +440,7 @@ public class OwnerController {
                                @PathVariable Long fieldId,
                                @RequestParam(required = false)
                                @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                       @RequestParam(defaultValue = "false") boolean all,
                                @AuthenticationPrincipal UserDetails ud,
                                Model model, RedirectAttributes ra) {
         Facility facility = facilityService.findById(facilityId);
@@ -390,12 +451,19 @@ public class OwnerController {
 
         if (date == null) date = LocalDate.now();
         Field field = fieldService.findById(fieldId);
-        List<BlockedTime> blocks = blockedRepo.findByFieldAndDateOrderByStartTime(field, date);
-        model.addAttribute("facility", facility);
+        List<BlockedTime> blocks = all
+            ? blockedRepo.findByFieldOrderByDateAscStartTimeAsc(field)
+            : blockedRepo.findByFieldAndDateOrderByStartTime(field, date);
+        BlockedTimeRequest newBlock = new BlockedTimeRequest();
+        newBlock.setFieldId(fieldId);
+        newBlock.setDate(date);
+
+        model.addAttribute("facility", facilityService.findById(facilityId));
         model.addAttribute("field", field);
         model.addAttribute("blocks", blocks);
         model.addAttribute("selectedDate", date);
-        model.addAttribute("newBlock", new BlockedTimeRequest());
+        model.addAttribute("viewingAll", all);
+        model.addAttribute("newBlock", newBlock);
         return "owner/blocked-times/manage";
     }
 
@@ -404,6 +472,7 @@ public class OwnerController {
                                     @PathVariable Long fieldId,
                                     @Valid @ModelAttribute("newBlock") BlockedTimeRequest req,
                                     BindingResult br,
+                                    @RequestParam(defaultValue = "false") boolean all,
                                     @AuthenticationPrincipal UserDetails ud,
                                     RedirectAttributes ra) {
         Facility facility = facilityService.findById(facilityId);
@@ -411,15 +480,43 @@ public class OwnerController {
             ra.addFlashAttribute("error", "Không được phép!");
             return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
         }
+        if (br.hasErrors()) {
+            String message = br.getAllErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Dữ liệu không hợp lệ")
+                .orElse("Dữ liệu không hợp lệ");
+            ra.addFlashAttribute("error", message);
+
+            LocalDate redirectDate = req.getDate() != null ? req.getDate() : LocalDate.now();
+            if (all) {
+                return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
+                        + "/blocked-times?all=true";
+            }
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
+                + "/blocked-times?date=" + redirectDate;
+        }
 
         if (br.hasErrors()) {
-            ra.addFlashAttribute("error", "Dữ liệu không hợp lệ");
-            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
+            String message = br.getAllErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Dữ liệu không hợp lệ")
+                .orElse("Dữ liệu không hợp lệ");
+            ra.addFlashAttribute("error", message);
+
+            LocalDate redirectDate = req.getDate() != null ? req.getDate() : LocalDate.now();
+            if (all) {
+                return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
+                        + "/blocked-times?all=true";
+            }
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
+                + "/blocked-times?date=" + redirectDate;
         }
         try {
-            Field field = fieldService.findById(fieldId);
-            if (!field.getFacility().getOwner().getEmail().equals(ud.getUsername()))
+            if (!fieldRepo.existsByIdAndFacility_IdAndFacility_Owner_Email(fieldId, facilityId, ud.getUsername())) {
                 throw new ForbiddenException("Không có quyền");
+            }
+
+            Field field = fieldService.findById(fieldId);
             if (bookingRepo.existsConflict(field, req.getDate(), req.getStartTime(), req.getEndTime()))
                 throw new IllegalStateException("Khung giờ này đã có người đặt, không thể chặn");
             BlockedTime bt = BlockedTime.builder()
@@ -431,6 +528,10 @@ public class OwnerController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
+        if (all) {
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
+                    + "/blocked-times?all=true";
+        }
         return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
                 + "/blocked-times?date=" + req.getDate();
     }
@@ -439,18 +540,100 @@ public class OwnerController {
     public String deleteBlockedTime(@PathVariable Long facilityId,
                                     @PathVariable Long fieldId,
                                     @PathVariable Long id,
+                                    @RequestParam(defaultValue = "false") boolean all,
                                     @AuthenticationPrincipal UserDetails ud,
                                     RedirectAttributes ra) {
         try {
-            BlockedTime bt = blockedRepo.findById(id).orElseThrow();
-            if (!bt.getField().getFacility().getOwner().getEmail().equals(ud.getUsername()))
+            if (!blockedRepo.ownedBy(id, fieldId, facilityId, ud.getUsername())) {
                 throw new ForbiddenException("Không có quyền");
-            blockedRepo.delete(bt);
+            }
+            blockedRepo.deleteById(id);
             ra.addFlashAttribute("success", "Đã xóa khung giờ bị chặn");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
+        if (all) {
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times?all=true";
+        }
         return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
+    }
+
+    @GetMapping("/facilities/{facilityId}/fields/{fieldId}/blocked-times/{id}/edit")
+    public String editBlockedTime(@PathVariable Long facilityId,
+                                  @PathVariable Long fieldId,
+                                  @PathVariable Long id,
+                                  @RequestParam(defaultValue = "false") boolean all,
+                                  @AuthenticationPrincipal UserDetails ud,
+                                  RedirectAttributes ra,
+                                  Model model) {
+        try {
+            BlockedTime blockedTime = blockedRepo.findOwnedForEdit(id, fieldId, facilityId, ud.getUsername())
+                    .orElseThrow(() -> new ForbiddenException("Không có quyền"));
+
+            BlockedTimeRequest editBlock = new BlockedTimeRequest();
+            editBlock.setFieldId(fieldId);
+            editBlock.setDate(blockedTime.getDate());
+            editBlock.setStartTime(blockedTime.getStartTime());
+            editBlock.setEndTime(blockedTime.getEndTime());
+            editBlock.setReason(blockedTime.getReason());
+
+            model.addAttribute("facility", blockedTime.getField().getFacility());
+            model.addAttribute("field", blockedTime.getField());
+            model.addAttribute("blocked", blockedTime);
+            model.addAttribute("viewingAll", all);
+            model.addAttribute("editBlock", editBlock);
+            return "owner/blocked-times/edit";
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            if (all) {
+                return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times?all=true";
+            }
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
+        }
+    }
+
+    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/blocked-times/{id}/edit")
+    public String updateBlockedTime(@PathVariable Long facilityId,
+                                    @PathVariable Long fieldId,
+                                    @PathVariable Long id,
+                                    @Valid @ModelAttribute("editBlock") BlockedTimeRequest req,
+                                    BindingResult br,
+                                    @RequestParam(defaultValue = "false") boolean all,
+                                    @AuthenticationPrincipal UserDetails ud,
+                                    RedirectAttributes ra,
+                                    Model model) {
+        BlockedTime blockedTime = blockedRepo.findOwnedForEdit(id, fieldId, facilityId, ud.getUsername())
+                .orElseThrow(() -> new ForbiddenException("Không có quyền"));
+
+        if (br.hasErrors()) {
+            model.addAttribute("facility", blockedTime.getField().getFacility());
+            model.addAttribute("field", blockedTime.getField());
+            model.addAttribute("blocked", blockedTime);
+            model.addAttribute("viewingAll", all);
+            return "owner/blocked-times/edit";
+        }
+
+        try {
+            if (bookingRepo.existsConflict(blockedTime.getField(), req.getDate(), req.getStartTime(), req.getEndTime())) {
+                throw new IllegalStateException("Khung giờ này đã có người đặt, không thể chặn");
+            }
+
+            blockedTime.setDate(req.getDate());
+            blockedTime.setStartTime(req.getStartTime());
+            blockedTime.setEndTime(req.getEndTime());
+            blockedTime.setReason(req.getReason());
+            blockedRepo.save(blockedTime);
+            ra.addFlashAttribute("success", "Đã cập nhật khung giờ bị chặn");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
+                    + "/blocked-times/" + id + "/edit" + (all ? "?all=true" : "");
+        }
+
+        if (all) {
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times?all=true";
+        }
+        return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times?date=" + req.getDate();
     }
 
     /** ── Quản lý booking (Owner xem danh sách) ──────────────────── */

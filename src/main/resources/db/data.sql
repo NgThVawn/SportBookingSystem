@@ -1,3 +1,4 @@
+
 INSERT IGNORE INTO membership_levels (name, min_bookings, discount_rate, description, badge_color)
 VALUES
   ('NONE',    0,   0.0000, 'Thành viên thường',    '#888888'),

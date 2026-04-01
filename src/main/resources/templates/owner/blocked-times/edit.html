@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Chỉnh sửa khung giờ chặn | Arena Kinetic Owner</title>
+
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#191c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#b02f00",
+                        "surface": "#f8f9fa"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
+
+<main class="ml-64 min-h-screen relative flex flex-col">
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10 shrink-0">
+        <div class="flex items-center gap-2 text-sm font-medium">
+            <span class="text-slate-400">Arena Manager</span>
+            <span class="text-slate-300">/</span>
+            <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Cơ sở</a>
+            <span class="text-slate-300">/</span>
+            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none" th:text="${field.name}">Sân</a>
+            <span class="text-slate-300">/</span>
+            <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times(fid=${facility.id},fldid=${field.id},all=${viewingAll})}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Chặn khung giờ</a>
+            <span class="text-slate-300">/</span>
+            <span class="text-slate-800 font-bold">Chỉnh sửa</span>
+        </div>
+        <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times(fid=${facility.id},fldid=${field.id},all=${viewingAll})}" class="text-sm text-orange-600 font-bold hover:underline">← Quay lại danh sách chặn giờ</a>
+    </header>
+
+    <div class="p-8 flex-1">
+        <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-bold text-sm" th:text="${error}"></span>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <section class="xl:col-span-2">
+                <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="font-headline font-black text-2xl text-slate-900 tracking-tight mb-1">Chỉnh sửa khung giờ chặn</h2>
+                    <p class="text-slate-500 text-sm mb-6">
+                        Sân: <span class="font-bold" th:text="${field.name}">Tên sân</span>
+                    </p>
+
+                    <form th:action="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times/{id}/edit(fid=${facility.id},fldid=${field.id},id=${blocked.id})}" method="post" th:object="${editBlock}" class="space-y-4">
+                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="all" th:value="${viewingAll}"/>
+                        <input type="hidden" th:field="*{fieldId}" th:value="${field.id}">
+
+                        <div>
+                            <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Ngày *</label>
+                            <input type="date" th:field="*{date}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
+                            <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Từ *</label>
+                                <input type="time" th:field="*{startTime}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
+                                <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}"></p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Đến *</label>
+                                <input type="time" th:field="*{endTime}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
+                                <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('endTime')}" th:errors="*{endTime}"></p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Lý do</label>
+                            <input th:field="*{reason}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none" placeholder="VD: Bảo trì sân">
+                            <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+                        </div>
+
+                        <div class="flex items-center gap-3 pt-2">
+                            <button type="submit" class="px-5 py-2.5 bg-orange-600 text-white font-bold text-sm rounded-xl hover:bg-orange-700 transition-all border-none cursor-pointer">
+                                Lưu thay đổi
+                            </button>
+                            <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times(fid=${facility.id},fldid=${field.id},all=${viewingAll})}" class="px-5 py-2.5 bg-slate-100 text-slate-700 font-bold text-sm rounded-xl hover:bg-slate-200 transition-all text-decoration-none">
+                                Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <aside>
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                    <h3 class="font-headline font-bold text-slate-900 mb-2">Thông tin hiện tại</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Khung giờ cũ: <span class="font-semibold text-slate-700" th:text="${#temporals.format(blocked.date, 'dd/MM/yyyy') + ' | ' + blocked.startTime + ' - ' + blocked.endTime}">--</span>
+                    </p>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>
