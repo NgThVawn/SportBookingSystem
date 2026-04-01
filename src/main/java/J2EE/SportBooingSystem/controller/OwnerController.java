@@ -1,9 +1,12 @@
 package J2EE.SportBooingSystem.controller;
 
 import J2EE.SportBooingSystem.dto.request.*;
+import J2EE.SportBooingSystem.dto.response.BookingResponse;
 import J2EE.SportBooingSystem.entity.*;
-import J2EE.SportBooingSystem.enums.SlotStatus;
+import J2EE.SportBooingSystem.enums.DayType;
 import J2EE.SportBooingSystem.enums.SportType;
+import J2EE.SportBooingSystem.exception.ForbiddenException;
+import J2EE.SportBooingSystem.repository.BookingRepository;
 import J2EE.SportBooingSystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +22,14 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.math.BigDecimal;
+import J2EE.SportBooingSystem.dto.request.BlockedTimeRequest;
+import J2EE.SportBooingSystem.dto.request.PriceRuleRequest;
+import J2EE.SportBooingSystem.entity.BlockedTime;
+import J2EE.SportBooingSystem.entity.PriceRule;
+import J2EE.SportBooingSystem.repository.BlockedTimeRepository;
+import J2EE.SportBooingSystem.service.PriceRuleService;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -32,7 +40,10 @@ public class OwnerController {
 
     private final FacilityService facilityService;
     private final FieldService fieldService;
-    private final TimeSlotService timeSlotService;
+    private final PriceRuleService priceRuleService;
+    private final BlockedTimeRepository blockedRepo;
+    private final BookingRepository bookingRepo;
+    private final BookingService bookingService;
     private final UserService userService;
 
     // ─── FACILITY ─────────────────────────
@@ -197,7 +208,6 @@ public class OwnerController {
         req.setSurfaceType(f.getSurfaceType());
         req.setCapacity(f.getCapacity());
         req.setPricePerHour(f.getPricePerHour());
-        req.setSlotDuration(f.getSlotDuration());
 
         model.addAttribute("facility", facilityService.findById(facilityId));
         model.addAttribute("field", f);
@@ -265,57 +275,156 @@ public class OwnerController {
         return "redirect:/owner/facilities/" + facilityId + "/fields";
     }
 
-    // ─── TIME SLOT ─────────────────────────
+    /** ── Quản lý giá (PriceRule) ────────────────────────────────── */
 
-    @GetMapping("/facilities/{facilityId}/fields/{fieldId}/slots")
-    public String fieldSlots(@PathVariable Long facilityId, @PathVariable Long fieldId, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date, Model model) {
-        LocalDate queryDate = (date != null) ? date : LocalDate.now();
+    @GetMapping("/facilities/{facilityId}/fields/{fieldId}/price-rules")
+    public String priceRules(@PathVariable Long facilityId,
+                             @PathVariable Long fieldId,
+                             @AuthenticationPrincipal UserDetails ud,
+                             Model model) {
+        Facility facility = facilityService.findById(facilityId);
         Field field = fieldService.findById(fieldId);
-        if (!field.getFacility().getId().equals(facilityId)) return "redirect:/owner/facilities";
+        List<PriceRule> rules = priceRuleService.getRulesByField(fieldId);
+        model.addAttribute("facility", facility);
+        model.addAttribute("field", field);
+        model.addAttribute("rules", rules);
+        model.addAttribute("newRule", new PriceRuleRequest());
+        model.addAttribute("dayTypes", DayType.values());
+        return "owner/price-rules/manage";
+    }
 
+    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/price-rules/create")
+    public String createPriceRule(@PathVariable Long facilityId,
+                                  @PathVariable Long fieldId,
+                                  @Valid @ModelAttribute("newRule") PriceRuleRequest req,
+                                  BindingResult br,
+                                  @AuthenticationPrincipal UserDetails ud,
+                                  RedirectAttributes ra) {
+        if (br.hasErrors()) {
+            ra.addFlashAttribute("error", "Dữ liệu không hợp lệ");
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
+        }
+        try {
+            priceRuleService.createRule(fieldId, req, ud.getUsername());
+            ra.addFlashAttribute("success", "Thêm quy tắc giá thành công");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
+    }
+
+    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/price-rules/{ruleId}/delete")
+    public String deletePriceRule(@PathVariable Long facilityId,
+                                  @PathVariable Long fieldId,
+                                  @PathVariable Long ruleId,
+                                  @AuthenticationPrincipal UserDetails ud,
+                                  RedirectAttributes ra) {
+        try {
+            priceRuleService.deleteRule(ruleId, ud.getUsername());
+            ra.addFlashAttribute("success", "Đã xóa quy tắc giá");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
+    }
+
+    /** ── Quản lý chặn giờ (BlockedTime) ────────────────────────── */
+
+    @GetMapping("/facilities/{facilityId}/fields/{fieldId}/blocked-times")
+    public String blockedTimes(@PathVariable Long facilityId,
+                               @PathVariable Long fieldId,
+                               @RequestParam(required = false)
+                               @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                               @AuthenticationPrincipal UserDetails ud,
+                               Model model) {
+        if (date == null) date = LocalDate.now();
+        Field field = fieldService.findById(fieldId);
+        List<BlockedTime> blocks = blockedRepo.findByFieldAndDateOrderByStartTime(field, date);
         model.addAttribute("facility", facilityService.findById(facilityId));
         model.addAttribute("field", field);
-        model.addAttribute("selectedDate", queryDate);
-        model.addAttribute("slots", timeSlotService.getAllSlots(fieldId, queryDate));
-
-        TimeSlotGenerateRequest genReq = new TimeSlotGenerateRequest();
-        genReq.setFieldId(fieldId);
-        genReq.setStartDate(queryDate);
-        genReq.setEndDate(queryDate.plusDays(7));
-        model.addAttribute("genRequest", genReq);
-
-        return "owner/fields/timeslot";
+        model.addAttribute("blocks", blocks);
+        model.addAttribute("selectedDate", date);
+        model.addAttribute("newBlock", new BlockedTimeRequest());
+        return "owner/blocked-times/manage";
     }
 
-    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/slots/generate")
-    public String generateSlots(@PathVariable Long facilityId, @PathVariable Long fieldId, @Valid @ModelAttribute("genRequest") TimeSlotGenerateRequest request, BindingResult result, @AuthenticationPrincipal UserDetails ud, RedirectAttributes ra) {
-        if (result.hasErrors()) {
-            ra.addFlashAttribute("errorMsg", "Dữ liệu nhập vào không hợp lệ!");
-            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/slots";
+    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/blocked-times/create")
+    public String createBlockedTime(@PathVariable Long facilityId,
+                                    @PathVariable Long fieldId,
+                                    @Valid @ModelAttribute("newBlock") BlockedTimeRequest req,
+                                    BindingResult br,
+                                    @AuthenticationPrincipal UserDetails ud,
+                                    RedirectAttributes ra) {
+        if (br.hasErrors()) {
+            ra.addFlashAttribute("error", "Dữ liệu không hợp lệ");
+            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
         }
         try {
-            request.setFieldId(fieldId);
-            timeSlotService.generateSlots(request, ud.getUsername());
-            ra.addFlashAttribute("successMsg", "Hệ thống đã tự động chia khung giờ thành công!");
+            Field field = fieldService.findById(fieldId);
+            // Xác nhận owner
+            if (!field.getFacility().getOwner().getEmail().equals(ud.getUsername()))
+                throw new ForbiddenException("Không có quyền");
+            if (bookingRepo.existsConflict(field, req.getDate(), req.getStartTime(), req.getEndTime()))
+                throw new IllegalStateException("Khung giờ này đã có người đặt, không thể chặn");
+            BlockedTime bt = BlockedTime.builder()
+                    .field(field).date(req.getDate())
+                    .startTime(req.getStartTime()).endTime(req.getEndTime())
+                    .reason(req.getReason()).build();
+            blockedRepo.save(bt);
+            ra.addFlashAttribute("success", "Đã chặn khung giờ thành công");
         } catch (Exception e) {
-            ra.addFlashAttribute("errorMsg", "Không thể tạo lịch: " + e.getMessage());
+            ra.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/slots?date=" + request.getStartDate();
+        return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
+                + "/blocked-times?date=" + req.getDate();
     }
 
-    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/slots/{slotId}/update")
-    @ResponseBody
-    public ResponseEntity<?> updateQuickSlot(
-            @PathVariable Long slotId,
-            @RequestParam(required = false) BigDecimal price,
-            @RequestParam(required = false) SlotStatus status,
-            @AuthenticationPrincipal UserDetails ud) {
+    @PostMapping("/facilities/{facilityId}/fields/{fieldId}/blocked-times/{id}/delete")
+    public String deleteBlockedTime(@PathVariable Long facilityId,
+                                    @PathVariable Long fieldId,
+                                    @PathVariable Long id,
+                                    @AuthenticationPrincipal UserDetails ud,
+                                    RedirectAttributes ra) {
         try {
-            timeSlotService.updateSlotDetail(slotId, price, status, ud.getUsername());
-            return ResponseEntity.ok(Map.of("success", true));
+            BlockedTime bt = blockedRepo.findById(id).orElseThrow();
+            if (!bt.getField().getFacility().getOwner().getEmail().equals(ud.getUsername()))
+                throw new ForbiddenException("Không có quyền");
+            blockedRepo.delete(bt);
+            ra.addFlashAttribute("success", "Đã xóa khung giờ bị chặn");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+            ra.addFlashAttribute("error", e.getMessage());
         }
+        return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/blocked-times";
+    }
+
+    /** ── Quản lý booking (Owner xem danh sách) ──────────────────── */
+
+    @GetMapping("/bookings")
+    public String ownerBookings(@RequestParam(required = false)
+                                @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                                @AuthenticationPrincipal UserDetails ud,
+                                Model model) {
+        List<BookingResponse> bookings = date != null
+                ? bookingService.getBookingsByOwner(ud.getUsername()).stream()
+                  .filter(b -> b.getBookingDate().isEqual(date)).toList()
+                : bookingService.getBookingsByOwner(ud.getUsername());
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("selectedDate", date);
+        return "owner/bookings/list";
+    }
+
+    @PostMapping("/bookings/{id}/cancel")
+    public String ownerCancelBooking(@PathVariable Long id,
+                                     @RequestParam(required = false) String reason,
+                                     @AuthenticationPrincipal UserDetails ud,
+                                     RedirectAttributes ra) {
+        try {
+            bookingService.cancelBooking(id, ud.getUsername(), reason);
+            ra.addFlashAttribute("success", "Đã hủy booking");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/bookings";
     }
     @GetMapping("")
     public String ownerDashboard(Model model, Authentication authentication) {

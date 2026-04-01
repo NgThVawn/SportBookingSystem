@@ -90,7 +90,6 @@ public class FieldServiceImpl implements FieldService {
         field.setSurfaceType(req.getSurfaceType());
         field.setCapacity(req.getCapacity());
         field.setPricePerHour(req.getPricePerHour());
-        field.setSlotDuration(req.getSlotDuration() != null ? req.getSlotDuration() : 60);
         return field;
     }
 }

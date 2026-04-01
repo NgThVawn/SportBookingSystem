@@ -47,7 +47,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public resources
                 .requestMatchers("/", "/facilities/**", "/css/**", "/js/**",
-                                 "/images/**", "/error/**").permitAll()
+                                 "/images/**", "/error/**", "/uploads/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
                 // Owner area
                 .requestMatchers("/owner/**").hasAnyRole("OWNER", "ADMIN")

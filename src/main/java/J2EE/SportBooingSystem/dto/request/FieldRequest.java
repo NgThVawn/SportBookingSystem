@@ -27,9 +27,4 @@ public class FieldRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be positive")
     private BigDecimal pricePerHour;
 
-    private BigDecimal pricePerSlot;
-
-    @NotNull(message = "Slot duration is required")
-    @Min(value = 30, message = "Minimum slot duration is 30 minutes")
-    private Integer slotDuration;
 }
