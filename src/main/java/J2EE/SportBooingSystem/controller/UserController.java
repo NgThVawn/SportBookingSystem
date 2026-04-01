@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/profile") // Tất cả các phương thức trong này sẽ bắt đầu bằng /profile
+@RequestMapping("/profile") 
 @RequiredArgsConstructor
 public class UserController {
 
@@ -76,7 +76,7 @@ public class UserController {
                                  Authentication authentication,
                                  RedirectAttributes redirectAttributes) {
 
-        // Kiểm tra mật khẩu mới và xác nhận mật khẩu
+
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
             return "redirect:/profile/security";

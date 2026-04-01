@@ -1,3 +1,3 @@
 package J2EE.SportBooingSystem.enums;
 
-public enum RoleName { USER, OWNER, ADMIN }
+public enum RoleName { USER, OWNER, ADMIN, SUPER_ADMIN }

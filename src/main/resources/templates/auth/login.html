@@ -41,8 +41,12 @@
                 <p class="font-body text-on-surface-variant">Chào mừng bạn trở lại với Arena Kinetic.</p>
             </div>
 
-            <div th:if="${param.error}" class="mb-6 p-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
-                <span class="font-semibold">Đăng nhập thất bại!</span> Vui lòng kiểm tra lại email hoặc mật khẩu.
+           <div th:if="${param.error}" class="mb-6 p-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
+                <span class="font-semibold block mb-1">Đăng nhập thất bại!</span> 
+                <span th:text="${session.SPRING_SECURITY_LAST_EXCEPTION != null 
+                                ? session.SPRING_SECURITY_LAST_EXCEPTION.message 
+                                : 'Email hoặc mật khẩu không chính xác.'}">
+                </span>
             </div>
             <div th:if="${param.logout}" class="mb-6 p-4 text-sm text-green-800 rounded-lg bg-green-50" role="alert">
                 Bạn đã đăng xuất thành công.
@@ -122,22 +126,20 @@
 
             toggleButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Ngăn form submit nếu lỡ bấm nhầm
+                    e.preventDefault(); 
 
-                    // Lấy ID của ô input từ thuộc tính data-target
                     const targetId = this.getAttribute('data-target');
                     const inputField = document.getElementById(targetId);
                     const icon = this.querySelector('.material-symbols-outlined');
 
-                    // Kiểm tra và đảo ngược trạng thái
                     if (inputField.type === 'password') {
                         inputField.type = 'text';
-                        icon.textContent = 'visibility'; // Đổi icon thành mắt mở
-                        icon.classList.add('text-primary'); // Nổi bật màu cam khi đang hiện
+                        icon.textContent = 'visibility'; 
+                        icon.classList.add('text-primary'); 
                     } else {
                         inputField.type = 'password';
-                        icon.textContent = 'visibility_off'; // Đổi icon thành mắt nhắm
-                        icon.classList.remove('text-primary'); // Trả lại màu xám
+                        icon.textContent = 'visibility_off'; 
+                        icon.classList.remove('text-primary'); 
                     }
                 });
             });

@@ -86,20 +86,60 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll();
     }
 
-    @Override
-    public void banUser(Long userId, String reason) {
-        User user = findById(userId);
-        user.setIsBanned(true);
-        user.setBanReason(reason);
+   @Override
+    public void banUser(Long targetUserId, String reason, String actionUserEmail) {
+        User targetUser = findById(targetUserId);
+        User actionUser = findByEmail(actionUserEmail);
+
+        // 1. Chặn tự khóa chính mình
+        if (targetUser.getId().equals(actionUser.getId())) {
+            throw new IllegalStateException("Bạn không thể tự khóa tài khoản của chính mình!");
+        }
+
+        boolean isActionUserSuperAdmin = actionUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == J2EE.SportBooingSystem.enums.RoleName.SUPER_ADMIN);
+        
+        boolean isTargetSuperAdmin = targetUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == J2EE.SportBooingSystem.enums.RoleName.SUPER_ADMIN);
+                
+        boolean isTargetAdmin = targetUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == J2EE.SportBooingSystem.enums.RoleName.ADMIN);
+
+        // 2. Chặn khóa SUPER_ADMIN
+        if (isTargetSuperAdmin) {
+            throw new SecurityException("Không ai có quyền khóa tài khoản SUPER_ADMIN!");
+        }
+
+        // 3. ADMIN không được khóa ADMIN khác (Chỉ SUPER_ADMIN mới được khóa ADMIN)
+        if (isTargetAdmin && !isActionUserSuperAdmin) {
+            throw new SecurityException("Bạn không đủ thẩm quyền để khóa một ADMIN khác!");
+        }
+
+        // Vượt qua hết các rào cản trên thì mới tiến hành khóa
+        targetUser.setIsBanned(true);
+        targetUser.setBanReason(reason);
+        userRepository.save(targetUser);
     }
 
     @Override
-    public void unbanUser(Long userId) {
-        User user = findById(userId);
-        user.setIsBanned(false);
-        user.setBanReason(null);
-    }
+    public void unbanUser(Long targetUserId, String actionUserEmail) {
+        User targetUser = findById(targetUserId);
+        User actionUser = findByEmail(actionUserEmail);
 
+        boolean isActionUserSuperAdmin = actionUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == J2EE.SportBooingSystem.enums.RoleName.SUPER_ADMIN);
+                
+        boolean isTargetAdmin = targetUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == J2EE.SportBooingSystem.enums.RoleName.ADMIN);
+
+        if (isTargetAdmin && !isActionUserSuperAdmin) {
+            throw new SecurityException("Chỉ SUPER_ADMIN mới có quyền mở khóa cho một ADMIN!");
+        }
+
+        targetUser.setIsBanned(false);
+        targetUser.setBanReason(null);
+        userRepository.save(targetUser);
+    }
 
     @Override
     public void updateProfile(String email, String fullName, String phone, MultipartFile avatar) {
@@ -143,13 +183,55 @@ public class UserServiceImpl implements UserService {
     public void changePassword(String email, String oldPassword, String newPassword) {
         User user = findByEmail(email);
 
-        // 1. Kiểm tra mật khẩu cũ có khớp với mật khẩu trong DB không
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new RuntimeException("Mật khẩu hiện tại không chính xác");
         }
 
-        // 2. Mã hóa mật khẩu mới và lưu lại
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+   @Override
+    public void promoteToAdmin(Long targetUserId, String actionUserEmail) {
+        User actionUser = findByEmail(actionUserEmail);
+
+        boolean isSuperAdmin = actionUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == RoleName.SUPER_ADMIN);
+                
+        if (!isSuperAdmin) {
+            throw new J2EE.SportBooingSystem.exception.ForbiddenException("Chỉ SUPER_ADMIN mới có quyền bổ nhiệm ADMIN mới!");
+        }
+
+        User targetUser = findById(targetUserId);
+        
+        boolean isTargetSuperAdmin = targetUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == RoleName.SUPER_ADMIN);
+        if(isTargetSuperAdmin) {
+             throw new IllegalStateException("Người dùng này đã là SUPER_ADMIN!");
+        }
+
+        Role adminRole = roleRepository.findByName(RoleName.ADMIN)
+            .orElseThrow(() -> new IllegalStateException("Chưa cấu hình quyền ADMIN trong DB"));
+        
+        targetUser.getRoles().add(adminRole);
+        userRepository.save(targetUser);
+    }
+
+    @Override
+    public void demoteFromAdmin(Long targetUserId, String currentSuperAdminEmail) {
+
+        User actionUser = findByEmail(currentSuperAdminEmail);
+        boolean isSuperAdmin = actionUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == RoleName.SUPER_ADMIN);
+                
+        if (!isSuperAdmin) {
+            throw new J2EE.SportBooingSystem.exception.ForbiddenException("Chỉ SUPER_ADMIN mới có quyền hạ cấp ADMIN!");
+        }
+
+        User targetUser = findById(targetUserId);
+        Role adminRole = roleRepository.findByName(RoleName.ADMIN)
+            .orElseThrow(() -> new IllegalStateException("Chưa cấu hình quyền ADMIN trong DB"));
+            
+        targetUser.getRoles().remove(adminRole);
+        userRepository.save(targetUser);
     }
 }

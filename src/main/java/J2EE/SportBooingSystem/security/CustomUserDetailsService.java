@@ -3,6 +3,8 @@ package J2EE.SportBooingSystem.security;
 import J2EE.SportBooingSystem.entity.User;
 import J2EE.SportBooingSystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,10 +25,15 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("No account found for: " + email));
+            .orElseThrow(() -> new UsernameNotFoundException("Sai tài khoản hoặc mật khẩu"));
 
-        if (!user.getIsActive() || user.getIsBanned()) {
-            throw new UsernameNotFoundException("Account is disabled or banned");
+        if (user.getIsBanned() != null && user.getIsBanned()) {
+            String reason = user.getBanReason() != null ? user.getBanReason() : "Vi phạm quy định của hệ thống";
+            throw new LockedException("Tài khoản của bạn đã bị khóa! Lý do: " + reason);
+        }
+
+        if (user.getIsActive() != null && !user.getIsActive()) {
+            throw new DisabledException("Tài khoản của bạn chưa được kích hoạt hoặc đã bị vô hiệu hóa.");
         }
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
@@ -37,8 +44,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             .withUsername(user.getEmail())
             .password(user.getPassword())
             .authorities(authorities)
-            .accountLocked(user.getIsBanned())
-            .disabled(!user.getIsActive())
             .build();
     }
 }

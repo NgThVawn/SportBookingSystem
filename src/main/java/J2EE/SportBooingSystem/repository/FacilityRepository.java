@@ -2,6 +2,7 @@ package J2EE.SportBooingSystem.repository;
 
 import J2EE.SportBooingSystem.entity.Facility;
 import J2EE.SportBooingSystem.entity.User;
+import J2EE.SportBooingSystem.enums.FacilityStatus;
 import J2EE.SportBooingSystem.enums.SportType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,12 +20,12 @@ public interface FacilityRepository extends JpaRepository<Facility, Long> {
     @EntityGraph(attributePaths = {"images"})
     List<Facility> findByOwner(User owner);
 
-    List<Facility> findByIsActiveTrueOrderByAvgRatingDesc();
+    List<Facility> findByStatusOrderByAvgRatingDesc(FacilityStatus status);
 
     @Query("""
         SELECT DISTINCT f FROM Facility f
         JOIN f.fields field
-        WHERE f.isActive = true
+        WHERE f.status = 'OPEN'
           AND (:city IS NULL OR LOWER(f.city) LIKE LOWER(CONCAT('%', :city, '%')))
           AND (:sport IS NULL OR field.sportType = :sport)
           AND (:name IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', :name, '%')))
@@ -37,5 +38,5 @@ public interface FacilityRepository extends JpaRepository<Facility, Long> {
             Pageable pageable
     );
 
-    long countByIsActiveTrue();
+    long countByStatus(FacilityStatus status);
 }

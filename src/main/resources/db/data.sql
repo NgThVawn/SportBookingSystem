@@ -5,4 +5,4 @@ VALUES
   ('GOLD',    30,  0.0700, 'Vàng — giảm 7%',        '#FFD700'),
   ('DIAMOND', 100, 0.1000, 'Kim cương — giảm 10%', '#B9F2FF');
 
-INSERT IGNORE INTO roles (name) VALUES ('USER'), ('OWNER'), ('ADMIN');
+INSERT IGNORE INTO roles (name) VALUES ('USER'), ('OWNER'), ('ADMIN'), ('SUPER_ADMIN');

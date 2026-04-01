@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Quản lý Người Dùng - Admin</title>
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f4f6f9; padding: 20px; }
+        h2 { color: #333; margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px;}
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px 10px; border: 1px solid #dee2e6; text-align: left; vertical-align: middle; }
+        th { background-color: #343a40; color: white; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        
+        .message { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; color: white;}
+        .btn-ban { background-color: #dc3545; }
+        .btn-unban { background-color: #28a745; }
+        .btn-promote { background-color: #6f42c1; }
+        .btn-demote { background-color: #fd7e14; }
+        
+        .role-tag { display: inline-block; padding: 2px 6px; background: #17a2b8; color: white; border-radius: 4px; font-size: 11px; margin-right: 3px;}
+        .banned-text { color: #dc3545; font-weight: bold; font-size: 13px;}
+        .active-text { color: #28a745; font-weight: bold; font-size: 13px;}
+    </style>
+</head>
+<body>
+
+    <h2>Quản lý Tài Khoản (Admin Dashboard)</h2>
+
+    <div class="message success" th:if="${successMsg}" th:text="${successMsg}"></div>
+    <div class="message error" th:if="${errorMsg}" th:text="${errorMsg}"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Họ Tên</th>
+                <th>Email</th>
+                <th>SĐT</th>
+                <th>Quyền hạn</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="u : ${users}">
+                <td th:text="${u.id}"></td>
+                <td th:text="${u.fullName}"></td>
+                <td th:text="${u.email}"></td>
+                <td th:text="${u.phone}"></td>
+                
+                <td>
+                    <span th:each="role : ${u.roles}" class="role-tag" th:text="${role.name}"></span>
+                </td>
+                
+                <td>
+                    <div th:if="${u.isBanned}">
+                        <span class="banned-text">Bị khóa</span><br/>
+                        <span style="font-size: 11px; color: #666;" th:text="'Lý do: ' + ${u.banReason}"></span>
+                    </div>
+                    <div th:unless="${u.isBanned}">
+                        <span class="active-text">Hoạt động</span>
+                    </div>
+                </td>
+                
+                <td style="display: flex; gap: 5px;">
+                    
+                    <form th:if="${!u.isBanned}" th:action="@{/admin/users/{id}/ban(id=${u.id})}" method="post" onsubmit="return askBanReason(this);">
+                        <input type="hidden" name="reason" class="ban-reason-input" />
+                        <button type="submit" class="btn btn-ban">Khóa (Ban)</button>
+                    </form>
+                    
+                    <form th:if="${u.isBanned}" th:action="@{/admin/users/{id}/unban(id=${u.id})}" method="post">
+                        <button type="submit" class="btn btn-unban">Mở khóa</button>
+                    </form>
+                    
+                    <div th:with="isAdmin=${#strings.contains(u.roles.toString(), 'ADMIN')}">
+                        <form th:if="${!isAdmin}" th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post" onsubmit="return confirm('Bạn chắc chắn muốn cấp quyền Quản trị (Admin) cho người này?');">
+                            <button type="submit" class="btn btn-promote">Lên Admin</button>
+                        </form>
+                        
+                        <form th:if="${isAdmin}" th:action="@{/admin/users/{id}/demote(id=${u.id})}" method="post" onsubmit="return confirm('Chỉ SUPER_ADMIN mới có thể hạ quyền. Xác nhận tiến hành?');">
+                            <button type="submit" class="btn btn-demote">Hạ quyền Admin</button>
+                        </form>
+                    </div>
+
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        // JS để hỏi lý do khóa tài khoản trước khi gửi Form
+        function askBanReason(form) {
+            let reason = prompt("Vui lòng nhập lý do khóa tài khoản này:");
+            if (reason != null && reason.trim() !== "") {
+                form.querySelector('.ban-reason-input').value = reason;
+                return true; // Cho phép gửi form
+            } else {
+                alert("Bạn phải nhập lý do để khóa!");
+                return false; // Chặn gửi form
+            }
+        }
+    </script>
+
+</body>
+</html>

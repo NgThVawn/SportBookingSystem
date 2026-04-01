@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Hệ thống Quản trị - Duyệt Cơ Sở</title>
+    <style>
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 30px; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; border-bottom: 2px solid #e8f0fe; padding-bottom: 15px; margin-top: 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { padding: 12px; border: 1px solid #e0e0e0; text-align: left; }
+        th { background: #f8f9fa; color: #5f6368; text-transform: uppercase; font-size: 12px; }
+        tr:hover { background: #f1f3f4; }
+
+        .facility-img { width: 100px; height: 70px; object-fit: cover; border-radius: 4px; background: #ddd; }
+        
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; display: inline-block; }
+        .bg-pending { background: #f2994a; }
+        .bg-open { background: #27ae60; }
+        .bg-blocked { background: #eb5757; }
+        .bg-other { background: #828282; }
+
+        .owner-info { font-size: 13px; }
+        .owner-name { font-weight: bold; display: block; color: #333; }
+        .owner-email { color: #777; font-style: italic; }
+
+        .status-form { display: flex; align-items: center; gap: 8px; }
+        select { padding: 6px; border-radius: 4px; border: 1px solid #dadce0; outline: none; }
+        .btn-save { background: #1a73e8; color: white; border: none; padding: 7px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-save:hover { background: #1765cf; }
+
+        .pagination { margin-top: 25px; display: flex; justify-content: center; gap: 5px; }
+        .pagination a { padding: 8px 12px; text-decoration: none; border: 1px solid #ddd; color: #1a73e8; border-radius: 4px; }
+        .pagination a.active { background: #1a73e8; color: white; border-color: #1a73e8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Danh sách Cơ sở Toàn hệ thống</h2>
+
+    <div th:if="${successMsg}" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px;" th:text="${successMsg}"></div>
+    <div th:if="${errorMsg}" style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px;" th:text="${errorMsg}"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Ảnh</th>
+                <th>Thông tin Cơ sở</th>
+                <th>Chủ sở hữu</th>
+                <th>Liên hệ & Giờ mở cửa</th>
+                <th>Trạng thái</th>
+                <th>Hành động của Admin</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="f : ${facilities.content}">
+                <td>
+                    <img th:src="${f.getPrimaryImageUrl() != null ? f.getPrimaryImageUrl() : 'https://via.placeholder.com/100x70?text=No+Image'}" 
+                         class="facility-img" alt="Facility Image">
+                </td>
+
+                <td>
+                    <strong th:text="${f.name != null ? f.name : 'N/A'}" style="font-size: 15px;"></strong><br/>
+                    <small th:text="${(f.address != null ? f.address : '') + ', ' + (f.city != null ? f.city : '')}"></small>
+                </td>
+
+                <td class="owner-info">
+                    <div th:if="${f.owner != null}">
+                        <span class="owner-name" th:text="${f.owner.fullName}"></span>
+                        <span class="owner-email" th:text="${f.owner.email}"></span>
+                    </div>
+                    <div th:unless="${f.owner != null}">
+                        <span class="owner-name">Hệ thống / N/A</span>
+                    </div>
+                </td>
+
+                <td>
+                    <span th:text="${f.phone != null ? '📞 ' + f.phone : '📞 N/A'}"></span><br/>
+                    <span th:text="${'⏰ ' + (f.openTime != null ? f.openTime : '??') + ' - ' + (f.closeTime != null ? f.closeTime : '??')}"></span>
+                </td>
+
+                <td>
+                    <span th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL}" class="badge bg-pending">CHỜ DUYỆT</span>
+                    <span th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).OPEN}" class="badge bg-open">ĐANG MỞ</span>
+                    <span th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}" class="badge bg-blocked">BỊ KHÓA</span>
+                    <span th:if="${f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).OPEN and f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL and f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}" 
+                          class="badge bg-other" th:text="${f.status != null ? f.status.displayName : 'KHÁC'}"></span>
+                </td>
+
+                <td>
+                    <form th:action="@{/admin/facilities/{id}/status(id=${f.id})}" method="post" class="status-form">
+                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        
+                        <select name="status">
+                            <th:block th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL}">
+                                <option value="PENDING_APPROVAL" selected disabled>Đang chờ duyệt</option>
+                                <option value="OPEN">Duyệt (Cho phép hoạt động)</option>
+                                <option value="BLOCKED">Từ chối & Khóa cơ sở</option>
+                            </th:block>
+
+                            <th:block th:if="${f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL and f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}">
+                                <option th:value="${f.status.name()}" selected th:text="'Giữ nguyên: ' + ${f.status.displayName}"></option>
+                                <option value="BLOCKED">Vi phạm & Khóa cơ sở</option>
+                            </th:block>
+
+                            <th:block th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}">
+                                <option value="BLOCKED" selected disabled>Đang bị khóa</option>
+                                <option value="OPEN">Mở khóa cơ sở</option>
+                            </th:block>
+                        </select>
+                        
+                        <button type="submit" class="btn-save">Xác nhận</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="pagination" th:if="${facilities.totalPages > 1}">
+        <a th:each="i : ${#numbers.sequence(0, facilities.totalPages - 1)}"
+           th:href="@{/admin/facilities(page=${i})}"
+           th:text="${i + 1}"
+           th:classappend="${i == facilities.number} ? 'active' : ''"></a>
+    </div>
+</div>
+
+</body>
+</html>

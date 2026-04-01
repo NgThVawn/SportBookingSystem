@@ -4,6 +4,7 @@ import J2EE.SportBooingSystem.dto.request.FacilityRequest;
 import J2EE.SportBooingSystem.entity.Facility;
 import J2EE.SportBooingSystem.entity.FacilityImage;
 import J2EE.SportBooingSystem.entity.User;
+import J2EE.SportBooingSystem.enums.FacilityStatus;
 import J2EE.SportBooingSystem.enums.SportType;
 import J2EE.SportBooingSystem.exception.ResourceNotFoundException;
 import J2EE.SportBooingSystem.repository.FacilityRepository;
@@ -89,6 +90,7 @@ public class FacilityServiceImpl implements FacilityService {
 
         return facilityRepository.save(facility);
     }
+
     @Override
     public void delete(Long id, String ownerEmail) {
 
@@ -107,7 +109,6 @@ public class FacilityServiceImpl implements FacilityService {
         Facility facility = facilityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Facility not found: " + id));
             
-
         facility.getImages().size(); 
         
         return facility;
@@ -127,7 +128,7 @@ public class FacilityServiceImpl implements FacilityService {
     @Override
     @Transactional(readOnly = true)
     public List<Facility> findAll() {
-        return facilityRepository.findByIsActiveTrueOrderByAvgRatingDesc();
+        return facilityRepository.findByStatusOrderByAvgRatingDesc(FacilityStatus.OPEN);
     }
 
     @Override
@@ -137,18 +138,50 @@ public class FacilityServiceImpl implements FacilityService {
     }
 
     @Override
-    public void toggleActive(Long id, String ownerEmail) {
+    public void changeStatus(Long id, FacilityStatus status, String ownerEmail) {
         Facility facility = findById(id);
         if (!facility.getOwner().getEmail().equals(ownerEmail)) {
             throw new SecurityException("Not authorized");
         }
-        facility.setIsActive(!facility.getIsActive());
+        
+        if (status == FacilityStatus.PENDING_APPROVAL || status == FacilityStatus.BLOCKED) {
+            throw new IllegalArgumentException("Chủ sân không có quyền tự chuyển sang trạng thái này!");
+        }
+               
+        if (facility.getStatus() == FacilityStatus.BLOCKED) {
+            throw new IllegalStateException("Cơ sở này đã bị Admin khóa, không thể tự thay đổi trạng thái. Vui lòng liên hệ hỗ trợ!");
+        }
+        
+        facility.setStatus(status);
+        facilityRepository.save(facility);
     }
 
     @Override
     @Transactional(readOnly = true)
     public long count() {
-        return facilityRepository.countByIsActiveTrue();
+        return facilityRepository.countByStatus(FacilityStatus.OPEN);
+    }
+
+    @Override
+    @Transactional(readOnly = true) // Đảm bảo có session xuyên suốt
+    public Page<Facility> findAllForAdmin(Pageable pageable) {
+        Page<Facility> facilities = facilityRepository.findAll(pageable);
+ 
+        facilities.forEach(f -> {
+            if (f.getOwner() != null) {
+                f.getOwner().getFullName(); 
+            }
+        });
+        
+        return facilities;
+    }
+
+    @Override
+    public void changeStatusByAdmin(Long id, FacilityStatus status) {
+        Facility facility = findById(id);
+        
+        facility.setStatus(status);
+        facilityRepository.save(facility);
     }
 
     private Facility mapToEntity(Facility facility, FacilityRequest req) {

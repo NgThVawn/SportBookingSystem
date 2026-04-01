@@ -12,8 +12,10 @@ public interface UserService {
     User findById(Long id);
     User getCurrentUser(String email);
     List<User> findAll();
-    void banUser(Long userId, String reason);
-    void unbanUser(Long userId);
+    void banUser(Long targetUserId, String reason, String actionUserEmail);
+    void unbanUser(Long targetUserId, String actionUserEmail);  
     void changePassword(String email, String oldPassword, String newPassword);
     void updateProfile(String email, String fullName, String phone, MultipartFile avatar);
+    void promoteToAdmin(Long targetUserId, String actionUserEmail);    
+    void demoteFromAdmin(Long targetUserId, String currentSuperAdminEmail);
 }
