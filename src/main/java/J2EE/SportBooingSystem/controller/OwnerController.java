@@ -402,9 +402,15 @@ public class OwnerController {
                                   RedirectAttributes ra,
                                   Model model) {
         if (br.hasErrors()) {
+            PriceRule rule = priceRuleRepository.findById(ruleId).orElse(null);
+            if (rule == null) {
+                ra.addFlashAttribute("error", "Quy tắc giá không tồn tại hoặc đã bị xóa");
+                return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId + "/price-rules";
+            }
+
             model.addAttribute("facility", facilityService.findById(facilityId));
             model.addAttribute("field", fieldService.findById(fieldId));
-            model.addAttribute("rule", priceRuleRepository.findById(ruleId).orElse(null));
+            model.addAttribute("rule", rule);
             model.addAttribute("dayTypes", DayType.values());
             return "owner/price-rules/edit";
         }
