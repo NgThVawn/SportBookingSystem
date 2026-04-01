@@ -77,10 +77,9 @@
                             <a th:href="@{/profile}" class="px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-primary transition-colors text-decoration-none flex items-center gap-3">
                                 <span class="material-symbols-outlined text-[20px]">person</span> Thông tin cá nhân
                             </a>
-                            <a th:href="@{/booking/history}" class="px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-primary transition-colors text-decoration-none flex items-center gap-3">
+                            <a th:href="@{/bookings}" class="px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-primary transition-colors text-decoration-none flex items-center gap-3">
                                 <span class="material-symbols-outlined text-[20px]">history</span> Lịch sử đặt sân
                             </a>
-                            <a class="dropdown-item" th:href="@{/bookings}">Lịch sử đặt sân</a>
                             <hr class="my-1 border-zinc-100">
                             <form th:action="@{/auth/logout}" method="post" class="m-0">
                                 <button type="submit" class="w-full text-left px-5 py-3 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors border-none bg-transparent cursor-pointer flex items-center gap-3 font-headline">

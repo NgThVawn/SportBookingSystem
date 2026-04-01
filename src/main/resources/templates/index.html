@@ -189,46 +189,60 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8" th:if="${facilities != null and !facilities.isEmpty()}">
 
                 <div th:each="f, iterStat : ${facilities.content}"
-                     th:if="${iterStat.index < 3}"
-                     th:classappend="${iterStat.index == 0 ? 'md:col-span-2' : ''}"
-                     class="group relative h-[500px] rounded-3xl overflow-hidden shadow-xl bg-white cursor-pointer">
+                     th:if="${iterStat.index < 2}"
+                     th:classappend="${iterStat.index == 0 ? 'md:col-span-2' : 'md:col-span-1'}"
+                     class="group relative h-[500px] rounded-3xl overflow-hidden shadow-xl bg-white cursor-pointer transition-transform duration-300 hover:-translate-y-2">
 
                     <img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                          th:src="${f.primaryImageUrl != null ? f.primaryImageUrl : 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1000&auto=format&fit=crop'}" alt="Hình ảnh sân">
 
-                    <div class="absolute top-6 left-6 flex gap-2">
-                        <span th:if="${iterStat.index == 0}" class="bg-primary text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest font-label flex items-center gap-1 shadow-lg">
-                            <span class="material-symbols-outlined text-sm">star</span> CAO CẤP
-                        </span>
+                    <div class="absolute top-6 left-6 flex flex-wrap gap-2 pr-6">
+            <span th:if="${iterStat.index == 0}" class="bg-primary text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest font-label flex items-center gap-1 shadow-lg">
+                <span class="material-symbols-outlined text-sm">star</span> CAO CẤP
+            </span>
                         <span class="bg-white/90 backdrop-blur-md text-zinc-900 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest font-label shadow-md flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> ĐANG CÓ SÂN
-                        </span>
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> ĐANG CÓ SÂN
+            </span>
                     </div>
 
-                    <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent">
-                        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent">
+
+                        <div th:if="${iterStat.index == 0}" class="flex flex-col md:flex-row md:items-end justify-between gap-6">
                             <div>
                                 <h3 class="text-3xl md:text-4xl font-black text-white mb-2 font-headline italic uppercase" th:text="${f.name}">TÊN SÂN ĐẤU</h3>
                                 <div class="flex items-center gap-4 text-zinc-300 text-sm font-label">
-                                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">location_on</span> <span th:text="${f.city}">Thành phố</span></span>
+                        <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">location_on</span> <span th:text="${f.city}">Thành phố</span>
+                        </span>
                                     <span class="flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-sm">star</span>
-                                        <span th:text="${f.avgRating != null ? f.avgRating : '5.0'}">5.0</span>
-                                    </span>
+                            <span class="material-symbols-outlined text-sm text-yellow-400">star</span>
+                            <span th:text="${f.avgRating != null ? f.avgRating : '5.0'}">5.0</span>
+                        </span>
                                 </div>
                             </div>
 
-                            <div th:if="${iterStat.index == 0}" class="bg-white p-4 rounded-2xl flex items-center gap-6 shadow-2xl">
+                            <div class="bg-white p-4 rounded-2xl flex items-center gap-6 shadow-2xl shrink-0">
                                 <a th:href="@{/facilities/{id}(id=${f.id})}" class="bg-primary text-white px-8 py-3 rounded-xl font-bold font-headline hover:bg-orange-700 transition-all text-decoration-none whitespace-nowrap">ĐẶT SÂN</a>
                             </div>
+                        </div>
 
-                            <a th:if="${iterStat.index > 0}" th:href="@{/facilities/{id}(id=${f.id})}" class="bg-white text-zinc-900 w-12 h-12 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all">
-                                <span class="material-symbols-outlined">arrow_forward</span>
+                        <div th:if="${iterStat.index == 1}" class="flex items-end justify-between gap-4">
+                            <div class="flex-1">
+                                <h3 class="text-2xl font-black text-white mb-2 font-headline italic uppercase truncate" th:text="${f.name}">TÊN SÂN ĐẤU</h3>
+                                <div class="flex items-center gap-4 text-zinc-300 text-sm font-label">
+                        <span class="flex items-center gap-1 truncate">
+                            <span class="material-symbols-outlined text-sm">location_on</span> <span th:text="${f.city}">Thành phố</span>
+                        </span>
+                                </div>
+                            </div>
+
+                            <a th:href="@{/facilities}" class="bg-white text-zinc-900 w-12 h-12 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-lg shrink-0 text-decoration-none" title="Xem tất cả sân đấu">
+                                <span class="material-symbols-outlined font-bold text-2xl">add</span>
                             </a>
                         </div>
+
                     </div>
                 </div>
-
             </div>
         </div>
     </section>
