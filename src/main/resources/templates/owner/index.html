@@ -40,56 +40,7 @@
 </head>
 <body class="bg-surface font-body text-on-surface antialiased">
 
-<aside class="h-screen w-64 fixed left-0 top-0 z-50 bg-slate-950 flex flex-col py-6 shadow-2xl">
-    <div class="px-6 mb-10 flex items-center gap-3">
-        <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center">
-            <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">bolt</span>
-        </div>
-        <div>
-            <h1 class="font-headline font-black text-white text-lg leading-tight uppercase tracking-tighter">Arena Manager</h1>
-            <p class="text-[10px] text-slate-500 font-label tracking-widest uppercase">Elite Sports Complex</p>
-        </div>
-    </div>
-
-    <nav class="flex-1 space-y-1">
-        <a class="bg-orange-600 text-white rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 shadow-[0_10px_20px_rgba(176,47,0,0.3)] font-['Inter'] text-sm font-medium hover:translate-x-1 transition-transform duration-300" th:href="@{/owner}">
-            <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-            <span>Dashboard</span>
-        </a>
-        <a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all font-['Inter'] text-sm font-medium hover:bg-slate-800/50 hover:translate-x-1 duration-300" th:href="@{/owner/facilities}">
-            <span class="material-symbols-outlined" data-icon="stadium">stadium</span>
-            <span>Field Management</span>
-        </a>
-        <a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all font-['Inter'] text-sm font-medium hover:bg-slate-800/50 hover:translate-x-1 duration-300" th:href="@{/owner/bookings}">
-            <span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
-            <span>Booking Schedule</span>
-        </a>
-        <a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all font-['Inter'] text-sm font-medium hover:bg-slate-800/50 hover:translate-x-1 duration-300" href="#">
-            <span class="material-symbols-outlined" data-icon="payments">payments</span>
-            <span>Revenue</span>
-        </a>
-    </nav>
-
-    <div class="mt-auto px-4 space-y-2">
-        <button class="w-full bg-slate-800 hover:bg-orange-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-headline font-bold transition-all duration-300 active:scale-95">
-            <span class="material-symbols-outlined text-sm">add_circle</span>
-            <span>New Booking</span>
-        </button>
-        <div class="pt-6 border-t border-slate-800">
-            <a class="text-slate-400 hover:text-white px-4 py-2 flex items-center gap-3 text-sm transition-all" href="#">
-                <span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
-                <span>Support</span>
-            </a>
-
-            <form th:action="@{/auth/logout}" method="post" class="m-0 w-full">
-                <button type="submit" class="w-full text-left text-slate-400 hover:text-red-400 px-4 py-2 flex items-center gap-3 text-sm transition-all bg-transparent border-none cursor-pointer">
-                    <span class="material-symbols-outlined" data-icon="logout">logout</span>
-                    <span>Log Out</span>
-                </button>
-            </form>
-        </div>
-    </div>
-</aside>
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('dashboard')}"></div>
 
 <main class="ml-64 min-h-screen relative">
 

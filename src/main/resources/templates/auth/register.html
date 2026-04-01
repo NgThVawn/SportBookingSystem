@@ -55,10 +55,14 @@
 
                 <div class="space-y-1.5">
                     <label class="font-label text-sm font-semibold text-on-surface ml-1">Địa chỉ Email</label>
-                    <input type="email" th:field="*{email}" required
+                    <input type="email" th:field="*{email}" required id="reg-email"
                            class="w-full bg-surface-container-high border-none rounded-lg px-4 py-3.5 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none border-b-2 border-transparent focus:border-primary"
                            th:errorclass="!border-red-500 !focus:border-red-500 !focus:ring-red-500/20 !bg-red-50"
                            placeholder="example@gmail.com"/>
+                    <p id="email-client-error" class="hidden text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">info</span>
+                        <span>Email không đúng định dạng</span>
+                    </p>
                     <p class="text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('email')}">
                         <span class="material-symbols-outlined text-[14px]">info</span> <span th:errors="*{email}"></span>
                     </p>
@@ -66,10 +70,14 @@
 
                 <div class="space-y-1.5">
                     <label class="font-label text-sm font-semibold text-on-surface ml-1">Số điện thoại</label>
-                    <input type="tel" th:field="*{phone}" required
+                    <input type="tel" th:field="*{phone}" required id="reg-phone" inputmode="numeric" pattern="[0-9]{9,15}"
                            class="w-full bg-surface-container-high border-none rounded-lg px-4 py-3.5 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none border-b-2 border-transparent focus:border-primary"
                            th:errorclass="!border-red-500 !focus:border-red-500 !focus:ring-red-500/20 !bg-red-50"
-                           placeholder="090 123 4567"/>
+                           placeholder="0901234567"/>
+                    <p id="phone-client-error" class="hidden text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">info</span>
+                        <span>Số điện thoại chỉ bao gồm số</span>
+                    </p>
                     <p class="text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('phone')}">
                         <span class="material-symbols-outlined text-[14px]">info</span> <span th:errors="*{phone}"></span>
                     </p>
@@ -153,6 +161,56 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const toggleButtons = document.querySelectorAll('.toggle-password');
+                const emailInput = document.getElementById('reg-email');
+                const emailClientError = document.getElementById('email-client-error');
+                const phoneInput = document.getElementById('reg-phone');
+                const phoneClientError = document.getElementById('phone-client-error');
+
+                function validateEmailRealtime() {
+                    if (!emailInput || !emailClientError) return;
+
+                    const value = emailInput.value.trim();
+                    const isValidEmail = value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+                    if (!isValidEmail) {
+                        emailClientError.classList.remove('hidden');
+                        emailInput.classList.add('border-red-500', 'focus:border-red-500');
+                        emailInput.setCustomValidity('Email không đúng định dạng');
+                        return;
+                    }
+
+                    emailClientError.classList.add('hidden');
+                    emailInput.classList.remove('border-red-500', 'focus:border-red-500');
+                    emailInput.setCustomValidity('');
+                }
+
+                function validatePhoneRealtime() {
+                    if (!phoneInput || !phoneClientError) return;
+
+                    const value = phoneInput.value;
+                    const isDigitsOnly = /^\d*$/.test(value);
+
+                    if (!isDigitsOnly) {
+                        phoneClientError.classList.remove('hidden');
+                        phoneInput.classList.add('border-red-500', 'focus:border-red-500');
+                        phoneInput.setCustomValidity('Số điện thoại chỉ bao gồm số');
+                        return;
+                    }
+
+                    phoneClientError.classList.add('hidden');
+                    phoneInput.classList.remove('border-red-500', 'focus:border-red-500');
+                    phoneInput.setCustomValidity('');
+                }
+
+                if (emailInput) {
+                    emailInput.addEventListener('input', validateEmailRealtime);
+                    emailInput.addEventListener('blur', validateEmailRealtime);
+                }
+
+                if (phoneInput) {
+                    phoneInput.addEventListener('input', validatePhoneRealtime);
+                    phoneInput.addEventListener('blur', validatePhoneRealtime);
+                }
 
                 toggleButtons.forEach(button => {
                     button.addEventListener('click', function() {
@@ -173,6 +231,9 @@
                         }
                     });
                 });
+
+                validateEmailRealtime();
+                validatePhoneRealtime();
             });
         </script>
     </section>

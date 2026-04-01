@@ -23,7 +23,7 @@
         <section class="mb-12">
             <div class="relative h-48 md:h-64 w-full rounded-2xl overflow-hidden mb-[-4rem]">
                 <img class="w-full h-full object-cover"
-                     src="https://images.unsplash.com/photo-1541252260730-0412e8e2108e?q=80&w=2000&auto=format&fit=crop" alt="Cover"/>
+                     src="https://images.pexels.com/photos/33456923/pexels-photo-33456923.jpeg" alt="Cover"/>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
             </div>
 
@@ -74,17 +74,18 @@
                         <span class="material-symbols-outlined">notifications</span> Thông báo
                     </a>
 
+                    <a th:href="@{/profile/security}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-white transition-all font-headline font-bold no-underline">
+                        <span class="material-symbols-outlined">security</span>
+                        Bảo mật
+                    </a>
+
                     <div class="pt-4 mt-4 border-t border-outline-variant/20">
-                        <form th:action="@{/auth/logout}" method="post">
+                        <form th:action="@{/auth/logout}" method="post" class="m-0">
                             <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all font-headline font-bold border-none bg-transparent cursor-pointer">
                                 <span class="material-symbols-outlined">logout</span> Đăng xuất
                             </button>
                         </form>
                     </div>
-                    <a th:href="@{/profile/security}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-white transition-all font-headline font-bold no-underline">
-                        <span class="material-symbols-outlined">security</span>
-                        Bảo mật
-                    </a>
                 </div>
             </aside>
 

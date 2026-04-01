@@ -6,22 +6,23 @@ import lombok.Data;
 @Data
 public class RegisterRequest {
 
-    @NotBlank(message = "Full name is required")
-    @Size(min = 2, max = 100, message = "Name must be 2–100 characters")
+    @NotBlank(message = "Họ và tên là bắt buộc")
+    @Size(min = 2, max = 100, message = "Tên phải từ 2–100 ký tự")
     private String fullName;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Please enter a valid email")
+    @NotBlank(message = "Email là bắt buộc")
+    @Email(message = "Email không đúng định dạng")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @NotBlank(message = "Mật khẩu là bắt buộc")
+    @Size(min = 8, message = "Mật khẩu phải có ít nhất 8 ký tự")
     private String password;
 
-    @NotBlank(message = "Please confirm your password")
+    @NotBlank(message = "Vui lòng xác nhận mật khẩu")
     private String confirmPassword;
 
-    @Pattern(regexp = "^\\+?[0-9]{9,15}$", message = "Invalid phone number")
+    @NotBlank(message = "Số điện thoại là bắt buộc")
+    @Pattern(regexp = "^[0-9]{9,15}$", message = "Số điện thoại chỉ bao gồm số")
     private String phone;
 
     private boolean registerAsOwner = false;

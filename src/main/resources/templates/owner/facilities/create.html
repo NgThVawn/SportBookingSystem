@@ -1,128 +1,258 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Create Facility</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Thêm mới Cơ sở | Arena Kinetic Owner</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { primary: "#b02f00", surface: "#f8f9fa" },
+                    fontFamily: { headline: ["Epilogue"], body: ["Inter"], label: ["Lexend"] },
+                },
+            },
+        }
+    </script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f9f9f9;
-            margin: 20px;
-        }
-        h2 {
-            color: #333;
-        }
-        form {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 600px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: bold;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 8px;
-            margin-top: 4px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box; 
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #28a745; 
-            border: none;
-            color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 15px;
-        }
-        button:hover {
-            background: #218838;
-        }
-        .message {
-            margin-top: 10px;
-            color: green;
-        }
-        .error-msg {
-            color: red;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        .field-error {
-            color: red;
-            font-size: 13px;
-            margin-top: 3px;
-            display: block;
-        }
-        a.back {
-            display: inline-block;
-            margin-top: 15px;
-            color: #007BFF;
-            text-decoration: none;
-        }
-        a.back:hover {
-            text-decoration: underline;
-        }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body>
+<body class="bg-surface font-body text-slate-800 antialiased">
 
-<h2>Create New Facility</h2>
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
 
-<p th:if="${errorMsg}" class="error-msg" th:text="${errorMsg}"></p>
-<p th:if="${successMsg}" class="message" th:text="${successMsg}"></p>
+<main class="ml-64 min-h-screen relative flex flex-col">
 
-<form th:action="@{/owner/facilities/create}" method="post" th:object="${facilityRequest}" enctype="multipart/form-data">
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm font-medium">
+                <span class="text-slate-400">Arena Manager</span>
+                <span class="text-slate-300">/</span>
+                <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Cơ sở</a>
+                <span class="text-slate-300">/</span>
+                <span class="text-slate-800 font-bold">Thêm mới</span>
+            </div>
+        </div>
+    </header>
 
-    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <div class="p-8 flex-1 w-full max-w-5xl mx-auto">
 
-    <label for="name">Facility Name <span style="color:red">*</span></label>
-    <input type="text" th:field="*{name}" id="name" placeholder="Enter facility name..." />
-    <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="font-headline font-black text-3xl text-slate-900 tracking-tight">Tạo Cơ sở mới</h2>
+                <p class="text-slate-500 text-sm mt-1">Điền thông tin chi tiết để đưa sân đấu của bạn lên hệ thống.</p>
+            </div>
+            <a th:href="@{/owner/facilities}" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-sm rounded-xl flex items-center gap-2 hover:bg-slate-50 transition-colors text-decoration-none shadow-sm active:scale-95">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span> Trở về danh sách
+            </a>
+        </div>
 
-    <label for="description">Description</label>
-    <textarea th:field="*{description}" id="description" rows="3" placeholder="Brief description of the facility..."></textarea>
-    <span class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+        <div th:if="${successMsg}" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="font-bold text-sm" th:text="${successMsg}"></span>
+        </div>
+        <div th:if="${errorMsg}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-bold text-sm" th:text="${errorMsg}"></span>
+        </div>
 
-    <label for="address">Address <span style="color:red">*</span></label>
-    <input type="text" th:field="*{address}" id="address" placeholder="Street address..." />
-    <span class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
 
-    <label for="city">City <span style="color:red">*</span></label>
-    <input type="text" th:field="*{city}" id="city" />
-    <span class="field-error" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></span>
+            <form th:action="@{/owner/facilities/create}" method="post" th:object="${facilityRequest}" enctype="multipart/form-data" class="space-y-8">
 
-    <label for="district">District</label>
-    <input type="text" th:field="*{district}" id="district" />
+                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-    <label for="phone">Phone Number</label>
-    <input type="text" th:field="*{phone}" id="phone" placeholder="+84..." />
-    <span class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+                <div class="space-y-4">
+                    <h3 class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span class="material-symbols-outlined text-orange-600">image</span> Hình ảnh cơ sở
+                    </h3>
+                    <div class="space-y-2">
+                        <label for="images" class="block text-sm font-bold text-slate-700">Tải lên hình ảnh sân đấu</label>
 
-    <label for="email">Email</label>
-    <input type="email" th:field="*{email}" id="email" />
-    <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+                        <div class="relative border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 hover:border-orange-500/50 transition-colors group cursor-pointer">
+                            <input type="file" name="images" id="images" multiple="multiple" accept="image/*" onchange="previewImages(this)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                            <div class="flex flex-col items-center justify-center text-slate-500 group-hover:text-orange-600 transition-colors">
+                                <span class="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
+                                <p class="font-bold text-base">Kéo thả ảnh vào đây hoặc click để chọn file</p>
+                                <p class="text-xs mt-1 text-slate-400 font-normal">Hỗ trợ JPG, PNG, WEBP (Khuyến nghị ảnh tỷ lệ 16:9)</p>
+                            </div>
+                        </div>
 
-    <label for="openTime">Open Time <span style="color:red">*</span></label>
-    <input type="time" th:field="*{openTime}" id="openTime" />
-    <span class="field-error" th:if="${#fields.hasErrors('openTime')}" th:errors="*{openTime}"></span>
+                        <div id="imagePreviewContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4 empty:hidden">
+                        </div>
 
-    <label for="closeTime">Close Time <span style="color:red">*</span></label>
-    <input type="time" th:field="*{closeTime}" id="closeTime" />
-    <span class="field-error" th:if="${#fields.hasErrors('closeTime')}" th:errors="*{closeTime}"></span>
+                    </div>
+                </div>
 
-    <label for="images">Upload Images</label>
-    <input type="file" name="images" id="images" multiple="multiple" accept="image/*" />
+                <div class="space-y-4 pt-4">
+                    <h3 class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span class="material-symbols-outlined text-orange-600">info</span> Thông tin cơ bản
+                    </h3>
 
-    <button type="submit">Create Facility</button>
-</form>
+                    <div class="space-y-6 max-w-2xl">
+                        <div class="space-y-1.5">
+                            <label for="name" class="block text-sm font-bold text-slate-700">Tên cơ sở đấu trường <span class="text-red-500">*</span></label>
+                            <input type="text" th:field="*{name}" id="name"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                   th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20"
+                                   placeholder="VD: Sân Bóng Arena Kinetic" />
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('name')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{name}"></span></p>
+                        </div>
 
-<a th:href="@{/owner/facilities}" class="back">← Back to Facilities</a>
+                        <div class="space-y-1.5">
+                            <label for="description" class="block text-sm font-bold text-slate-700">Mô tả giới thiệu sân</label>
+                            <textarea th:field="*{description}" id="description" rows="4"
+                                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all resize-none font-body text-sm leading-relaxed"
+                                      th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20"
+                                      placeholder="Mô tả về chất lượng mặt sân, bãi đậu xe, dịch vụ nước uống..."></textarea>
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('description')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{description}"></span></p>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="space-y-4 pt-4">
+                    <h3 class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span class="material-symbols-outlined text-orange-600">location_on</span> Vị trí & Liên hệ
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                        <div class="space-y-1.5">
+                            <label for="phone" class="block text-sm font-bold text-slate-700">Hotline đặt sân <span class="text-red-500">*</span></label>
+                            <input type="text" th:field="*{phone}" id="phone"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                   th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20"
+                                   placeholder="0901 234 567" />
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('phone')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{phone}"></span></p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label for="email" class="block text-sm font-bold text-slate-700">Email liên hệ</label>
+                            <input type="email" th:field="*{email}" id="email"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                   th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20"
+                                   placeholder="contact@arena.vn" />
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('email')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{email}"></span></p>
+                        </div>
+
+                        <div class="md:col-span-2 space-y-1.5">
+                            <label for="address" class="block text-sm font-bold text-slate-700">Địa chỉ cụ thể <span class="text-red-500">*</span></label>
+                            <input type="text" th:field="*{address}" id="address"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                   th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20"
+                                   placeholder="Số nhà, Tên đường, Phường/Xã..." />
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('address')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{address}"></span></p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label for="district" class="block text-sm font-bold text-slate-700">Quận/Huyện <span class="text-red-500">*</span></label>
+                            <input type="text" th:field="*{district}" id="district"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                   th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20"
+                                   placeholder="VD: Quận 10" />
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('district')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{district}"></span></p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label for="city" class="block text-sm font-bold text-slate-700">Tỉnh/Thành phố <span class="text-red-500">*</span></label>
+                            <input type="text" th:field="*{city}" id="city"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                   th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20"
+                                   placeholder="VD: TP. Hồ Chí Minh" />
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('city')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{city}"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-4">
+                    <h3 class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span class="material-symbols-outlined text-orange-600">schedule</span> Thời gian hoạt động
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                        <div class="space-y-1.5">
+                            <label for="openTime" class="block text-sm font-bold text-slate-700">Giờ mở cửa sân <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">light_mode</span>
+                                <input type="time" th:field="*{openTime}" id="openTime"
+                                       class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                       th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20" />
+                            </div>
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('openTime')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{openTime}"></span></p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label for="closeTime" class="block text-sm font-bold text-slate-700">Giờ đóng cửa sân <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">dark_mode</span>
+                                <input type="time" th:field="*{closeTime}" id="closeTime"
+                                       class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                       th:errorclass="!border-red-500 !bg-red-50 focus:!ring-red-500/20" />
+                            </div>
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1" th:if="${#fields.hasErrors('closeTime')}"><span class="material-symbols-outlined text-[14px]">warning</span> <span th:errors="*{closeTime}"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-10 flex justify-end gap-3 border-t border-slate-100 mt-12">
+                    <a th:href="@{/owner/facilities}" class="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors text-decoration-none shadow-sm">
+                        Hủy bỏ
+                    </a>
+                    <button type="submit" class="px-8 py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 shadow-lg shadow-orange-600/20 active:scale-95 transition-all flex items-center gap-2 border-none cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px] font-bold">add_circle</span> Thêm cơ sở
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</main>
+<script th:inline="javascript">
+    // Hàm hiển thị ảnh Preview khi người dùng chọn file
+    function previewImages(input) {
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        previewContainer.innerHTML = ''; // Xóa trắng ảnh cũ nếu người dùng chọn lại file
+
+        if (input.files && input.files.length > 0) {
+            // Lặp qua từng file người dùng vừa chọn
+            Array.from(input.files).forEach(file => {
+                // Chỉ xử lý nếu nó là file ảnh
+                if (!file.type.startsWith('image/')) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 1. Tạo một cái khung HTML cho ảnh
+                    const div = document.createElement('div');
+                    div.className = 'relative rounded-xl overflow-hidden border border-slate-200 shadow-sm h-28 group animate-fade-in';
+
+                    // 2. Tạo thẻ <img>
+                    const img = document.createElement('img');
+                    img.src = e.target.result; // URL mã hóa của ảnh
+                    img.className = 'w-full h-full object-cover';
+
+                    // 3. (Bonus) Tạo thanh đen mờ mờ ở dưới chứa tên file
+                    const overlay = document.createElement('div');
+                    overlay.className = 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/80 to-transparent p-2';
+                    overlay.innerHTML = `<p class="text-[10px] text-white truncate font-medium">${file.name}</p>`;
+
+                    // Nhét vào giao diện
+                    div.appendChild(img);
+                    div.appendChild(overlay);
+                    previewContainer.appendChild(div);
+                }
+                reader.readAsDataURL(file); // Đọc file
+            });
+        }
+    }
+</script>
 </body>
 </html>
