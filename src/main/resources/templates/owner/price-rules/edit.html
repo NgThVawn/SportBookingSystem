@@ -59,9 +59,9 @@
     </header>
 
     <div class="p-8 flex-1">
-        <div th:if="${errorMsg}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
+        <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
             <span class="material-symbols-outlined">error</span>
-            <span class="font-bold text-sm" th:text="${errorMsg}"></span>
+            <span class="font-bold text-sm" th:text="${error}"></span>
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
