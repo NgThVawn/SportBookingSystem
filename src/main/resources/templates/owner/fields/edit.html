@@ -1,63 +1,189 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Edit Field</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Chỉnh sửa sân | Arena Kinetic</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800;900&amp;family=Inter:wght@400;500;600&amp;family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": "#f8f9fa",
+                        "tertiary-fixed": "#c8e6ff",
+                        "surface-tint": "#b02f00",
+                        "tertiary": "#00628c",
+                        "primary": "#b02f00",
+                        "on-surface-variant": "#5b4039",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "secondary-fixed": "#e0e0ff",
+                        "surface-bright": "#f8f9fa",
+                        "on-tertiary-fixed": "#001e2e",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f3f4f5",
+                        "secondary": "#4c56af",
+                        "surface-variant": "#e1e3e4",
+                        "primary-fixed": "#ffdbd1",
+                        "on-background": "#191c1d",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#e4beb4",
+                        "outline": "#907067",
+                        "primary-fixed-dim": "#ffb5a0",
+                        "on-primary-fixed-variant": "#862200",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#004c6d",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "background": "#f8f9fa",
+                        "on-primary-fixed": "#3b0900",
+                        "primary-container": "#ff5722",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#edeeef",
+                        "on-surface": "#191c1d",
+                        "tertiary-container": "#007caf",
+                        "on-primary-container": "#541200",
+                        "inverse-primary": "#ffb5a0",
+                        "surface-container-high": "#e7e8e9",
+                        "on-secondary-container": "#27308a",
+                        "surface-container-highest": "#e1e3e4",
+                        "secondary-container": "#959efd",
+                        "on-secondary-fixed-variant": "#343d96",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#86cfff",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dadb",
+                        "inverse-surface": "#2e3132",
+                        "on-secondary-fixed": "#000767",
+                        "on-tertiary-container": "#fcfcff",
+                        "inverse-on-surface": "#f0f1f2"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"}
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; padding: 20px; }
-        .container { max-width: 600px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: auto; }
-        h2 { color: #333; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
-        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        .btn-update { background: #007bff; color: white; border: none; padding: 12px; width: 100%; margin-top: 25px; cursor: pointer; border-radius: 4px; font-size: 16px; font-weight: bold; }
-        .btn-update:hover { background: #0069d9; }
-        .error-msg { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
-        .field-error { color: #dc3545; font-size: 13px; margin-top: 5px; }
-        .back-link { display: inline-block; margin-top: 20px; color: #6c757d; text-decoration: none; }
-        .back-link:hover { text-decoration: underline; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Epilogue', sans-serif; }
+        .font-label { font-family: 'Lexend', sans-serif; }
     </style>
 </head>
-<body>
+<body class="bg-surface text-on-surface min-h-screen">
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
 
-<div class="container">
-    <h2>Edit Field: <span th:text="${field.name}"></span></h2>
+<main class="ml-64 min-h-screen">
+    <header class="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl flex justify-between items-center px-8 py-4 shadow-sm">
+        <div class="flex items-center gap-4">
+            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="p-2 hover:bg-surface-container rounded-full transition-colors group text-decoration-none">
+                <span class="material-symbols-outlined text-slate-500 group-hover:text-primary transition-colors">arrow_back</span>
+            </a>
+            <h2 class="font-headline tracking-tight font-bold text-2xl text-slate-900">Chỉnh sửa sân</h2>
+        </div>
+        <div></div>
+    </header>
 
-    <div class="error-msg" th:if="${errorMsg}" th:text="${errorMsg}"></div>
-    
-    <form th:action="@{/owner/facilities/{facId}/fields/{fieldId}/edit(facId=${facility.id}, fieldId=${field.id})}" 
-          th:object="${fieldRequest}" method="post">
-        
-        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-        
-        <label>Field Name *</label>
-        <input th:field="*{name}" />
-        <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+    <form th:action="@{/owner/facilities/{facId}/fields/{fieldId}/edit(facId=${facility.id}, fieldId=${field.id})}" th:object="${fieldRequest}" method="post">
+        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-        <label>Sport Type *</label>
-        <select th:field="*{sportType}">
-            <option th:each="s : ${sportTypes}" th:value="${s}" th:text="${s.displayName}"></option>
-        </select>
-        <p class="field-error" th:if="${#fields.hasErrors('sportType')}" th:errors="*{sportType}"></p>
+        <div class="p-8 max-w-6xl mx-auto">
+            <div th:if="${errorMsg}" class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-800 p-4" th:text="${errorMsg}"></div>
 
-        <label>Surface Type</label>
-        <input th:field="*{surfaceType}" placeholder="Cỏ nhân tạo, Sân gạch..." />
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8">
+                    <section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm space-y-6">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">edit_square</span>
+                            <h3 class="text-xl font-bold tracking-tight text-slate-900">Thông tin sân</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="font-label text-sm font-medium text-slate-600">Tên sân bóng</label>
+                                <input th:field="*{name}" class="w-full bg-surface-container-highest border-none focus:ring-2 focus:ring-primary/20 rounded-lg p-3 text-on-surface placeholder:text-slate-400" placeholder="VD: Sân A1 - Mỹ Đình" type="text"/>
+                                <p class="text-xs text-red-600" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+                            </div>
 
-        <div style="display: flex; gap: 15px;">
-            <div style="flex: 1;">
-                <label>Price Per Hour (VNĐ) *</label>
-                <input type="number" th:field="*{pricePerHour}" />
-                <p class="field-error" th:if="${#fields.hasErrors('pricePerHour')}" th:errors="*{pricePerHour}"></p>
+                            <div class="space-y-2">
+                                <label class="font-label text-sm font-medium text-slate-600">Loại sân</label>
+                                <select th:field="*{sportType}" class="w-full bg-surface-container-highest border-none focus:ring-2 focus:ring-primary/20 rounded-lg p-3 text-on-surface">
+                                    <option th:each="s : ${sportTypes}" th:value="${s}" th:text="${s.displayName}"></option>
+                                </select>
+                                <p class="text-xs text-red-600" th:if="${#fields.hasErrors('sportType')}" th:errors="*{sportType}"></p>
+                            </div>
+
+                            <div class="md:col-span-2 space-y-2">
+                                <label class="font-label text-sm font-medium text-slate-600">Mô tả ngắn</label>
+                                <textarea th:field="*{description}" class="w-full bg-surface-container-highest border-none focus:ring-2 focus:ring-primary/20 rounded-lg p-3 text-on-surface placeholder:text-slate-400" placeholder="Mô tả về chất lượng cỏ, kích thước hoặc lưu ý riêng của sân..." rows="3"></textarea>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="font-label text-sm font-medium text-slate-600">Bề mặt sân</label>
+                                <input th:field="*{surfaceType}" class="w-full bg-surface-container-highest border-none focus:ring-2 focus:ring-primary/20 rounded-lg p-3 text-on-surface placeholder:text-slate-400" placeholder="VD: Cỏ nhân tạo" type="text"/>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm space-y-6">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">payments</span>
+                            <h3 class="text-xl font-bold tracking-tight text-slate-900">Giá thuê</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2 relative">
+                                <label class="font-label text-sm font-medium text-slate-600">Giá thuê theo giờ</label>
+                                <div class="relative">
+                                    <input th:field="*{pricePerHour}" class="w-full bg-surface-container-highest border-none focus:ring-2 focus:ring-primary/20 rounded-lg p-3 text-on-surface pr-16 font-label" placeholder="300000" type="number" step="0.01"/>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">VNĐ</span>
+                                </div>
+                                <p class="text-xs text-red-600" th:if="${#fields.hasErrors('pricePerHour')}" th:errors="*{pricePerHour}"></p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="lg:col-span-1 space-y-8">
+                    <div class="sticky top-28 space-y-4">
+                        <div class="bg-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10">
+                                <span class="material-symbols-outlined text-6xl">verified</span>
+                            </div>
+                            <h4 class="font-headline font-bold text-lg mb-2">Cập nhật thông tin</h4>
+                            <p class="text-slate-400 text-sm mb-6">Xác nhận lại tên sân, loại sân và giá để đảm bảo dữ liệu hiển thị chính xác.</p>
+                            <div class="space-y-3">
+                                <button class="w-full bg-primary text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-primary-container transition-all active:scale-95 shadow-lg shadow-primary/20" type="submit">
+                                    <span class="material-symbols-outlined">save</span>
+                                    <span>Lưu thay đổi</span>
+                                </button>
+                                <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="w-full bg-slate-800 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-700 transition-all active:scale-95 text-decoration-none">
+                                    <span>Hủy bỏ</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-tertiary-fixed/30 border-l-4 border-tertiary rounded-lg">
+                            <div class="flex gap-3">
+                                <span class="material-symbols-outlined text-tertiary">lightbulb</span>
+                                <p class="text-xs text-on-tertiary-fixed leading-relaxed">
+                                    <strong>Mẹo:</strong> Cập nhật thông tin rõ ràng giúp khách đặt sân nhanh hơn và giảm tỉ lệ hủy.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <label>Description</label>
-        <textarea th:field="*{description}" rows="3"></textarea>
-
-        <button type="submit" class="btn-update">Update Field Information</button>
     </form>
-    
-    <br/>
-    <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="back-link">← Back to Fields Management</a>
-</div>
-
+</main>
 </body>
 </html>
