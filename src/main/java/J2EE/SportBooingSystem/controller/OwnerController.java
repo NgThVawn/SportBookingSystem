@@ -495,22 +495,6 @@ public class OwnerController {
             return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
                 + "/blocked-times?date=" + redirectDate;
         }
-
-        if (br.hasErrors()) {
-            String message = br.getAllErrors().stream()
-                .findFirst()
-                .map(error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Dữ liệu không hợp lệ")
-                .orElse("Dữ liệu không hợp lệ");
-            ra.addFlashAttribute("error", message);
-
-            LocalDate redirectDate = req.getDate() != null ? req.getDate() : LocalDate.now();
-            if (all) {
-                return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
-                        + "/blocked-times?all=true";
-            }
-            return "redirect:/owner/facilities/" + facilityId + "/fields/" + fieldId
-                + "/blocked-times?date=" + redirectDate;
-        }
         try {
             if (!fieldRepo.existsByIdAndFacility_IdAndFacility_Owner_Email(fieldId, facilityId, ud.getUsername())) {
                 throw new ForbiddenException("Không có quyền");
