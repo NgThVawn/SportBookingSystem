@@ -49,7 +49,7 @@
             <span class="text-slate-300">/</span>
             <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Cơ sở</a>
             <span class="text-slate-300">/</span>
-            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none" th:text="${field.name}">Sân</a>
+            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none" th:text="${facility.name}">Sân</a>
             <span class="text-slate-300">/</span>
             <span class="text-slate-800 font-bold">Chặn khung giờ</span>
         </div>
