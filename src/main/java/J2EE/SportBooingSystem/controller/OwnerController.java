@@ -604,8 +604,15 @@ public class OwnerController {
         }
 
         try {
+            if (req.getStartTime() != null && req.getEndTime() != null
+                    && !req.getStartTime().isBefore(req.getEndTime())) {
+                throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc");
+            }
             if (bookingRepo.existsConflict(blockedTime.getField(), req.getDate(), req.getStartTime(), req.getEndTime())) {
                 throw new IllegalStateException("Khung giờ này đã có người đặt, không thể chặn");
+            }
+            if (blockedRepo.existsConflictExcludingId(blockedTime.getField(), req.getDate(), req.getStartTime(), req.getEndTime(), id)) {
+                throw new IllegalStateException("Khung giờ này đã bị chặn bởi quy tắc khác");
             }
 
             blockedTime.setDate(req.getDate());

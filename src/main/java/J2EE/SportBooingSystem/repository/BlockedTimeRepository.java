@@ -30,6 +30,20 @@ public interface BlockedTimeRepository extends JpaRepository<BlockedTime, Long> 
 
     @Query("""
         SELECT COUNT(bt) > 0 FROM BlockedTime bt
+        WHERE bt.field = :field
+          AND bt.date = :date
+          AND bt.startTime < :endTime
+          AND bt.endTime > :startTime
+          AND bt.id <> :excludeId
+    """)
+    boolean existsConflictExcludingId(@Param("field") Field field,
+                                      @Param("date") LocalDate date,
+                                      @Param("startTime") LocalTime startTime,
+                                      @Param("endTime") LocalTime endTime,
+                                      @Param("excludeId") Long excludeId);
+
+    @Query("""
+        SELECT COUNT(bt) > 0 FROM BlockedTime bt
         JOIN bt.field f
         JOIN f.facility fac
         JOIN fac.owner o
