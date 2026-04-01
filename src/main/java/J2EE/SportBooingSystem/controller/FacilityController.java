@@ -18,6 +18,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/facilities")
@@ -37,16 +40,27 @@ public class FacilityController {
             @RequestParam(required = false) SportType sport,
             @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "0") int page,
+            @AuthenticationPrincipal UserDetails userDetails,
             Model model) {
 
         Page<Facility> facilities = facilityService.search(city, sport, name,
             PageRequest.of(page, 9));
+
+        Set<Long> favIds = Collections.emptySet();
+        if (userDetails != null) {
+            favIds = userRepository.findByEmail(userDetails.getUsername())
+                .map(u -> favoriteRepository.findByUser(u).stream()
+                    .map(f -> f.getFacility().getId())
+                    .collect(Collectors.toSet()))
+                .orElse(Collections.emptySet());
+        }
 
         model.addAttribute("facilities", facilities);
         model.addAttribute("sportTypes", SportType.values());
         model.addAttribute("selectedCity", city);
         model.addAttribute("selectedSport", sport);
         model.addAttribute("searchName", name);
+        model.addAttribute("favoriteFacilityIds", favIds);
         return "facilities/list";
     }
 

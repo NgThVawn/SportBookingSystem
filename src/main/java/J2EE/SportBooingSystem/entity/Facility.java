@@ -1,6 +1,9 @@
 package J2EE.SportBooingSystem.entity;
 
 import J2EE.SportBooingSystem.enums.FacilityStatus;
+import J2EE.SportBooingSystem.enums.FieldStatus;
+import J2EE.SportBooingSystem.enums.SportType;
+import org.hibernate.annotations.BatchSize;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -11,7 +14,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "facilities")
@@ -82,6 +89,7 @@ public class Facility {
     private List<FacilityImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<Field> fields = new ArrayList<>();
 
@@ -99,5 +107,26 @@ public class Facility {
                 .map(FacilityImage::getImageUrl)
                 .findFirst()
                 .orElse(images.isEmpty() ? null : images.get(0).getImageUrl());
+    }
+
+    public Set<SportType> getUniqueSportTypes() {
+        return fields.stream()
+                .filter(f -> f.getStatus() == FieldStatus.OPEN)
+                .map(Field::getSportType)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public BigDecimal getMinPricePerHour() {
+        return fields.stream()
+                .filter(f -> f.getStatus() == FieldStatus.OPEN)
+                .map(Field::getPricePerHour)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
+    public long getOpenFieldCount() {
+        return fields.stream()
+                .filter(f -> f.getStatus() == FieldStatus.OPEN)
+                .count();
     }
 }

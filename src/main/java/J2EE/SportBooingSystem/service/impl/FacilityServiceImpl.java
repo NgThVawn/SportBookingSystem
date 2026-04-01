@@ -117,12 +117,16 @@ public class FacilityServiceImpl implements FacilityService {
     @Override
     @Transactional(readOnly = true)
     public Page<Facility> search(String city, SportType sport, String name, Pageable pageable) {
-        return facilityRepository.searchFacilities(
+        Page<Facility> page = facilityRepository.searchFacilities(
             (city != null && !city.isBlank()) ? city : null,
             sport,
             (name != null && !name.isBlank()) ? name : null,
             pageable
         );
+        // Force-initialize lazy 'fields' collection while the session is still open
+        // (@BatchSize(20) on Facility.fields batches this into a single IN query)
+        page.getContent().forEach(f -> f.getFields().size());
+        return page;
     }
 
     @Override
