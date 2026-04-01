@@ -10,20 +10,18 @@
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
         <form th:action="@{/bookings}" method="post" th:object="${bookingRequest}">
-            <input type="hidden" th:field="*{fieldId}" th:value="${fieldId}">
-            <input type="hidden" name="bookingDate"
-                   th:value="${#request.getParameter('date')}">
-            <input type="hidden" name="startTime"
-                   th:value="${#request.getParameter('start')}">
-            <input type="hidden" name="endTime"
-                   th:value="${#request.getParameter('end')}">
+            <!-- Dữ liệu từ query params (fieldId, date, start, end) truyền qua model -->
+            <input type="hidden" name="fieldId"     th:value="${fieldId}">
+            <input type="hidden" name="bookingDate" th:value="${date}">
+            <input type="hidden" name="startTime"   th:value="${start}">
+            <input type="hidden" name="endTime"     th:value="${end}">
 
             <div class="card mb-3">
                 <div class="card-body">
                     <p><strong>Ngày:</strong>
-                        <span th:text="${#request.getParameter('date')}"></span></p>
+                        <span th:text="${date}"></span></p>
                     <p><strong>Giờ:</strong>
-                        <span th:text="${#request.getParameter('start') + ' – ' + #request.getParameter('end')}"></span></p>
+                        <span th:text="${start + ' – ' + end}"></span></p>
                 </div>
             </div>
 

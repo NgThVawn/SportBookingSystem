@@ -15,4 +15,5 @@ public interface BookingService {
     BookingResponse getBookingByCode(String code, String requestorEmail);
     AvailabilityResponse getAvailability(Long fieldId, LocalDate date);
     void completeExpiredBookings(); // Gọi bởi scheduler
+    void cancelExpiredPendingBookings();
 }

@@ -11,6 +11,8 @@ import J2EE.SportBooingSystem.repository.*;
 import J2EE.SportBooingSystem.service.BookingService;
 import J2EE.SportBooingSystem.service.PriceRuleService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepo;
@@ -29,6 +32,8 @@ public class BookingServiceImpl implements BookingService {
     private final FieldRepository fieldRepo;
     private final UserRepository userRepo;
     private final PriceRuleService priceRuleService;
+    @Value("${booking.payment-timeout-minutes:5}")
+    private int paymentTimeoutMinutes;
 
     @Override
     @Transactional
@@ -59,7 +64,7 @@ public class BookingServiceImpl implements BookingService {
                 .startTime(req.getStartTime())
                 .endTime(req.getEndTime())
                 .totalPrice(price)
-                .status(BookingStatus.CONFIRMED)
+                .status(BookingStatus.PENDING)
                 .note(req.getNote())
                 .build();
 
@@ -162,5 +167,20 @@ public class BookingServiceImpl implements BookingService {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String rand = String.format("%04d", new Random().nextInt(10000));
         return "BK" + date + rand;
+    }
+
+    @Override
+    @Transactional
+    public void cancelExpiredPendingBookings() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(paymentTimeoutMinutes);
+        bookingRepo.findAll().stream()
+                .filter(b -> b.getStatus() == BookingStatus.PENDING)
+                .filter(b -> b.getCreatedAt().isBefore(cutoff))
+                .forEach(b -> {
+                    b.setStatus(BookingStatus.CANCELLED);
+                    b.setCancelReason("Tự động hủy do chưa thanh toán sau " + paymentTimeoutMinutes + " phút");
+                    bookingRepo.save(b);
+                    log.info("Auto-cancelled PENDING booking: {}", b.getBookingCode());
+                });
     }
 }

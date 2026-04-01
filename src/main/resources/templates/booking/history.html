@@ -1,44 +1,83 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
-<head><title>Lịch sử đặt sân</title></head>
-<body>
-<th:block th:fragment="content">
-    <div class="container py-4">
+<!doctype html>
+<html
+  lang="vi"
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}"
+>
+  <head>
+    <title>Lịch sử đặt sân</title>
+  </head>
+  <body>
+    <th:block th:fragment="content">
+      <div class="container py-4">
         <h3 class="mb-4">Lịch sử đặt sân</h3>
 
-        <div th:if="${#lists.isEmpty(bookings)}" class="text-muted">Bạn chưa có lịch đặt sân nào.</div>
+        <div th:if="${#lists.isEmpty(bookings)}" class="text-muted">
+          Bạn chưa có lịch đặt sân nào.
+        </div>
 
         <div th:each="b : ${bookings}" class="card mb-3 shadow-sm">
-            <div class="card-body d-flex justify-content-between align-items-start">
-                <div>
-                    <h6 class="mb-1">
-                        <span th:text="${b.facilityName}"></span> —
-                        <span th:text="${b.fieldName}"></span>
-                    </h6>
-                    <p class="mb-1 text-muted small">
-                        <span th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy')}"></span>
-                        &nbsp;
-                        <span th:text="${b.startTime + ' – ' + b.endTime}"></span>
-                    </p>
-                    <p class="mb-1">
-                        <strong th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + '₫'}"></strong>
-                    </p>
-                    <span class="badge"
-                          th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-success' :
-                                b.status.name() == 'CANCELLED' ? 'bg-danger' :
-                                b.status.name() == 'COMPLETED' ? 'bg-secondary' : 'bg-warning'}"
-                          th:text="${b.status}"></span>
-                    <small class="text-muted ms-2" th:text="'#' + ${b.bookingCode}"></small>
-                </div>
-                <form th:if="${b.status.name() == 'CONFIRMED'}"
-                      th:action="@{/bookings/{id}/cancel(id=${b.id})}" method="post">
-                    <button type="submit" class="btn btn-outline-danger btn-sm"
-                            onclick="return confirm('Bạn có chắc muốn hủy?')">Hủy</button>
-                </form>
+          <div
+            class="card-body d-flex justify-content-between align-items-start"
+          >
+            <div>
+              <h6 class="mb-1">
+                <span th:text="${b.facilityName}"></span> —
+                <span th:text="${b.fieldName}"></span>
+              </h6>
+              <p class="mb-1 text-muted small">
+                <span
+                  th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy')}"
+                ></span>
+                &nbsp;
+                <span th:text="${b.startTime + ' – ' + b.endTime}"></span>
+              </p>
+              <p class="mb-1">
+                <strong
+                  th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + '₫'}"
+                ></strong>
+              </p>
+              <span
+                class="badge"
+                th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-success' :
+                        b.status.name() == 'PENDING'   ? 'bg-warning text-dark' :
+                        b.status.name() == 'CANCELLED' ? 'bg-danger' :
+                        b.status.name() == 'COMPLETED' ? 'bg-secondary' : 'bg-info'}"
+                th:text="${b.status.name() == 'PENDING' ? 'Chờ thanh toán' :
+                 b.status.name() == 'CONFIRMED' ? 'Đã xác nhận' :
+                 b.status.name() == 'CANCELLED' ? 'Đã hủy' :
+                 b.status.name() == 'COMPLETED' ? 'Hoàn thành' : b.status}"
+              >
+              </span>
+              <small
+                class="text-muted ms-2"
+                th:text="'#' + ${b.bookingCode}"
+              ></small>
             </div>
+            <a
+              th:if="${b.status.name() == 'PENDING'}"
+              th:href="@{/payment/checkout(bookingCode=${b.bookingCode})}"
+              class="btn btn-danger btn-sm"
+              >Thanh toán ngay</a
+            >
+
+            <!-- Nút Hủy (khi CONFIRMED) -->
+            <form
+              th:if="${b.status.name() == 'CONFIRMED'}"
+              th:action="@{/bookings/{id}/cancel(id=${b.id})}"
+              method="post"
+            >
+              <button
+                type="submit"
+                class="btn btn-outline-danger btn-sm"
+                onclick="return confirm('Bạn có chắc muốn hủy?');"
+              >
+                Hủy
+              </button>
+            </form>
+          </div>
         </div>
-    </div>
-</th:block>
-</body>
+      </div>
+    </th:block>
+  </body>
 </html>

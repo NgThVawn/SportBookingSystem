@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head><title>Kết quả thanh toán</title></head>
+<body>
+<th:block th:fragment="content">
+    <div class="container py-5" style="max-width: 600px">
+
+        <!-- ── THÀNH CÔNG ── -->
+        <div th:if="${success}" class="text-center mb-4">
+            <div class="display-1 text-success mb-3">&#10003;</div>
+            <h2 class="text-success">Thanh toán thành công!</h2>
+            <p class="text-muted">Đặt sân của bạn đã được xác nhận.</p>
+        </div>
+
+        <!-- ── THẤT BẠI ── -->
+        <div th:unless="${success}" class="text-center mb-4">
+            <div class="display-1 text-danger mb-3">&#10007;</div>
+            <h2 class="text-danger">Thanh toán không thành công</h2>
+            <p class="text-muted">
+                Giao dịch bị từ chối
+                <th:block th:if="${responseCode != null}">
+                    (Mã lỗi: <strong th:text="${responseCode}"></strong>)
+                </th:block>.
+            </p>
+            <p class="text-muted small">
+                <span th:if="${responseCode == '24'}">Bạn đã hủy giao dịch.</span>
+                <span th:if="${responseCode == '51'}">Tài khoản không đủ số dư.</span>
+                <span th:if="${responseCode == '65'}">Tài khoản vượt quá hạn mức giao dịch.</span>
+                <span th:if="${responseCode == '75'}">Ngân hàng đang bảo trì.</span>
+                <span th:if="${responseCode != '24' and responseCode != '51' and responseCode != '65' and responseCode != '75'}">
+                    Vui lòng thử lại hoặc liên hệ ngân hàng.
+                </span>
+            </p>
+        </div>
+
+        <!-- Chi tiết giao dịch -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">Chi tiết giao dịch</div>
+            <div class="card-body">
+                <div class="row g-2 small">
+                    <div class="col-6 text-muted">Mã đặt sân</div>
+                    <div class="col-6 fw-semibold" th:text="${bookingCode}"></div>
+
+                    <th:block th:if="${booking != null}">
+                        <div class="col-6 text-muted">Cơ sở</div>
+                        <div class="col-6" th:text="${booking.facilityName}"></div>
+                        <div class="col-6 text-muted">Sân</div>
+                        <div class="col-6" th:text="${booking.fieldName}"></div>
+                        <div class="col-6 text-muted">Ngày giờ</div>
+                        <div class="col-6"
+                             th:text="${#temporals.format(booking.bookingDate,'dd/MM/yyyy')
+                                        + ' | ' + booking.startTime + ' – ' + booking.endTime}">
+                        </div>
+                    </th:block>
+
+                    <th:block th:if="${amountVnd != null}">
+                        <div class="col-6 text-muted">Số tiền</div>
+                        <div class="col-6"
+                             th:text="${#numbers.formatDecimal(amountVnd, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                        </div>
+                    </th:block>
+
+                    <th:block th:if="${transactionNo != null}">
+                        <div class="col-6 text-muted">Mã GD VNPay</div>
+                        <div class="col-6" th:text="${transactionNo}"></div>
+                    </th:block>
+
+                    <th:block th:if="${bankCode != null}">
+                        <div class="col-6 text-muted">Ngân hàng</div>
+                        <div class="col-6" th:text="${bankCode}"></div>
+                    </th:block>
+
+                    <th:block th:if="${payDate != null and #strings.length(payDate) >= 12}">
+                        <div class="col-6 text-muted">Thời gian</div>
+                        <div class="col-6"
+                             th:text="${#strings.substring(payDate,6,8) + '/'
+                                        + #strings.substring(payDate,4,6) + '/'
+                                        + #strings.substring(payDate,0,4) + ' '
+                                        + #strings.substring(payDate,8,10) + ':'
+                                        + #strings.substring(payDate,10,12)}">
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nút hành động -->
+        <div th:if="${success}" class="d-grid gap-2">
+            <a href="/bookings" class="btn btn-success">Xem lịch sử đặt sân</a>
+            <a href="/facilities" class="btn btn-outline-secondary">Đặt thêm sân</a>
+        </div>
+
+        <div th:unless="${success}" class="d-grid gap-2">
+            <a th:if="${booking != null and booking.status.name() == 'PENDING'}"
+               th:href="@{/payment/checkout(bookingCode=${bookingCode})}"
+               class="btn btn-danger">Thử thanh toán lại</a>
+            <a href="/bookings" class="btn btn-outline-secondary">Về lịch sử đặt sân</a>
+            <a href="/facilities" class="btn btn-outline-secondary">Đặt sân khác</a>
+        </div>
+
+    </div>
+</th:block>
+</body>
+</html>
