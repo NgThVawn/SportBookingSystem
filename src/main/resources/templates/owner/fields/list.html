@@ -15,7 +15,8 @@
         .btn-create { background-color: #28a745; }
         .btn-edit { background-color: #007bff; }
         .btn-delete { background-color: #dc3545; }
-        .btn-slots { background-color: #17a2b8; }
+        .btn-price { background-color: #ffd70b; }
+        .btn-hour { background-color: #ffd70b; }
         
         table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; }
@@ -67,12 +68,10 @@
             </td>
             <td th:text="${f.surfaceType != null ? f.surfaceType : 'N/A'}"></td>
             <td th:text="${#numbers.formatDecimal(f.pricePerHour, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
-            <td th:text="${f.slotDuration} + ' min'"></td>
             
             <td class="status-cell">
                 <span th:class="'badge status-' + ${#strings.toLowerCase(f.status)}" th:text="${f.status}"></span>
             </td>
-
             <td class="actions">
                 <a th:href="@{/owner/facilities/{facId}/fields/{fieldId}/edit(facId=${facility.id}, fieldId=${f.id})}" 
                    class="btn btn-edit">Edit</a>
@@ -83,14 +82,16 @@
                     <option value="MAINTENANCE" th:selected="${f.status.name() == 'MAINTENANCE'}">Maintenance</option>
                 </select>
 
-                <a th:href="@{/owner/facilities/{facId}/fields/{fieldId}/slots(facId=${facility.id}, fieldId=${f.id})}" 
-                   class="btn btn-slots">Slots</a>
-
                 <form th:action="@{/owner/facilities/{facId}/fields/{fieldId}/delete(facId=${facility.id}, fieldId=${f.id})}" 
-                      method="post" onsubmit="return confirm('Are you sure? All timeslots for this field will be lost!');">
+                      method="post" onsubmit="return confirm('Are you sure?');">
                     <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <button type="submit" class="btn btn-delete">Delete</button>
                 </form>
+                <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id}, fldid=${f.id})}"
+                   class="btn btn-price btn-sm">Quản lý giá</a>
+
+                <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times(fid=${facility.id}, fldid=${f.id})}"
+                   class="btn btn-hour btn-sm">Chặn giờ</a>
             </td>
         </tr>
         <tr th:if="${#lists.isEmpty(fields)}">

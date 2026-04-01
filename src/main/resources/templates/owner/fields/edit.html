@@ -47,11 +47,6 @@
                 <input type="number" th:field="*{pricePerHour}" />
                 <p class="field-error" th:if="${#fields.hasErrors('pricePerHour')}" th:errors="*{pricePerHour}"></p>
             </div>
-            <div style="flex: 1;">
-                <label>Slot Duration (Min) *</label>
-                <input type="number" th:field="*{slotDuration}" />
-                <p class="field-error" th:if="${#fields.hasErrors('slotDuration')}" th:errors="*{slotDuration}"></p>
-            </div>
         </div>
 
         <label>Description</label>

@@ -27,4 +27,11 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> fail(String message) {
         return ApiResponse.<T>builder().success(false).message(message).build();
     }
+    public static <T> ApiResponse<T> success(T data) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .message("Success")
+                .data(data)
+                .build();
+    }
 }

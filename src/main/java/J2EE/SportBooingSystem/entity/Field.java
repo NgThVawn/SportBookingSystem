@@ -46,10 +46,7 @@ public class Field {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal pricePerHour;
-    
-    @Column(nullable = false)
-    @Builder.Default
-    private Integer slotDuration = 60;
+
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
@@ -65,10 +62,6 @@ public class Field {
     private Integer reviewCount = 0;
 
 
-
-    @OneToMany(mappedBy = "field", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<TimeSlot> timeSlots = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

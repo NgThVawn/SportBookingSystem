@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head><title>Chặn giờ</title></head>
+<body>
+<th:block th:fragment="content">
+    <div class="container py-4">
+        <h4>Chặn khung giờ – <span th:text="${field.name}"></span></h4>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}"   class="alert alert-danger"  th:text="${error}"></div>
+
+        <!-- Chọn ngày xem -->
+        <form class="d-flex gap-2 mb-3" method="get">
+            <input type="date" name="date" class="form-control w-auto"
+                   th:value="${#temporals.format(selectedDate,'yyyy-MM-dd')}">
+            <button class="btn btn-outline-primary">Xem</button>
+        </form>
+
+        <!-- Danh sách blocked -->
+        <table class="table table-bordered mb-4">
+            <thead class="table-light">
+            <tr><th>Khung giờ</th><th>Lý do</th><th></th></tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(blocks)}">
+                <td colspan="3" class="text-center text-muted">Không có khung giờ nào bị chặn</td>
+            </tr>
+            <tr th:each="b : ${blocks}">
+                <td th:text="${b.startTime + ' – ' + b.endTime}"></td>
+                <td th:text="${b.reason ?: '—'}"></td>
+                <td>
+                    <form th:action="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times/{id}/delete
+                            (fid=${facility.id},fldid=${field.id},id=${b.id})}"
+                          method="post">
+                        <button class="btn btn-danger btn-sm"
+                                onclick="return confirm('Bỏ chặn khung giờ này?')">Bỏ chặn</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Form thêm -->
+        <div class="card">
+            <div class="card-header">Chặn khung giờ mới</div>
+            <div class="card-body">
+                <form th:action="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times/create
+                        (fid=${facility.id},fldid=${field.id})}"
+                      method="post" th:object="${newBlock}">
+                    <input type="hidden" th:field="*{fieldId}" th:value="${field.id}">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Ngày *</label>
+                            <input type="date" th:field="*{date}" class="form-control"
+                                   th:value="${#temporals.format(selectedDate,'yyyy-MM-dd')}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Từ *</label>
+                            <input type="time" th:field="*{startTime}" class="form-control">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Đến *</label>
+                            <input type="time" th:field="*{endTime}" class="form-control">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Lý do</label>
+                            <input th:field="*{reason}" class="form-control" placeholder="VD: Bảo trì sân">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning mt-3">Chặn khung giờ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

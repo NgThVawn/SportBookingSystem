@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head><title>Đặt sân</title></head>
+<body>
+<th:block th:fragment="content">
+    <div class="container py-4" style="max-width:600px">
+        <h3 class="mb-4">Xác nhận đặt sân</h3>
+
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <form th:action="@{/bookings}" method="post" th:object="${bookingRequest}">
+            <input type="hidden" th:field="*{fieldId}" th:value="${fieldId}">
+            <input type="hidden" name="bookingDate"
+                   th:value="${#request.getParameter('date')}">
+            <input type="hidden" name="startTime"
+                   th:value="${#request.getParameter('start')}">
+            <input type="hidden" name="endTime"
+                   th:value="${#request.getParameter('end')}">
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p><strong>Ngày:</strong>
+                        <span th:text="${#request.getParameter('date')}"></span></p>
+                    <p><strong>Giờ:</strong>
+                        <span th:text="${#request.getParameter('start') + ' – ' + #request.getParameter('end')}"></span></p>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Ghi chú</label>
+                <textarea th:field="*{note}" class="form-control" rows="3"
+                          placeholder="Yêu cầu đặc biệt (nếu có)..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">Xác nhận đặt sân</button>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary w-100 mt-2">Quay lại</a>
+        </form>
+    </div>
+</th:block>
+</body>
+</html>

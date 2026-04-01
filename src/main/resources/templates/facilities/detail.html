@@ -4,232 +4,211 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8"/>
-    <title th:text="${facility.name + ' — SportBooking'}">Facility — SportBooking</title>
+    <title th:text="${facility.name + ' — Arena Kinetic'}">Facility — SportBooking</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
     <link th:href="@{/css/app.css}" rel="stylesheet"/>
+    <style>
+        /* CSS cho lưới thời gian mới */
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .time-slot {
+            padding: 8px 5px;
+            text-align: center;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            color: #495057;
+        }
+        .time-slot.available:hover {
+            border-color: #0d6efd;
+            color: #0d6efd;
+            background: #f8f9fa;
+        }
+        .time-slot.occupied {
+            background: #f8d7da;
+            border-color: #f5c2c7;
+            color: #842029;
+            cursor: not-allowed;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .time-slot.blocked {
+            background: #fff3cd;
+            border-color: #ffecb5;
+            color: #664d03;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .time-slot.selected {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+            box-shadow: 0 2px 4px rgba(13,110,253,0.3);
+        }
+        .time-slot.in-range {
+            background: #cfe2ff;
+            border-color: #9ec5fe;
+            color: #084298;
+        }
+    </style>
 </head>
 <body class="bg-light">
-<div th:replace="~{fragments/base :: navbar}"></div>
-<div th:replace="~{fragments/base :: alerts}"></div>
+<div th:replace="~{fragments/header :: navbar}"></div>
 
-<div class="container py-4">
+<div class="container" style="padding-top: 100px; padding-bottom: 50px;">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
-            <li class="breadcrumb-item"><a th:href="@{/facilities}">Facilities</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/facilities}">Cơ sở</a></li>
             <li class="breadcrumb-item active" th:text="${facility.name}"></li>
         </ol>
     </nav>
 
     <div class="row g-4">
-        <!-- Left: Facility Info -->
         <div class="col-lg-8">
-            <!-- Hero Image -->
             <img th:src="${facility.primaryImageUrl != null ? facility.primaryImageUrl : '/images/default-facility.jpg'}"
-                 class="w-100 rounded-3 mb-3" style="height:320px;object-fit:cover;" alt="Facility"/>
+                 class="w-100 rounded-4 mb-4 shadow-sm" style="height:400px;object-fit:cover;" alt="Facility"/>
 
-            <!-- Info header -->
-            <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
-                    <h2 class="fw-bold" th:text="${facility.name}"></h2>
-                    <p class="text-muted mb-0">
-                        <i class="bi bi-geo-alt me-1"></i>
+                    <h1 class="fw-bold h2" th:text="${facility.name}"></h1>
+                    <p class="text-muted mb-0 fs-5">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
                         <span th:text="${facility.address + ', ' + facility.city}"></span>
                     </p>
                 </div>
-                <div class="text-end">
+                <div class="text-end bg-white p-2 rounded-3 shadow-sm border">
                     <span class="fs-4 fw-bold text-warning">
                         <i class="bi bi-star-fill me-1"></i>
                         <span th:text="${facility.avgRating}"></span>
                     </span>
                     <p class="text-muted small mb-0">
-                        <span th:text="${facility.reviewCount}"></span> reviews
+                        <span th:text="${facility.reviewCount}"></span> đánh giá
                     </p>
                 </div>
             </div>
 
-            <!-- Contact info -->
-            <div class="row g-2 mb-4">
-                <div class="col-auto" th:if="${facility.phone}">
-                    <span class="badge bg-light text-dark border">
-                        <i class="bi bi-telephone me-1"></i><span th:text="${facility.phone}"></span>
-                    </span>
-                </div>
-                <div class="col-auto">
-                    <span class="badge bg-light text-dark border">
-                        <i class="bi bi-clock me-1"></i>
-                        <span th:text="${facility.openTime + ' – ' + facility.closeTime}"></span>
-                    </span>
-                </div>
+            <div class="mb-5 bg-white p-4 rounded-4 shadow-sm border-0" th:if="${facility.description}">
+                <h5 class="fw-bold border-bottom pb-2 mb-3">Giới thiệu</h5>
+                <p class="text-muted mb-0 line-height-lg" th:text="${facility.description}"></p>
             </div>
 
-            <!-- Description -->
-            <div class="mb-4" th:if="${facility.description}">
-                <h5 class="fw-bold">About</h5>
-                <p class="text-muted" th:text="${facility.description}"></p>
-            </div>
+            <section id="booking-section" class="card shadow-sm border-0 rounded-4 mb-4 border-top border-primary border-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4"><i class="bi bi-calendar-check text-primary me-2"></i>Tiến hành đặt sân</h4>
 
-            <!-- Fields / Courts -->
-            <h5 class="fw-bold mb-3">
-                <i class="bi bi-grid me-2"></i>Available Courts
-            </h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-muted small text-uppercase">1. Chọn sân</label>
+                            <select id="fieldSelect" class="form-select form-select-lg">
+                                <option value="">-- Vui lòng chọn sân --</option>
+                                <option th:each="f : ${fields}"
+                                        th:if="${f.status.name() == 'OPEN'}"
+                                        th:value="${f.id}"
+                                        th:text="${f.name + ' (' + f.sportType.displayName + ') – Từ ' + #numbers.formatDecimal(f.pricePerHour,0,'COMMA',0,'POINT') + '₫/h'}">
+                                </option>
+                            </select>
+                        </div>
 
-            <!-- Date picker -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-body">
-                    <div class="row align-items-center g-2">
-                        <div class="col-auto fw-medium">Select Date:</div>
-                        <div class="col-auto">
-                            <input type="date" id="globalDate" class="form-control"
-                                   th:value="${selectedDate}"
-                                   th:min="${today}"/>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-muted small text-uppercase">2. Chọn ngày</label>
+                            <input type="date" id="bookingDate" class="form-control form-select-lg"
+                                   th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="accordion" id="fieldsAccordion">
-                <div class="accordion-item border-0 shadow-sm mb-2 rounded-3"
-                     th:each="field, iStat : ${fields}">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button fw-semibold"
-                                th:classappend="${field.status.name() != 'OPEN'} ? 'collapsed'"
-                                type="button" data-bs-toggle="collapse"
-                                th:data-bs-target="'#field-' + ${field.id}">
-                            <span class="me-2"
-                                  th:text="${field.name + ' — ' + field.sportType.displayName}"></span>
-                            <span class="badge ms-2"
-                                  th:classappend="${field.status.name() == 'OPEN'} ? 'bg-success' : 'bg-secondary'"
-                                  th:text="${field.status}"></span>
-                        </button>
-                    </h2>
-                    <div th:id="'field-' + ${field.id}" class="accordion-collapse collapse"
-                         th:classappend="${iStat.index == 0 && field.status.name() == 'OPEN'} ? 'show'">
-                        <div class="accordion-body">
-                            <div class="row g-2 mb-3">
-                                <div class="col-auto">
-                                    <span class="badge bg-info-subtle text-info">
-                                        <span th:text="${field.surfaceType ?: 'Standard'}"></span>
-                                    </span>
-                                </div>
-                                <div class="col-auto">
-                                    <strong class="text-primary"
-                                            th:text="${#numbers.formatDecimal(field.pricePerHour,0,'COMMA',0,'POINT') + ' VND/hr'}">
-                                    </strong>
+                    <div id="availabilitySection" class="d-none">
+                        <label class="form-label fw-semibold text-muted small text-uppercase d-flex justify-content-between">
+                            <span>3. Chọn khung giờ (Bấm ô Bắt đầu và ô Kết thúc)</span>
+                            <span class="text-primary cursor-pointer" id="resetSelectionBtn" style="cursor: pointer;"><i class="bi bi-arrow-clockwise"></i> Chọn lại</span>
+                        </label>
+
+                        <div class="d-flex gap-3 mb-2 small justify-content-center bg-light p-2 rounded-3">
+                            <span><span class="badge bg-white border text-dark me-1">17:00</span> Trống</span>
+                            <span><span class="badge bg-primary me-1">17:00</span> Đang chọn</span>
+                            <span><span class="badge bg-danger bg-opacity-25 text-danger border border-danger me-1">17:00</span> Đã đặt</span>
+                        </div>
+
+                        <div id="timeGrid" class="time-grid mb-4">
+                        </div>
+
+                        <div class="row g-3 mb-3 d-none" id="timeResultRow">
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded-3 text-center border">
+                                    <span class="d-block text-muted small mb-1">Giờ bắt đầu</span>
+                                    <strong class="fs-5 text-primary" id="lblStartTime">--:--</strong>
+                                    <input type="hidden" id="startTime">
                                 </div>
                             </div>
-
-                            <!-- Slot grid (loaded via JS) -->
-                            <div class="slot-grid" th:id="'slots-' + ${field.id}"
-                                 th:data-field-id="${field.id}">
-                                <div class="text-center text-muted py-3">
-                                    <div class="spinner-border spinner-border-sm me-2"></div>
-                                    Loading slots...
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded-3 text-center border">
+                                    <span class="d-block text-muted small mb-1">Giờ kết thúc</span>
+                                    <strong class="fs-5 text-primary" id="lblEndTime">--:--</strong>
+                                    <input type="hidden" id="endTime">
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Book button -->
-                            <form sec:authorize="isAuthenticated()"
-                                  th:action="@{/booking/create}" method="post"
-                                  th:id="'bookForm-' + ${field.id}" class="mt-3">
-                                <input type="hidden" name="facilityId" th:value="${facility.id}"/>
-                                <div class="selected-slots-container"
-                                     th:id="'selectedSlots-' + ${field.id}"></div>
-                                <div class="row align-items-end g-2">
-                                    <div class="col-md-5">
-                                        <label class="form-label small fw-medium">Voucher Code</label>
-                                        <input type="text" name="voucherCode"
-                                               class="form-control form-control-sm"
-                                               placeholder="Optional voucher code"/>
-                                    </div>
-                                    <div class="col-md-7">
-                                        <label class="form-label small fw-medium">Notes</label>
-                                        <input type="text" name="notes"
-                                               class="form-control form-control-sm"
-                                               placeholder="Any special requests..."/>
-                                    </div>
-                                </div>
-                                <div class="mt-3 d-flex gap-2">
-                                    <button type="submit" class="btn btn-success fw-semibold"
-                                            th:disabled="${field.status.name() != 'OPEN'}">
-                                        <i class="bi bi-calendar-check me-1"></i>Book Selected Slots
-                                    </button>
-                                    <span class="text-muted my-auto small"
-                                          th:id="'totalPrice-' + ${field.id}">
-                                        Select slots above
-                                    </span>
-                                </div>
-                            </form>
-
-                            <div sec:authorize="!isAuthenticated()" class="alert alert-info mt-3 py-2">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <a th:href="@{/auth/login}">Sign in</a> to book this court.
+                        <div id="priceSummary" class="alert alert-info d-none border-info">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>Chi tiết tính tiền</h6>
+                            </div>
+                            <div id="priceSegments" class="small mb-2 text-muted"></div>
+                            <hr class="border-info opacity-25">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="fs-5">Tổng cộng:</strong>
+                                <strong class="fs-4 text-danger" id="totalPrice">0₫</strong>
                             </div>
                         </div>
+
+                        <a id="bookBtn" href="#" class="btn btn-primary btn-lg w-100 d-none fw-bold mt-2">
+                            Tiến hành Đặt Sân
+                        </a>
                     </div>
+
                 </div>
-            </div>
-
-            <!-- Reviews -->
-            <h5 class="fw-bold mt-5 mb-3">
-                <i class="bi bi-chat-quote me-2"></i>Reviews
-                <span class="badge bg-secondary ms-2 fs-6" th:text="${#lists.size(reviews)}"></span>
-            </h5>
-
-            <div th:if="${#lists.isEmpty(reviews)}" class="text-muted">
-                No reviews yet. Be the first!
-            </div>
-
-            <div class="card border-0 shadow-sm mb-3" th:each="r : ${reviews}">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong th:text="${r.user.fullName}"></strong>
-                            <span class="text-muted small ms-2"
-                                  th:text="${#temporals.format(r.createdAt,'dd/MM/yyyy')}"></span>
-                        </div>
-                        <div class="text-warning">
-                            <th:block th:each="i : ${#numbers.sequence(1, r.rating)}">
-                                <i class="bi bi-star-fill"></i>
-                            </th:block>
-                            <th:block th:each="i : ${#numbers.sequence(r.rating + 1, 5)}">
-                                <i class="bi bi-star"></i>
-                            </th:block>
-                        </div>
-                    </div>
-                    <p class="mt-2 mb-1" th:text="${r.comment}"></p>
-                    <div th:if="${r.ownerReply}" class="ms-3 mt-2 p-2 bg-light rounded">
-                        <small class="text-muted fw-medium">Owner reply:</small>
-                        <p class="mb-0 small" th:text="${r.ownerReply}"></p>
-                    </div>
-                </div>
-            </div>
+            </section>
         </div>
 
-        <!-- Right: Services sidebar -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm sticky-top" style="top:1rem;">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">
-                        <i class="bi bi-bag me-2"></i>Add-on Services
-                    </h6>
-                    <div th:if="${#lists.isEmpty(services)}" class="text-muted small">
-                        No extra services available.
-                    </div>
-                    <div th:each="svc : ${services}" class="d-flex justify-content-between mb-2">
-                        <span th:text="${svc.name}"></span>
-                        <span class="text-primary fw-medium"
-                              th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + ' VND'}">
-                        </span>
-                    </div>
+            <div class="card border-0 shadow-sm rounded-4 sticky-top mb-4" style="top: 100px;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold border-bottom pb-2 mb-3">Thông tin cơ sở</h5>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-3 d-flex align-items-center">
+                            <div class="bg-light rounded-circle p-2 me-3"><i class="bi bi-clock text-primary"></i></div>
+                            <div>
+                                <small class="text-muted d-block">Giờ hoạt động</small>
+                                <strong th:text="${facility.openTime + ' – ' + facility.closeTime}"></strong>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center" th:if="${facility.phone}">
+                            <div class="bg-light rounded-circle p-2 me-3"><i class="bi bi-telephone text-primary"></i></div>
+                            <div>
+                                <small class="text-muted d-block">Hotline</small>
+                                <strong th:text="${facility.phone}"></strong>
+                            </div>
+                        </li>
+                    </ul>
 
-                    <hr/>
-                    <div class="text-muted small">
-                        <i class="bi bi-shield-check me-1 text-success"></i>
-                        No double-booking guarantee<br/>
-                        <i class="bi bi-arrow-counterclockwise me-1 text-info"></i>
-                        Free cancellation before slot time
+                    <h6 class="fw-bold mb-3"><i class="bi bi-bag-plus me-2"></i>Dịch vụ đi kèm</h6>
+                    <div th:if="${#lists.isEmpty(services)}" class="text-muted small">
+                        Không có dịch vụ thêm.
+                    </div>
+                    <div th:each="svc : ${services}" class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-light">
+                        <span class="text-secondary small" th:text="${svc.name}"></span>
+                        <span class="text-dark fw-medium small"
+                              th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + 'đ'}">
+                        </span>
                     </div>
                 </div>
             </div>
@@ -237,17 +216,233 @@
     </div>
 </div>
 
-<div th:replace="~{fragments/base :: footer}"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script th:src="@{/js/booking.js}"></script>
 <script th:inline="javascript">
-    const facilityId = [[${facility.id}]];
-    const today = [[${today.toString()}]];
-    const initialDate = [[${selectedDate.toString()}]];
-    const initialFieldId = [[${selectedFieldId}]];
-    document.addEventListener('DOMContentLoaded', () => {
-        initBooking(initialDate, initialFieldId);
-    });
+    document.addEventListener('DOMContentLoaded', function () {
+        const fieldSelect  = document.getElementById('fieldSelect');
+        const dateInput    = document.getElementById('bookingDate');
+        const availSection = document.getElementById('availabilitySection');
+        const timeGrid     = document.getElementById('timeGrid');
+
+        const lblStartTime = document.getElementById('lblStartTime');
+        const lblEndTime   = document.getElementById('lblEndTime');
+        const inStartTime  = document.getElementById('startTime');
+        const inEndTime    = document.getElementById('endTime');
+        const timeResultRow= document.getElementById('timeResultRow');
+
+        const priceSummary = document.getElementById('priceSummary');
+        const priceSegEl   = document.getElementById('priceSegments');
+        const totalPriceEl = document.getElementById('totalPrice');
+        const bookBtn      = document.getElementById('bookBtn');
+        const resetBtn     = document.getElementById('resetSelectionBtn');
+
+        let availability = null;
+        let selectedStartMinutes = null;
+        let selectedEndMinutes = null;
+
+        // Tự động set ngày hôm nay nếu chưa có
+        if(!dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+
+        async function loadAvailability() {
+            const fieldId = fieldSelect.value;
+            const date    = dateInput.value;
+
+            resetSelection();
+
+            if (!fieldId || !date) {
+                availSection.classList.add('d-none');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/fields/${fieldId}/availability?date=${date}`);
+                const json = await res.json();
+                availability = json.data;
+                renderTimeGrid();
+                availSection.classList.remove('d-none');
+            } catch (error) {
+                console.error("Lỗi tải lịch trống:", error);
+                alert("Không thể tải lịch sân. Vui lòng thử lại.");
+            }
+        }
+
+        function renderTimeGrid() {
+            const { openTime, closeTime, occupied } = availability;
+            const open  = toMinutes(openTime);
+            const close = toMinutes(closeTime);
+
+            let html = '';
+            // Vẽ từng Block 30 phút
+            for (let m = open; m < close; m += 30) {
+                const segEnd = m + 30;
+                const type = getSegmentType(m, segEnd, occupied);
+                const label = toHHMM(m);
+
+                html += `<div class="time-slot ${type}"
+                              data-start-min="${m}"
+                              data-end-min="${segEnd}"
+                              data-time="${label}">
+                            ${label}
+                         </div>`;
+            }
+
+            timeGrid.innerHTML = html;
+
+            // Gắn sự kiện click
+            timeGrid.querySelectorAll('.time-slot.available').forEach(slot => {
+                slot.addEventListener('click', () => handleSlotClick(slot));
+            });
+        }
+
+        function handleSlotClick(slot) {
+            const slotStart = parseInt(slot.getAttribute('data-start-min'));
+            const slotEnd = parseInt(slot.getAttribute('data-end-min'));
+
+            // Click lần 1: Đặt Start (End mặc định là +30p của Start)
+            if (selectedStartMinutes === null || (selectedStartMinutes !== null && selectedEndMinutes !== null)) {
+                selectedStartMinutes = slotStart;
+                selectedEndMinutes = null; // Đợi click lần 2
+            }
+            // Click lần 2: Đặt End
+            else {
+                // Nếu click lùi về trước Start, thì đổi Start
+                if (slotStart < selectedStartMinutes) {
+                    selectedStartMinutes = slotStart;
+                } else {
+                    selectedEndMinutes = slotEnd; // Bấm ô tiếp theo thì tính đến cuối ô đó
+                }
+            }
+
+            // Kiểm tra xem khoảng giữa có bị occupied không
+            if (selectedStartMinutes !== null && selectedEndMinutes !== null) {
+                if (hasConflictInRange(selectedStartMinutes, selectedEndMinutes)) {
+                    alert("Khoảng thời gian bạn chọn chứa khung giờ đã có người đặt. Vui lòng chọn lại!");
+                    resetSelection();
+                    return;
+                }
+            }
+
+            updateUI();
+        }
+
+        function updateUI() {
+            // Xóa style cũ
+            timeGrid.querySelectorAll('.time-slot').forEach(s => {
+                s.classList.remove('selected', 'in-range');
+            });
+
+            // Nếu chỉ mới chọn 1 ô
+            if (selectedStartMinutes !== null && selectedEndMinutes === null) {
+                const slot = timeGrid.querySelector(`.time-slot[data-start-min="${selectedStartMinutes}"]`);
+                if(slot) slot.classList.add('selected');
+
+                // Cập nhật nhãn
+                inStartTime.value = toHHMM(selectedStartMinutes);
+                inEndTime.value = toHHMM(selectedStartMinutes + 30); // Tạm tính 30p
+                lblStartTime.innerText = inStartTime.value;
+                lblEndTime.innerText = inEndTime.value;
+                timeResultRow.classList.remove('d-none');
+
+                loadPrice(inStartTime.value, inEndTime.value);
+            }
+            // Nếu đã chọn xong 1 khoảng
+            else if (selectedStartMinutes !== null && selectedEndMinutes !== null) {
+                timeGrid.querySelectorAll('.time-slot').forEach(s => {
+                    const sm = parseInt(s.getAttribute('data-start-min'));
+                    const em = parseInt(s.getAttribute('data-end-min'));
+
+                    if (sm === selectedStartMinutes || em === selectedEndMinutes) {
+                        s.classList.add('selected');
+                    } else if (sm > selectedStartMinutes && em < selectedEndMinutes) {
+                        s.classList.add('in-range');
+                    }
+                });
+
+                inStartTime.value = toHHMM(selectedStartMinutes);
+                inEndTime.value = toHHMM(selectedEndMinutes);
+                lblStartTime.innerText = inStartTime.value;
+                lblEndTime.innerText = inEndTime.value;
+                timeResultRow.classList.remove('d-none');
+
+                loadPrice(inStartTime.value, inEndTime.value);
+            }
+        }
+
+        async function loadPrice(startStr, endStr) {
+            const fieldId = fieldSelect.value;
+            const date    = dateInput.value;
+
+            if (!fieldId || !date || !startStr || !endStr) return;
+
+            try {
+                const res  = await fetch(`/api/v1/fields/${fieldId}/price?date=${date}&start=${startStr}&end=${endStr}`);
+                const json = await res.json();
+                const data = json.data;
+
+                let segHtml = '';
+                data.segments.forEach(s => {
+                    segHtml += `<div class="d-flex justify-content-between mb-1">
+                                    <span>${s.timeRange} (${s.ruleName})</span>
+                                    <span>${fmt(s.pricePerHour)}₫ x ${s.hours}h = <strong>${fmt(s.subtotal)}₫</strong></span>
+                                </div>`;
+                });
+                priceSegEl.innerHTML = segHtml;
+                totalPriceEl.textContent = fmt(data.totalPrice) + '₫';
+                priceSummary.classList.remove('d-none');
+
+                const url = `/bookings/new?fieldId=${fieldId}&date=${date}&start=${startStr}&end=${endStr}`;
+                bookBtn.href = url;
+                bookBtn.classList.remove('d-none');
+            } catch (e) {
+                console.error("Lỗi tính tiền:", e);
+            }
+        }
+
+        function resetSelection() {
+            selectedStartMinutes = null;
+            selectedEndMinutes = null;
+            timeResultRow.classList.add('d-none');
+            priceSummary.classList.add('d-none');
+            bookBtn.classList.add('d-none');
+            if(availability) renderTimeGrid();
+        }
+
+        resetBtn.addEventListener('click', resetSelection);
+        fieldSelect.addEventListener('change', loadAvailability);
+        dateInput.addEventListener('change', loadAvailability);
+
+        // --- Helpers ---
+        function toMinutes(t) {
+            if(!t) return 0;
+            const [h,m] = t.split(':'); return parseInt(h)*60 + parseInt(m);
+        }
+        function toHHMM(m) {
+            return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
+        }
+        function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+
+        function getSegmentType(start, end, occupied) {
+            for (const o of occupied) {
+                const os = toMinutes(o.start), oe = toMinutes(o.end);
+                // Nếu khoảng thời gian của ô [start, end] nằm đè lên bất kỳ ô occupied nào
+                if (start < oe && end > os) return o.type === 'BOOKING' ? 'occupied' : 'blocked';
+            }
+            return 'available';
+        }
+
+        function hasConflictInRange(startMin, endMin) {
+            const occupied = availability.occupied;
+            for (const o of occupied) {
+                const os = toMinutes(o.start), oe = toMinutes(o.end);
+                if (startMin < oe && endMin > os) return true;
+            }
+            return false;
+        }
+    })();
 </script>
 </body>
 </html>

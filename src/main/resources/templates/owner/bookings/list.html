@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head><title>Quản lý đặt sân</title></head>
+<body>
+<th:block th:fragment="content">
+    <div class="container py-4">
+        <h3 class="mb-4">Danh sách đặt sân</h3>
+
+        <form class="d-flex gap-2 mb-4" method="get">
+            <input type="date" name="date" class="form-control w-auto"
+                   th:value="${selectedDate != null ? #temporals.format(selectedDate,'yyyy-MM-dd') : ''}">
+            <button class="btn btn-outline-primary">Lọc theo ngày</button>
+            <a th:href="@{/owner/bookings}" class="btn btn-outline-secondary">Xem tất cả</a>
+        </form>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}"   class="alert alert-danger"  th:text="${error}"></div>
+
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+            <tr>
+                <th>Mã</th><th>Khách</th><th>Sân</th>
+                <th>Ngày</th><th>Giờ</th><th>Giá</th>
+                <th>Trạng thái</th><th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(bookings)}">
+                <td colspan="8" class="text-center text-muted">Chưa có đơn đặt sân nào</td>
+            </tr>
+            <tr th:each="b : ${bookings}">
+                <td><small th:text="${b.bookingCode}"></small></td>
+                <td th:text="${b.user != null ? b.user.fullName : '—'}"></td>
+                <td th:text="${b.fieldName}"></td>
+                <td th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy')}"></td>
+                <td th:text="${b.startTime + ' – ' + b.endTime}"></td>
+                <td th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + '₫'}"></td>
+                <td>
+          <span class="badge"
+                th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-success' :
+                                  b.status.name() == 'CANCELLED' ? 'bg-danger' :
+                                  b.status.name() == 'COMPLETED' ? 'bg-secondary' : 'bg-warning'}"
+                th:text="${b.status}"></span>
+                </td>
+                <td>
+                    <form th:if="${b.status.name() == 'CONFIRMED'}"
+                          th:action="@{/owner/bookings/{id}/cancel(id=${b.id})}" method="post">
+                        <button class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Hủy đơn đặt sân này?')">Hủy</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</th:block>
+</body>
+</html>
