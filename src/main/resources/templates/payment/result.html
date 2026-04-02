@@ -1,105 +1,143 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
-<head><title>Kết quả thanh toán</title></head>
+<head>
+    <title>Kết quả thanh toán — Arena Kinetic</title>
+</head>
 <body>
 <th:block th:fragment="content">
-    <div class="container py-5" style="max-width: 600px">
 
-        <!-- ── THÀNH CÔNG ── -->
-        <div th:if="${success}" class="text-center mb-4">
-            <div class="display-1 text-success mb-3">&#10003;</div>
-            <h2 class="text-success">Thanh toán thành công!</h2>
-            <p class="text-muted">Đặt sân của bạn đã được xác nhận.</p>
-        </div>
+    <div class="min-h-[90vh] flex items-center justify-center py-12 px-4 sm:px-6 bg-slate-50/50 font-body text-slate-800">
 
-        <!-- ── THẤT BẠI ── -->
-        <div th:unless="${success}" class="text-center mb-4">
-            <div class="display-1 text-danger mb-3">&#10007;</div>
-            <h2 class="text-danger">Thanh toán không thành công</h2>
-            <p class="text-muted">
-                Giao dịch bị từ chối
-                <th:block th:if="${responseCode != null}">
-                    (Mã lỗi: <strong th:text="${responseCode}"></strong>)
-                </th:block>.
-            </p>
-            <p class="text-muted small">
-                <span th:if="${responseCode == '24'}">Bạn đã hủy giao dịch.</span>
-                <span th:if="${responseCode == '51'}">Tài khoản không đủ số dư.</span>
-                <span th:if="${responseCode == '65'}">Tài khoản vượt quá hạn mức giao dịch.</span>
-                <span th:if="${responseCode == '75'}">Ngân hàng đang bảo trì.</span>
-                <span th:if="${responseCode != '24' and responseCode != '51' and responseCode != '65' and responseCode != '75'}">
-                    Vui lòng thử lại hoặc liên hệ ngân hàng.
-                </span>
-            </p>
-        </div>
+        <div class="max-w-xl w-full bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-[0_10px_40px_rgb(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
 
-        <!-- Chi tiết giao dịch -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header">Chi tiết giao dịch</div>
-            <div class="card-body">
-                <div class="row g-2 small">
-                    <div class="col-6 text-muted">Mã đặt sân</div>
-                    <div class="col-6 fw-semibold" th:text="${bookingCode}"></div>
+            <div th:if="${success}" class="text-center">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-50 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+
+                <div class="w-28 h-28 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_0_10px_rgba(16,185,129,0.1)] animate-[bounce_1s_ease-in-out_1]">
+                    <span class="material-symbols-outlined text-[64px] text-emerald-500" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                </div>
+
+                <h2 class="text-3xl font-black font-headline text-emerald-600 uppercase italic tracking-tight mb-2">Thanh toán thành công!</h2>
+                <p class="text-slate-500 font-medium">Tuyệt vời! Lịch đặt sân của bạn đã được xác nhận.</p>
+            </div>
+
+            <div th:unless="${success}" class="text-center">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-50 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+
+                <div class="w-28 h-28 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_0_10px_rgba(239,68,68,0.1)]">
+                    <span class="material-symbols-outlined text-[64px] text-red-500" style="font-variation-settings: 'FILL' 1;">cancel</span>
+                </div>
+
+                <h2 class="text-3xl font-black font-headline text-red-600 uppercase italic tracking-tight mb-2">Giao dịch thất bại!</h2>
+                <p class="text-slate-500 font-medium mb-1">Rất tiếc, thanh toán của bạn không thành công.</p>
+
+                <div class="inline-flex items-center justify-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-xl text-sm font-bold mt-2">
+                    <span class="material-symbols-outlined text-[18px]">info</span>
+                    <span th:if="${responseCode == '24'}">Bạn đã chủ động hủy giao dịch.</span>
+                    <span th:if="${responseCode == '51'}">Tài khoản không đủ số dư.</span>
+                    <span th:if="${responseCode == '65'}">Tài khoản vượt quá hạn mức giao dịch trong ngày.</span>
+                    <span th:if="${responseCode == '75'}">Ngân hàng thanh toán đang bảo trì.</span>
+                    <span th:if="${responseCode != '24' and responseCode != '51' and responseCode != '65' and responseCode != '75'}">
+                        Mã lỗi: <span th:text="${responseCode}"></span>. Vui lòng thử lại.
+                    </span>
+                </div>
+            </div>
+
+            <div class="mt-10 bg-slate-50 rounded-3xl border border-slate-100 p-6 md:p-8 relative">
+                <div class="absolute -top-3 left-8 w-6 h-6 bg-white rounded-full border-b border-slate-100"></div>
+                <div class="absolute -top-3 right-8 w-6 h-6 bg-white rounded-full border-b border-slate-100"></div>
+
+                <h3 class="text-sm font-bold font-headline text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">receipt_long</span> Chi tiết giao dịch
+                </h3>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                        <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Mã hóa đơn</span>
+                        <span class="font-bold text-slate-900" th:text="${bookingCode}"></span>
+                    </div>
 
                     <th:block th:if="${booking != null}">
-                        <div class="col-6 text-muted">Cơ sở</div>
-                        <div class="col-6" th:text="${booking.facilityName}"></div>
-                        <div class="col-6 text-muted">Sân</div>
-                        <div class="col-6" th:text="${booking.fieldName}"></div>
-                        <div class="col-6 text-muted">Ngày giờ</div>
-                        <div class="col-6"
-                             th:text="${#temporals.format(booking.bookingDate,'dd/MM/yyyy')
-                                        + ' | ' + booking.startTime + ' – ' + booking.endTime}">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Cơ sở</span>
+                            <span class="font-bold text-slate-900 text-right max-w-[200px] truncate" th:text="${booking.facilityName}"></span>
                         </div>
-                    </th:block>
-
-                    <th:block th:if="${amountVnd != null}">
-                        <div class="col-6 text-muted">Số tiền</div>
-                        <div class="col-6"
-                             th:text="${#numbers.formatDecimal(amountVnd, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Sân thi đấu</span>
+                            <span class="font-bold text-slate-900" th:text="${booking.fieldName}"></span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Thời gian đá</span>
+                            <div class="text-right">
+                                <span class="block font-bold text-slate-900" th:text="${booking.startTime + ' – ' + booking.endTime}"></span>
+                                <span class="text-[11px] text-slate-500 font-medium" th:text="${#temporals.format(booking.bookingDate,'dd/MM/yyyy')}"></span>
+                            </div>
                         </div>
                     </th:block>
 
                     <th:block th:if="${transactionNo != null}">
-                        <div class="col-6 text-muted">Mã GD VNPay</div>
-                        <div class="col-6" th:text="${transactionNo}"></div>
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Mã VNPay</span>
+                            <span class="font-medium text-slate-700 font-mono" th:text="${transactionNo}"></span>
+                        </div>
                     </th:block>
 
                     <th:block th:if="${bankCode != null}">
-                        <div class="col-6 text-muted">Ngân hàng</div>
-                        <div class="col-6" th:text="${bankCode}"></div>
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Ngân hàng</span>
+                            <span class="font-bold text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 text-xs" th:text="${bankCode}"></span>
+                        </div>
                     </th:block>
 
                     <th:block th:if="${payDate != null and #strings.length(payDate) >= 12}">
-                        <div class="col-6 text-muted">Thời gian</div>
-                        <div class="col-6"
-                             th:text="${#strings.substring(payDate,6,8) + '/'
-                                        + #strings.substring(payDate,4,6) + '/'
-                                        + #strings.substring(payDate,0,4) + ' '
-                                        + #strings.substring(payDate,8,10) + ':'
-                                        + #strings.substring(payDate,10,12)}">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Ngày GD</span>
+                            <span class="font-medium text-slate-700"
+                                  th:text="${#strings.substring(payDate,6,8) + '/' + #strings.substring(payDate,4,6) + '/' + #strings.substring(payDate,0,4) + ' ' + #strings.substring(payDate,8,10) + ':' + #strings.substring(payDate,10,12)}">
+                            </span>
+                        </div>
+                    </th:block>
+
+                    <th:block th:if="${amountVnd != null}">
+                        <div class="flex justify-between items-end pt-2">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Số tiền thanh toán</span>
+                            <span class="text-2xl font-black font-headline italic"
+                                  th:classappend="${success ? 'text-emerald-600' : 'text-slate-900'}"
+                                  th:text="${#numbers.formatDecimal(amountVnd, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                            </span>
                         </div>
                     </th:block>
                 </div>
             </div>
-        </div>
 
-        <!-- Nút hành động -->
-        <div th:if="${success}" class="d-grid gap-2">
-            <a href="/bookings" class="btn btn-success">Xem lịch sử đặt sân</a>
-            <a href="/facilities" class="btn btn-outline-secondary">Đặt thêm sân</a>
-        </div>
+            <div class="mt-8 space-y-3">
 
-        <div th:unless="${success}" class="d-grid gap-2">
-            <a th:if="${booking != null and booking.status.name() == 'PENDING'}"
-               th:href="@{/payment/checkout(bookingCode=${bookingCode})}"
-               class="btn btn-danger">Thử thanh toán lại</a>
-            <a href="/bookings" class="btn btn-outline-secondary">Về lịch sử đặt sân</a>
-            <a href="/facilities" class="btn btn-outline-secondary">Đặt sân khác</a>
-        </div>
+                <div th:if="${success}" class="flex flex-col sm:flex-row gap-3">
+                    <a href="/bookings" class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-primary text-white font-bold rounded-xl transition-colors text-decoration-none shadow-lg shadow-slate-900/20">
+                        <span class="material-symbols-outlined text-[20px]">history</span> Lịch sử đặt sân
+                    </a>
+                    <a href="/facilities" class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-colors text-decoration-none border border-slate-200">
+                        <span class="material-symbols-outlined text-[20px]">add_circle</span> Đặt thêm sân
+                    </a>
+                </div>
 
+                <div th:unless="${success}" class="flex flex-col sm:flex-row gap-3">
+                    <a th:if="${booking != null and booking.status.name() == 'PENDING'}"
+                       th:href="@{/payment/checkout(bookingCode=${bookingCode})}"
+                       class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-[#005BAA] hover:bg-[#004785] text-white font-bold rounded-xl transition-colors text-decoration-none shadow-lg shadow-[#005BAA]/30">
+                        <span class="material-symbols-outlined text-[20px]">refresh</span> Thử thanh toán lại
+                    </a>
+                    <a href="/bookings" class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-colors text-decoration-none border border-slate-200">
+                        Trở về lịch sử
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
     </div>
+
 </th:block>
 </body>
 </html>

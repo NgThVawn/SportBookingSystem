@@ -32,7 +32,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/owner")
-@PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+@PreAuthorize("hasAnyRole('OWNER')")
 @RequiredArgsConstructor
 public class OwnerController {
 

@@ -1,69 +1,96 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
-<head><title>Thanh toán</title></head>
+<head>
+    <title>Xác nhận Thanh toán — Arena Kinetic</title>
+</head>
 <body>
 <th:block th:fragment="content">
-    <div class="container py-4" style="max-width: 640px">
 
-        <h3 class="mb-1">Xác nhận thanh toán</h3>
-        <p class="text-muted mb-4">Kiểm tra thông tin đơn hàng trước khi chuyển sang VNPay</p>
+    <div class="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 bg-slate-50/50 font-body text-slate-800">
 
-        <!-- Thông tin đặt sân -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h6 class="mb-0">Thông tin đặt sân</h6>
+        <div class="max-w-2xl w-full bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-[0_10px_40px_rgb(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
+
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 bg-orange-50 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-blue-100 shadow-sm">
+                    <span class="material-symbols-outlined text-blue-600 text-[32px]">payments</span>
+                </div>
+                <h2 class="text-3xl font-black font-headline text-slate-900 uppercase italic tracking-tight mb-2">Xác nhận thanh toán</h2>
+                <p class="text-sm text-slate-500 font-medium">Kiểm tra kỹ thông tin hóa đơn trước khi chuyển sang cổng VNPay</p>
             </div>
-            <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-5 text-muted">Mã đặt sân</div>
-                    <div class="col-7 fw-semibold" th:text="${booking.bookingCode}"></div>
 
-                    <div class="col-5 text-muted">Cơ sở</div>
-                    <div class="col-7" th:text="${booking.facilityName}"></div>
+            <div class="bg-slate-950 rounded-[2rem] p-8 text-white relative shadow-2xl mb-8 overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/40 blur-[50px] rounded-full pointer-events-none"></div>
 
-                    <div class="col-5 text-muted">Sân</div>
-                    <div class="col-7" th:text="${booking.fieldName}"></div>
+                <div class="flex justify-between items-center mb-6 pb-6 border-b border-white/10 border-dashed">
+                    <div>
+                        <span class="block text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-1">Mã hóa đơn</span>
+                        <div class="font-headline font-black text-xl tracking-wider text-orange-400" th:text="${booking.bookingCode}">BK-123456</div>
+                    </div>
+                    <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/5">
+                        <span class="text-xs font-bold text-slate-300 font-label uppercase tracking-widest" th:text="${booking.sportType}">BÓNG ĐÁ</span>
+                    </div>
+                </div>
 
-                    <div class="col-5 text-muted">Loại hình</div>
-                    <div class="col-7" th:text="${booking.sportType}"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8 mb-8 relative z-10">
+                    <div>
+                        <span class="block text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">stadium</span> Cơ sở</span>
+                        <div class="font-bold text-white text-base" th:text="${booking.facilityName}">Tên cơ sở</div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">grid_view</span> Sân đấu</span>
+                        <div class="font-bold text-white text-base" th:text="${booking.fieldName}">Sân số 1</div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">calendar_today</span> Ngày đặt</span>
+                        <div class="font-bold text-white text-base" th:text="${#temporals.format(booking.bookingDate, 'dd/MM/yyyy')}">20/10/2026</div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">schedule</span> Thời gian</span>
+                        <div class="font-bold text-white text-base" th:text="${booking.startTime + ' – ' + booking.endTime}">17:30 - 19:00</div>
+                    </div>
+                </div>
 
-                    <div class="col-5 text-muted">Ngày</div>
-                    <div class="col-7"
-                         th:text="${#temporals.format(booking.bookingDate, 'dd/MM/yyyy')}"></div>
+                <div class="relative flex items-center justify-center mb-6">
+                    <div class="absolute left-[-40px] w-6 h-6 bg-white rounded-full"></div>
+                    <div class="w-full border-t-2 border-dashed border-white/20"></div>
+                    <div class="absolute right-[-40px] w-6 h-6 bg-white rounded-full"></div>
+                </div>
 
-                    <div class="col-5 text-muted">Giờ</div>
-                    <div class="col-7"
-                         th:text="${booking.startTime + ' – ' + booking.endTime}"></div>
+                <div class="flex justify-between items-end relative z-10">
+                    <span class="text-xs font-label font-bold text-slate-400 uppercase tracking-widest mb-1">Tổng thanh toán</span>
+                    <span class="text-4xl font-black font-headline text-white italic tracking-tight" th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</span>
                 </div>
             </div>
-            <div class="card-footer d-flex justify-content-between align-items-center">
-                <span class="text-muted">Tổng thanh toán</span>
-                <span class="fs-4 fw-bold text-danger"
-                      th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
-      </span>
+
+            <div class="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 relative z-10">
+                <span class="material-symbols-outlined text-amber-500 mt-0.5">timer</span>
+                <p class="text-sm font-medium text-amber-900 m-0 leading-relaxed">
+                    Đơn đặt sân sẽ tự động bị hủy nếu không hoàn tất thanh toán trong vòng <strong class="font-bold text-amber-700">30 phút</strong>.
+                </p>
             </div>
-        </div>
 
-        <!-- Nút hành động -->
-        <form th:action="@{/payment/vnpay}" method="post">
-            <input type="hidden" name="bookingCode" th:value="${booking.bookingCode}">
-            <button type="submit" class="btn btn-danger w-100 py-3 fs-5 mb-3">
-                <img src="https://vnpay.vn/s1/statics/img/logo-icon.7e1e72d6.svg"
-                     alt="VNPay" height="28" class="me-2">
-                Thanh toán qua VNPay
-            </button>
-        </form>
+            <div class="space-y-4 relative z-10">
+                <form th:action="@{/payment/vnpay}" method="post" class="m-0">
+                    <input type="hidden" name="bookingCode" th:value="${booking.bookingCode}">
 
-        <a href="/bookings" class="btn btn-outline-secondary w-100">
-            Để sau (thanh toán trong 30 phút)
-        </a>
+                    <button type="submit" class="w-full flex items-center justify-center gap-3 py-4 bg-[#005BAA] hover:bg-[#004785] text-white font-headline font-black text-lg uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#005BAA]/30 active:scale-95 border-none cursor-pointer">
+                        <img src="https://cdn.brandfetch.io/idV02t6WJs/theme/dark/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B" alt="VNPay Logo" class="h-6 brightness-0 invert">
+                        Thanh toán VNPay
+                    </button>
+                </form>
 
-        <div class="alert alert-warning mt-3 small">
-            <strong>Lưu ý:</strong> Đơn đặt sân sẽ tự động bị hủy nếu không thanh toán trong vòng
-            <strong>30 phút</strong>.
+                <a href="/bookings" class="w-full flex items-center justify-center py-4 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold font-label text-xs uppercase tracking-widest rounded-xl transition-colors text-decoration-none border border-slate-200">
+                    Để sau (Chờ thanh toán)
+                </a>
+            </div>
+
         </div>
     </div>
+
 </th:block>
 </body>
 </html>
