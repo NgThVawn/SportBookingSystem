@@ -1,447 +1,532 @@
 <!DOCTYPE html>
-<html lang="en"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title th:text="${facility.name + ' — Arena Kinetic'}">Facility — SportBooking</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${facility.name + ' — Arena Kinetic'}">Chi tiết cơ sở — Arena Kinetic</title>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
     <link th:href="@{/css/app.css}" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#b02f00",
+                        "primary-dim": "#ff5722",
+                        "surface": "#f8f9fa",
+                        "surface-low": "#f3f4f5",
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    },
+                },
+            },
+        }
+    </script>
+
     <style>
-        /* CSS cho lưới thời gian mới */
-        .time-grid {
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .kinetic-gradient { background: linear-gradient(135deg, #ff5722 0%, #b02f00 100%); }
+
+        .timeline-wrapper {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+        }
+        .timeline-wrapper::-webkit-scrollbar { height: 6px; }
+        .timeline-wrapper::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+
+        .timeline-row {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
+            grid-template-columns: 100px repeat(34, minmax(44px, 1fr));
+            border-bottom: 1px solid #f1f5f9;
+            background: white;
         }
-        .time-slot {
-            padding: 8px 5px;
-            text-align: center;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            font-size: 14px;
-            font-weight: 500;
+        .timeline-row:last-child { border-bottom: none; }
+
+        .time-cell {
+            height: 48px;
+            border-right: 1px solid #f8fafc;
+            position: relative;
             cursor: pointer;
-            transition: all 0.2s;
-            background: #fff;
-            color: #495057;
+            transition: all 0.2s ease;
         }
-        .time-slot.available:hover {
-            border-color: #0d6efd;
-            color: #0d6efd;
-            background: #f8f9fa;
+        .time-header {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .time-slot.occupied {
-            background: #f8d7da;
-            border-color: #f5c2c7;
-            color: #842029;
+
+        .time-cell.available:hover { background-color: #ffedd5; }
+
+        .time-cell.occupied {
+            background-color: #fee2e2;
             cursor: not-allowed;
-            text-decoration: line-through;
-            opacity: 0.6;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239,68,68,0.1) 5px, rgba(239,68,68,0.1) 10px);
         }
-        .time-slot.blocked {
-            background: #fff3cd;
-            border-color: #ffecb5;
-            color: #664d03;
+        .time-cell.blocked {
+            background-color: #f1f5f9;
             cursor: not-allowed;
-            opacity: 0.6;
         }
-        .time-slot.selected {
-            background: #0d6efd;
-            border-color: #0d6efd;
-            color: white;
-            box-shadow: 0 2px 4px rgba(13,110,253,0.3);
-        }
-        .time-slot.in-range {
-            background: #cfe2ff;
-            border-color: #9ec5fe;
-            color: #084298;
-        }
+
+        .time-cell.selected { background-color: #b02f00; box-shadow: inset 0 0 0 1px #7f1d1d; z-index: 10;}
+        .time-cell.in-range { background-color: #ffedd5; box-shadow: inset 0 1px 0 #fdba74, inset 0 -1px 0 #fdba74; }
+        .time-cell.available.ghost-range { background-color: #ffedd5; opacity: 0.7;}
     </style>
 </head>
-<body class="bg-light">
+<body class="bg-surface font-body text-slate-800 antialiased">
+
 <div th:replace="~{fragments/header :: navbar}"></div>
 
-<div class="container" style="padding-top: 100px; padding-bottom: 50px;">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
-            <li class="breadcrumb-item"><a th:href="@{/facilities}">Cơ sở</a></li>
-            <li class="breadcrumb-item active" th:text="${facility.name}"></li>
-        </ol>
-    </nav>
+<main class="pt-24 pb-12 px-4 md:px-6 max-w-7xl mx-auto">
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <img th:src="${facility.primaryImageUrl != null ? facility.primaryImageUrl : '/images/default-facility.jpg'}"
-                 class="w-100 rounded-4 mb-4 shadow-sm" style="height:400px;object-fit:cover;" alt="Facility"/>
-
-            <div class="d-flex justify-content-between align-items-start mb-4">
-                <div>
-                    <h1 class="fw-bold h2" th:text="${facility.name}"></h1>
-                    <p class="text-muted mb-0 fs-5">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                        <span th:text="${facility.address + ', ' + facility.city}"></span>
-                    </p>
-                </div>
-                <div class="text-end bg-white p-2 rounded-3 shadow-sm border">
-                    <span class="fs-4 fw-bold text-warning">
-                        <i class="bi bi-star-fill me-1"></i>
-                        <span th:text="${facility.avgRating}"></span>
-                    </span>
-                    <p class="text-muted small mb-0">
-                        <span th:text="${facility.reviewCount}"></span> đánh giá
-                    </p>
-                </div>
+    <header class="relative w-full h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden mb-10 group">
+        <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+             th:src="${facility.primaryImageUrl != null ? facility.primaryImageUrl : '/images/default-facility.jpg'}" alt="Facility Image"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-8 md:p-12">
+            <div class="flex flex-wrap gap-3 mb-4">
+                <span class="bg-primary px-4 py-1.5 rounded-full text-white font-label text-xs font-bold uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                    <span class="material-symbols-outlined text-[14px]">verified</span> Đối tác chính thức
+                </span>
+                <span class="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-label text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg">
+                    <span class="material-symbols-outlined text-[14px] text-yellow-400" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span th:text="${facility.avgRating + ' (' + facility.reviewCount + '+ đánh giá)'}">5.0 (0 đánh giá)</span>
+                </span>
             </div>
-
-            <div class="mb-5 bg-white p-4 rounded-4 shadow-sm border-0" th:if="${facility.description}">
-                <h5 class="fw-bold border-bottom pb-2 mb-3">Giới thiệu</h5>
-                <p class="text-muted mb-0 line-height-lg" th:text="${facility.description}"></p>
+            <h1 class="font-headline text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-4 italic" th:text="${facility.name}">TÊN SÂN ĐẤU</h1>
+            <div class="flex items-center gap-2 text-white/80 font-body text-sm md:text-base">
+                <span class="material-symbols-outlined text-[20px]">location_on</span>
+                <span th:text="${facility.address + ', ' + facility.city}">Địa chỉ sân</span>
             </div>
+        </div>
+    </header>
 
-            <section id="booking-section" class="card shadow-sm border-0 rounded-4 mb-4 border-top border-primary border-4">
-                <div class="card-body p-4">
-                    <h4 class="fw-bold mb-4"><i class="bi bi-calendar-check text-primary me-2"></i>Tiến hành đặt sân</h4>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small text-uppercase">1. Chọn sân</label>
-                            <select id="fieldSelect" class="form-select form-select-lg">
-                                <option value="">-- Vui lòng chọn sân --</option>
-                                <option th:each="f : ${fields}"
-                                        th:if="${f.status.name() == 'OPEN'}"
-                                        th:value="${f.id}"
-                                        th:text="${f.name + ' (' + f.sportType.displayName + ') – Từ ' + #numbers.formatDecimal(f.pricePerHour,0,'COMMA',0,'POINT') + '₫/h'}">
-                                </option>
-                            </select>
-                        </div>
+        <div class="lg:col-span-8 space-y-8">
 
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small text-uppercase">2. Chọn ngày</label>
-                            <input type="date" id="bookingDate" class="form-control form-select-lg"
-                                   th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
-                        </div>
+            <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100" th:if="${facility.description}">
+                <h2 class="font-headline text-2xl font-black mb-6 flex items-center gap-3 text-slate-900">
+                    <span class="w-1.5 h-6 bg-primary rounded-full"></span> Giới thiệu cơ sở
+                </h2>
+                <p class="text-slate-600 leading-relaxed m-0" th:text="${facility.description}"></p>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-8 pt-8 border-t border-slate-100" th:if="${not #lists.isEmpty(services)}">
+                    <div th:each="svc : ${services}" class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
+                        <span class="material-symbols-outlined text-primary text-[22px]">check_circle</span>
+                        <span class="font-label text-sm font-bold text-slate-700" th:text="${svc.name}">Wifi</span>
                     </div>
-
-                    <div id="availabilitySection" class="d-none">
-                        <label class="form-label fw-semibold text-muted small text-uppercase d-flex justify-content-between">
-                            <span>3. Chọn khung giờ (Bấm ô Bắt đầu và ô Kết thúc)</span>
-                            <span class="text-primary cursor-pointer" id="resetSelectionBtn" style="cursor: pointer;"><i class="bi bi-arrow-clockwise"></i> Chọn lại</span>
-                        </label>
-
-                        <div class="d-flex gap-3 mb-2 small justify-content-center bg-light p-2 rounded-3">
-                            <span><span class="badge bg-white border text-dark me-1">17:00</span> Trống</span>
-                            <span><span class="badge bg-primary me-1">17:00</span> Đang chọn</span>
-                            <span><span class="badge bg-danger bg-opacity-25 text-danger border border-danger me-1">17:00</span> Đã đặt</span>
-                        </div>
-
-                        <div id="timeGrid" class="time-grid mb-4">
-                        </div>
-
-                        <div class="row g-3 mb-3 d-none" id="timeResultRow">
-                            <div class="col-6">
-                                <div class="p-3 bg-light rounded-3 text-center border">
-                                    <span class="d-block text-muted small mb-1">Giờ bắt đầu</span>
-                                    <strong class="fs-5 text-primary" id="lblStartTime">--:--</strong>
-                                    <input type="hidden" id="startTime">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-3 bg-light rounded-3 text-center border">
-                                    <span class="d-block text-muted small mb-1">Giờ kết thúc</span>
-                                    <strong class="fs-5 text-primary" id="lblEndTime">--:--</strong>
-                                    <input type="hidden" id="endTime">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="priceSummary" class="alert alert-info d-none border-info">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>Chi tiết tính tiền</h6>
-                            </div>
-                            <div id="priceSegments" class="small mb-2 text-muted"></div>
-                            <hr class="border-info opacity-25">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <strong class="fs-5">Tổng cộng:</strong>
-                                <strong class="fs-4 text-danger" id="totalPrice">0₫</strong>
-                            </div>
-                        </div>
-
-                        <a id="bookBtn" href="#" class="btn btn-primary btn-lg w-100 d-none fw-bold mt-2">
-                            Tiến hành Đặt Sân
-                        </a>
-                    </div>
-
                 </div>
             </section>
-        </div>
 
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 sticky-top mb-4" style="top: 100px;">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold border-bottom pb-2 mb-3">Thông tin cơ sở</h5>
-                    <ul class="list-unstyled mb-4">
-                        <li class="mb-3 d-flex align-items-center">
-                            <div class="bg-light rounded-circle p-2 me-3"><i class="bi bi-clock text-primary"></i></div>
-                            <div>
-                                <small class="text-muted d-block">Giờ hoạt động</small>
-                                <strong th:text="${facility.openTime + ' – ' + facility.closeTime}"></strong>
-                            </div>
-                        </li>
-                        <li class="mb-3 d-flex align-items-center" th:if="${facility.phone}">
-                            <div class="bg-light rounded-circle p-2 me-3"><i class="bi bi-telephone text-primary"></i></div>
-                            <div>
-                                <small class="text-muted d-block">Hotline</small>
-                                <strong th:text="${facility.phone}"></strong>
-                            </div>
-                        </li>
-                    </ul>
+            <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100">
+                    <h2 class="font-headline text-2xl font-black flex items-center gap-3 text-slate-900 m-0">
+                        <span class="w-1.5 h-6 bg-primary rounded-full"></span> Đặt lịch thi đấu
+                    </h2>
 
-                    <h6 class="fw-bold mb-3"><i class="bi bi-bag-plus me-2"></i>Dịch vụ đi kèm</h6>
-                    <div th:if="${#lists.isEmpty(services)}" class="text-muted small">
-                        Không có dịch vụ thêm.
-                    </div>
-                    <div th:each="svc : ${services}" class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-light">
-                        <span class="text-secondary small" th:text="${svc.name}"></span>
-                        <span class="text-dark fw-medium small"
-                              th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + 'đ'}">
-                        </span>
+                    <div class="relative w-full sm:w-48 shrink-0">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">calendar_month</span>
+                        <input type="date" id="bookingDate" class="w-full bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl pl-11 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none cursor-pointer"
+                               th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
                     </div>
                 </div>
-            </div>
+
+                <div class="flex flex-wrap gap-4 font-label text-[10px] font-bold uppercase tracking-widest mb-6 justify-center md:justify-start">
+                    <div class="flex items-center gap-2 text-slate-500"><span class="w-4 h-4 rounded bg-white border border-slate-200"></span> Trống</div>
+                    <div class="flex items-center gap-2 text-orange-600"><span class="w-4 h-4 rounded bg-primary"></span> Đang chọn</div>
+                    <div class="flex items-center gap-2 text-red-600"><span class="w-4 h-4 rounded bg-red-100 border border-red-200"></span> Đã đặt</div>
+                </div>
+
+                <div class="timeline-wrapper relative" id="timelineContainer">
+                    <div class="text-center py-10 text-slate-400 font-bold animate-pulse" id="loadingTimeline">
+                        Đang tải lịch sân...
+                    </div>
+
+                    <div id="timelineContent" class="hidden min-w-[1000px]">
+                        <div class="timeline-row bg-slate-50 sticky top-0 z-20" id="timeHeaderRow">
+                            <div class="bg-slate-100 p-3 font-bold text-xs flex items-center justify-center border-r border-slate-200 sticky left-0 z-30 uppercase tracking-widest text-slate-500 font-label">Tên Sân</div>
+                        </div>
+
+                        <div id="fieldsContainer"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <button type="button" id="resetSelectionBtn" class="hidden px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors font-label mx-auto cursor-pointer border-none">
+                        Hủy chọn / Làm mới
+                    </button>
+                </div>
+            </section>
+
         </div>
+
+        <aside class="lg:col-span-4 space-y-8 sticky top-28 mb-12">
+
+            <div class="bg-slate-950 text-white p-8 rounded-[2rem] shadow-2xl overflow-hidden relative">
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 blur-[60px] rounded-full pointer-events-none"></div>
+
+                <h3 class="font-headline text-xl font-black mb-6 uppercase tracking-tight border-b border-white/10 pb-4">Chi tiết thanh toán</h3>
+
+                <div id="emptyBookingState" class="py-8 text-center text-slate-400">
+                    <span class="material-symbols-outlined text-[40px] mb-2 opacity-50">touch_app</span>
+                    <p class="text-sm font-label uppercase tracking-widest leading-relaxed">Vui lòng chọn khung giờ trống trên biểu đồ bên trái</p>
+                </div>
+
+                <div id="activeBookingState" class="hidden">
+                    <div class="space-y-4 mb-6 font-body text-sm">
+                        <div class="flex justify-between items-start mb-4 bg-white/5 p-3 rounded-xl">
+                            <span class="text-slate-400">Sân chọn</span>
+                            <span class="font-bold text-white text-right" id="summaryFieldName">--</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-slate-400">Thời gian</span>
+                            <span class="font-bold text-orange-400" id="summaryTime">--:-- đến --:--</span>
+                        </div>
+
+                        <div class="border-t border-white/10 pt-4 mt-4 space-y-2" id="priceSegments">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-end mb-8 pt-4 border-t border-white/10">
+                        <div>
+                            <p class="text-[10px] font-label uppercase text-slate-400 tracking-widest mb-1">Tổng cộng tạm tính</p>
+                            <p class="text-4xl font-headline font-black text-white italic" id="totalPrice">0₫</p>
+                        </div>
+                    </div>
+
+                    <a id="bookBtn" href="#" class="w-full py-4 kinetic-gradient rounded-xl font-headline font-black uppercase tracking-widest shadow-lg shadow-primary/40 hover:scale-[1.02] transition-transform active:scale-95 flex items-center justify-center gap-2 text-white text-decoration-none">
+                        ĐẶT SÂN NGAY
+                        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                    </a>
+                </div>
+
+                <p class="text-[10px] text-center text-slate-500 mt-6 font-label uppercase tracking-widest">Hỗ trợ thanh toán Online & Tiền mặt</p>
+            </div>
+
+        </aside>
     </div>
-</div>
+</main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script th:inline="javascript">
+
+<div id="facilityConfig" class="hidden"
+     th:data-id="${facility.id}"
+     th:data-open="${facility.openTime}"
+     th:data-close="${facility.closeTime}">
+</div>
+
+<div id="fieldDataContainer" class="hidden">
+    <div th:each="f : ${fields}"
+         th:if="${f.status != null and f.status.name() == 'OPEN'}"
+         class="field-item-data"
+         th:data-id="${f.id}"
+         th:data-name="${f.name}"
+         th:data-sport="${f.sportType != null ? f.sportType.displayName : ''}">
+    </div>
+</div>
+
+<script>
     document.addEventListener('DOMContentLoaded', function () {
-        const fieldSelect  = document.getElementById('fieldSelect');
-        const dateInput    = document.getElementById('bookingDate');
-        const availSection = document.getElementById('availabilitySection');
-        const timeGrid     = document.getElementById('timeGrid');
+        const dateInput = document.getElementById('bookingDate');
 
-        const lblStartTime = document.getElementById('lblStartTime');
-        const lblEndTime   = document.getElementById('lblEndTime');
-        const inStartTime  = document.getElementById('startTime');
-        const inEndTime    = document.getElementById('endTime');
-        const timeResultRow= document.getElementById('timeResultRow');
+        const configEl = document.getElementById('facilityConfig');
+        const facilityId = configEl.getAttribute('data-id');
+        const openTimeStr = configEl.getAttribute('data-open');
+        const closeTimeStr = configEl.getAttribute('data-close');
 
-        const priceSummary = document.getElementById('priceSummary');
+        const openFields = Array.from(document.querySelectorAll('.field-item-data')).map(el => ({
+            id: el.getAttribute('data-id'),
+            name: el.getAttribute('data-name'),
+            sportType: el.getAttribute('data-sport')
+        }));
+
+        const loadingEl = document.getElementById('loadingTimeline');
+        const contentEl = document.getElementById('timelineContent');
+        const headerRow = document.getElementById('timeHeaderRow');
+        const fieldsCon = document.getElementById('fieldsContainer');
+        const resetBtn  = document.getElementById('resetSelectionBtn');
+
+        const emptyState  = document.getElementById('emptyBookingState');
+        const activeState = document.getElementById('activeBookingState');
+        const lblFieldName = document.getElementById('summaryFieldName');
+        const lblTime      = document.getElementById('summaryTime');
         const priceSegEl   = document.getElementById('priceSegments');
         const totalPriceEl = document.getElementById('totalPrice');
         const bookBtn      = document.getElementById('bookBtn');
-        const resetBtn     = document.getElementById('resetSelectionBtn');
 
-        let availability = null;
-        let selectedStartMinutes = null;
-        let selectedEndMinutes = null;
+        let fieldsData = [];
+        let selectedFieldId = null;
+        let selectedStartMin = null;
+        let selectedEndMin = null;
+        let selectionStep = 0; // 0: Chưa chọn, 1: Chọn 1 ô (30p), 2: Kéo dài nhiều ô
 
-        // Tự động set ngày hôm nay nếu chưa có
-        if(!dateInput.value) {
-            dateInput.value = new Date().toISOString().split('T')[0];
+        if(!dateInput.value) { dateInput.value = new Date().toISOString().split('T')[0]; }
+
+        const facStartMin = toMinutes(openTimeStr);
+        const facEndMin = toMinutes(closeTimeStr);
+        let headerHtml = '<div class="bg-slate-100 p-3 font-bold text-xs flex items-center justify-center border-r border-b border-slate-200 sticky left-0 z-30 uppercase tracking-widest text-slate-500 font-label">Tên Sân</div>';
+        for(let m = facStartMin; m < facEndMin; m += 30) {
+            headerHtml += `<div class="time-header">${toHHMM(m)}</div>`;
         }
+        headerRow.innerHTML = headerHtml;
 
-        async function loadAvailability() {
-            const fieldId = fieldSelect.value;
-            const date    = dateInput.value;
+        dateInput.addEventListener('change', loadAllFieldsData);
+        resetBtn.addEventListener('click', resetSelection);
 
-            resetSelection();
-
-            if (!fieldId || !date) {
-                availSection.classList.add('d-none');
+        async function loadAllFieldsData() {
+            if(openFields.length === 0) {
+                loadingEl.innerText = "Cơ sở này hiện không có sân nào hoạt động.";
                 return;
             }
 
+            loadingEl.classList.remove('hidden');
+            contentEl.classList.add('hidden');
+            resetSelection();
+            fieldsData = [];
+
             try {
-                const res = await fetch(`/api/v1/fields/${fieldId}/availability?date=${date}`);
-                const json = await res.json();
-                availability = json.data;
-                renderTimeGrid();
-                availSection.classList.remove('d-none');
-            } catch (error) {
-                console.error("Lỗi tải lịch trống:", error);
-                alert("Không thể tải lịch sân. Vui lòng thử lại.");
-            }
-        }
+                const date = dateInput.value;
+                const promises = openFields.map(f => fetch(`/api/v1/fields/${f.id}/availability?date=${date}`).then(r => r.json()));
+                const results = await Promise.all(promises);
 
-        function renderTimeGrid() {
-            const { openTime, closeTime, occupied } = availability;
-            const open  = toMinutes(openTime);
-            const close = toMinutes(closeTime);
-
-            let html = '';
-            // Vẽ từng Block 30 phút
-            for (let m = open; m < close; m += 30) {
-                const segEnd = m + 30;
-                const type = getSegmentType(m, segEnd, occupied);
-                const label = toHHMM(m);
-
-                html += `<div class="time-slot ${type}"
-                              data-start-min="${m}"
-                              data-end-min="${segEnd}"
-                              data-time="${label}">
-                            ${label}
-                         </div>`;
-            }
-
-            timeGrid.innerHTML = html;
-
-            // Gắn sự kiện click
-            timeGrid.querySelectorAll('.time-slot.available').forEach(slot => {
-                slot.addEventListener('click', () => handleSlotClick(slot));
-            });
-        }
-
-        function handleSlotClick(slot) {
-            const slotStart = parseInt(slot.getAttribute('data-start-min'));
-            const slotEnd = parseInt(slot.getAttribute('data-end-min'));
-
-            // Click lần 1: Đặt Start (End mặc định là +30p của Start)
-            if (selectedStartMinutes === null || (selectedStartMinutes !== null && selectedEndMinutes !== null)) {
-                selectedStartMinutes = slotStart;
-                selectedEndMinutes = null; // Đợi click lần 2
-            }
-            // Click lần 2: Đặt End
-            else {
-                // Nếu click lùi về trước Start, thì đổi Start
-                if (slotStart < selectedStartMinutes) {
-                    selectedStartMinutes = slotStart;
-                } else {
-                    selectedEndMinutes = slotEnd; // Bấm ô tiếp theo thì tính đến cuối ô đó
-                }
-            }
-
-            // Kiểm tra xem khoảng giữa có bị occupied không
-            if (selectedStartMinutes !== null && selectedEndMinutes !== null) {
-                if (hasConflictInRange(selectedStartMinutes, selectedEndMinutes)) {
-                    alert("Khoảng thời gian bạn chọn chứa khung giờ đã có người đặt. Vui lòng chọn lại!");
-                    resetSelection();
-                    return;
-                }
-            }
-
-            updateUI();
-        }
-
-        function updateUI() {
-            // Xóa style cũ
-            timeGrid.querySelectorAll('.time-slot').forEach(s => {
-                s.classList.remove('selected', 'in-range');
-            });
-
-            // Nếu chỉ mới chọn 1 ô
-            if (selectedStartMinutes !== null && selectedEndMinutes === null) {
-                const slot = timeGrid.querySelector(`.time-slot[data-start-min="${selectedStartMinutes}"]`);
-                if(slot) slot.classList.add('selected');
-
-                // Cập nhật nhãn
-                inStartTime.value = toHHMM(selectedStartMinutes);
-                inEndTime.value = toHHMM(selectedStartMinutes + 30); // Tạm tính 30p
-                lblStartTime.innerText = inStartTime.value;
-                lblEndTime.innerText = inEndTime.value;
-                timeResultRow.classList.remove('d-none');
-
-                loadPrice(inStartTime.value, inEndTime.value);
-            }
-            // Nếu đã chọn xong 1 khoảng
-            else if (selectedStartMinutes !== null && selectedEndMinutes !== null) {
-                timeGrid.querySelectorAll('.time-slot').forEach(s => {
-                    const sm = parseInt(s.getAttribute('data-start-min'));
-                    const em = parseInt(s.getAttribute('data-end-min'));
-
-                    if (sm === selectedStartMinutes || em === selectedEndMinutes) {
-                        s.classList.add('selected');
-                    } else if (sm > selectedStartMinutes && em < selectedEndMinutes) {
-                        s.classList.add('in-range');
+                results.forEach((res, index) => {
+                    if(res.data) {
+                        fieldsData.push({
+                            fieldInfo: openFields[index],
+                            availability: res.data
+                        });
                     }
                 });
 
-                inStartTime.value = toHHMM(selectedStartMinutes);
-                inEndTime.value = toHHMM(selectedEndMinutes);
-                lblStartTime.innerText = inStartTime.value;
-                lblEndTime.innerText = inEndTime.value;
-                timeResultRow.classList.remove('d-none');
-
-                loadPrice(inStartTime.value, inEndTime.value);
+                renderGanttChart();
+                loadingEl.classList.add('hidden');
+                contentEl.classList.remove('hidden');
+            } catch (e) {
+                console.error(e);
+                loadingEl.innerText = "Lỗi tải dữ liệu lịch trống. Vui lòng F5 lại trang.";
             }
         }
 
-        async function loadPrice(startStr, endStr) {
-            const fieldId = fieldSelect.value;
-            const date    = dateInput.value;
+        function renderGanttChart() {
+            let html = '';
 
-            if (!fieldId || !date || !startStr || !endStr) return;
+            fieldsData.forEach(item => {
+                const field = item.fieldInfo;
+                const occ = item.availability.occupied;
 
-            try {
-                const res  = await fetch(`/api/v1/fields/${fieldId}/price?date=${date}&start=${startStr}&end=${endStr}`);
-                const json = await res.json();
-                const data = json.data;
+                html += `<div class="timeline-row group" data-field-id="${field.id}">`;
 
-                let segHtml = '';
-                data.segments.forEach(s => {
-                    segHtml += `<div class="d-flex justify-content-between mb-1">
-                                    <span>${s.timeRange} (${s.ruleName})</span>
-                                    <span>${fmt(s.pricePerHour)}₫ x ${s.hours}h = <strong>${fmt(s.subtotal)}₫</strong></span>
-                                </div>`;
+                html += `<div class="bg-white group-hover:bg-slate-50 p-2 font-bold text-xs flex flex-col justify-center border-r border-slate-100 sticky left-0 z-10 font-headline leading-tight shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                            <span class="text-slate-800 truncate">${field.name}</span>
+                            <span class="text-[9px] text-slate-400 font-label tracking-widest mt-0.5 truncate">${field.sportType}</span>
+                         </div>`;
+
+                for(let m = facStartMin; m < facEndMin; m += 30) {
+                    const segEnd = m + 30;
+                    const type = getSegmentType(m, segEnd, occ);
+                    html += `<div class="time-cell ${type}"
+                                  data-field-id="${field.id}"
+                                  data-start-min="${m}"
+                                  data-end-min="${segEnd}">
+                             </div>`;
+                }
+                html += `</div>`;
+            });
+
+            fieldsCon.innerHTML = html;
+
+            document.querySelectorAll('.time-cell.available').forEach(cell => {
+                cell.addEventListener('click', handleCellClick);
+                cell.addEventListener('mouseenter', handleCellHover);
+            });
+        }
+
+        // ĐÃ SỬA LẠI LOGIC Ở ĐÂY: 1 CLICK LÀ CHỐT 30 PHÚT
+        function handleCellClick(e) {
+            const cell = e.target;
+            const fid = cell.getAttribute('data-field-id');
+            const sm = parseInt(cell.getAttribute('data-start-min'));
+            const em = parseInt(cell.getAttribute('data-end-min'));
+
+            if (selectionStep === 0 || selectedFieldId !== fid || selectionStep === 2) {
+                // Khởi tạo chọn 1 ô (30 phút)
+                selectedFieldId = fid;
+                selectedStartMin = sm;
+                selectedEndMin = em;
+                selectionStep = 1;
+            } else if (selectionStep === 1) {
+                if (sm < selectedStartMin) {
+                    // Bấm lùi về phía trước -> Reset lại chọn ô mới
+                    selectedStartMin = sm;
+                    selectedEndMin = em;
+                    selectionStep = 1;
+                } else {
+                    // Bấm tiến lên -> Kéo dài dải thời gian
+                    selectedEndMin = em;
+                    selectionStep = 2; // Chốt, bấm phát nữa sẽ reset
+                }
+            }
+
+            // Kiểm tra xem khoảng chọn có đè lên giờ đã bị đặt không
+            if (hasConflict(selectedFieldId, selectedStartMin, selectedEndMin)) {
+                alert("Khoảng giờ này bị vướng lịch đã đặt. Vui lòng chọn lại!");
+                // Trả về chọn đúng 1 ô bị kẹt
+                selectedStartMin = sm;
+                selectedEndMin = em;
+                selectionStep = 1;
+            }
+
+            updateGridUI();
+            updateSidebarUI();
+        }
+
+        function handleCellHover(e) {
+            if(selectionStep !== 1) return; // Chỉ hiện bóng mờ khi đang ở bước có thể kéo dài
+
+            const cell = e.target;
+            const fid = cell.getAttribute('data-field-id');
+            if(fid !== selectedFieldId) return;
+
+            const hoverMin = parseInt(cell.getAttribute('data-start-min'));
+
+            document.querySelectorAll('.ghost-range').forEach(c => c.classList.remove('ghost-range'));
+
+            if(hoverMin > selectedStartMin) {
+                document.querySelectorAll(`.time-cell[data-field-id="${fid}"]`).forEach(c => {
+                    const csm = parseInt(c.getAttribute('data-start-min'));
+                    if(csm > selectedStartMin && csm <= hoverMin) {
+                        if(c.classList.contains('available')) c.classList.add('ghost-range');
+                    }
                 });
-                priceSegEl.innerHTML = segHtml;
-                totalPriceEl.textContent = fmt(data.totalPrice) + '₫';
-                priceSummary.classList.remove('d-none');
+            }
+        }
 
-                const url = `/bookings/new?fieldId=${fieldId}&date=${date}&start=${startStr}&end=${endStr}`;
-                bookBtn.href = url;
-                bookBtn.classList.remove('d-none');
-            } catch (e) {
-                console.error("Lỗi tính tiền:", e);
+        function updateGridUI() {
+            document.querySelectorAll('.time-cell').forEach(c => {
+                c.classList.remove('selected', 'in-range', 'ghost-range');
+            });
+
+            if(selectedStartMin !== null && selectedEndMin !== null) {
+                resetBtn.classList.remove('hidden');
+
+                document.querySelectorAll(`.time-cell[data-field-id="${selectedFieldId}"]`).forEach(c => {
+                    const sm = parseInt(c.getAttribute('data-start-min'));
+                    const em = parseInt(c.getAttribute('data-end-min'));
+
+                    // Tô màu toàn bộ khoảng từ Start đến End
+                    if(sm >= selectedStartMin && em <= selectedEndMin) {
+                        c.classList.add('selected');
+                    }
+                });
+            } else {
+                resetBtn.classList.add('hidden');
+            }
+        }
+
+        async function updateSidebarUI() {
+            if(selectedStartMin === null) {
+                emptyState.classList.remove('hidden');
+                activeState.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            activeState.classList.remove('hidden');
+
+            const fInfo = openFields.find(f => f.id === selectedFieldId);
+            lblFieldName.innerText = fInfo.name + ' (' + fInfo.sportType + ')';
+
+            const startStr = toHHMM(selectedStartMin);
+            const endStr = toHHMM(selectedEndMin); // Giờ đây EndMin luôn tồn tại ngay từ lần click đầu tiên
+            lblTime.innerText = `${startStr} đến ${endStr}`;
+
+            bookBtn.classList.add('opacity-50', 'pointer-events-none');
+            try {
+                const date = dateInput.value;
+                const res = await fetch(`/api/v1/fields/${selectedFieldId}/price?date=${date}&start=${startStr}&end=${endStr}`);
+                const json = await res.json();
+
+                if(json.data) {
+                    let phtml = '';
+                    json.data.segments.forEach(s => {
+                        phtml += `<div class="flex justify-between items-center mb-1">
+                                    <span class="text-slate-400">${s.timeRange} <span class="text-[10px] text-slate-500">(${s.ruleName})</span></span>
+                                    <span class="font-bold text-white">${fmt(s.subtotal)}₫</span>
+                                  </div>`;
+                    });
+                    priceSegEl.innerHTML = phtml;
+                    totalPriceEl.innerText = fmt(json.data.totalPrice) + '₫';
+
+                    bookBtn.href = `/bookings/new?fieldId=${selectedFieldId}&date=${date}&start=${startStr}&end=${endStr}`;
+                    bookBtn.classList.remove('opacity-50', 'pointer-events-none');
+                }
+            } catch(e) {
+                console.error(e);
+                priceSegEl.innerHTML = '<div class="text-red-400">Lỗi tính tiền. Vui lòng F5 lại trang.</div>';
             }
         }
 
         function resetSelection() {
-            selectedStartMinutes = null;
-            selectedEndMinutes = null;
-            timeResultRow.classList.add('d-none');
-            priceSummary.classList.add('d-none');
-            bookBtn.classList.add('d-none');
-            if(availability) renderTimeGrid();
+            selectedFieldId = null;
+            selectedStartMin = null;
+            selectedEndMin = null;
+            selectionStep = 0;
+            updateGridUI();
+            updateSidebarUI();
         }
 
-        resetBtn.addEventListener('click', resetSelection);
-        fieldSelect.addEventListener('change', loadAvailability);
-        dateInput.addEventListener('change', loadAvailability);
-
-        // --- Helpers ---
         function toMinutes(t) {
             if(!t) return 0;
-            const [h,m] = t.split(':'); return parseInt(h)*60 + parseInt(m);
+            const parts = t.split(':');
+            return parseInt(parts[0])*60 + parseInt(parts[1]);
         }
         function toHHMM(m) {
             return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
         }
         function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
 
-        function getSegmentType(start, end, occupied) {
-            for (const o of occupied) {
+        function getSegmentType(start, end, occupiedArr) {
+            for (const o of occupiedArr) {
                 const os = toMinutes(o.start), oe = toMinutes(o.end);
-                // Nếu khoảng thời gian của ô [start, end] nằm đè lên bất kỳ ô occupied nào
                 if (start < oe && end > os) return o.type === 'BOOKING' ? 'occupied' : 'blocked';
             }
             return 'available';
         }
 
-        function hasConflictInRange(startMin, endMin) {
-            const occupied = availability.occupied;
-            for (const o of occupied) {
+        function hasConflict(fid, startMin, endMin) {
+            const data = fieldsData.find(item => item.fieldInfo.id === fid);
+            if(!data) return true;
+            for (const o of data.availability.occupied) {
                 const os = toMinutes(o.start), oe = toMinutes(o.end);
                 if (startMin < oe && endMin > os) return true;
             }
             return false;
         }
+
+        setTimeout(loadAllFieldsData, 100);
     })();
 </script>
 </body>

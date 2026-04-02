@@ -1,83 +1,208 @@
-<!doctype html>
-<html
-  lang="vi"
-  xmlns:th="http://www.thymeleaf.org"
-  th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}"
->
-  <head>
-    <title>Lịch sử đặt sân</title>
-  </head>
-  <body>
-    <th:block th:fragment="content">
-      <div class="container py-4">
-        <h3 class="mb-4">Lịch sử đặt sân</h3>
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Lịch sử đặt sân — Arena Kinetic</title>
+</head>
+<body>
+<th:block th:fragment="content">
 
-        <div th:if="${#lists.isEmpty(bookings)}" class="text-muted">
-          Bạn chưa có lịch đặt sân nào.
-        </div>
+    <div class="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8 font-body text-slate-800">
+        <div class="max-w-7xl mx-auto">
 
-        <div th:each="b : ${bookings}" class="card mb-3 shadow-sm">
-          <div
-            class="card-body d-flex justify-content-between align-items-start"
-          >
-            <div>
-              <h6 class="mb-1">
-                <span th:text="${b.facilityName}"></span> —
-                <span th:text="${b.fieldName}"></span>
-              </h6>
-              <p class="mb-1 text-muted small">
-                <span
-                  th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy')}"
-                ></span>
-                &nbsp;
-                <span th:text="${b.startTime + ' – ' + b.endTime}"></span>
-              </p>
-              <p class="mb-1">
-                <strong
-                  th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + '₫'}"
-                ></strong>
-              </p>
-              <span
-                class="badge"
-                th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-success' :
-                        b.status.name() == 'PENDING'   ? 'bg-warning text-dark' :
-                        b.status.name() == 'CANCELLED' ? 'bg-danger' :
-                        b.status.name() == 'COMPLETED' ? 'bg-secondary' : 'bg-info'}"
-                th:text="${b.status.name() == 'PENDING' ? 'Chờ thanh toán' :
-                 b.status.name() == 'CONFIRMED' ? 'Đã xác nhận' :
-                 b.status.name() == 'CANCELLED' ? 'Đã hủy' :
-                 b.status.name() == 'COMPLETED' ? 'Hoàn thành' : b.status}"
-              >
-              </span>
-              <small
-                class="text-muted ms-2"
-                th:text="'#' + ${b.bookingCode}"
-              ></small>
+            <header class="mb-10">
+                <h1 class="text-4xl md:text-5xl font-black font-headline tracking-tighter text-slate-900 mb-2 uppercase italic">Lịch sử đặt sân</h1>
+                <p class="text-slate-500 font-medium text-lg">Quản lý và theo dõi các hoạt động thể thao của bạn tại Arena Kinetic.</p>
+            </header>
+
+            <div class="flex gap-3 overflow-x-auto pb-6 mb-4 no-scrollbar">
+                <button onclick="filterBookings('ALL', this)" class="filter-btn bg-primary text-white px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 shadow-lg shadow-primary/30 transition-all border-none cursor-pointer">Tất cả</button>
+                <button onclick="filterBookings('CONFIRMED', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Đã xác nhận</button>
+                <button onclick="filterBookings('PENDING', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Chờ thanh toán</button>
+                <button onclick="filterBookings('COMPLETED', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Hoàn thành</button>
+                <button onclick="filterBookings('CANCELLED', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Đã hủy</button>
             </div>
-            <a
-              th:if="${b.status.name() == 'PENDING'}"
-              th:href="@{/payment/checkout(bookingCode=${b.bookingCode})}"
-              class="btn btn-danger btn-sm"
-              >Thanh toán ngay</a
-            >
 
-            <!-- Nút Hủy (khi CONFIRMED) -->
-            <form
-              th:if="${b.status.name() == 'CONFIRMED'}"
-              th:action="@{/bookings/{id}/cancel(id=${b.id})}"
-              method="post"
-            >
-              <button
-                type="submit"
-                class="btn btn-outline-danger btn-sm"
-                onclick="return confirm('Bạn có chắc muốn hủy?');"
-              >
-                Hủy
-              </button>
-            </form>
-          </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                <div class="lg:col-span-8 space-y-6">
+
+                    <div id="emptyState" th:if="${#lists.isEmpty(bookings)}" class="bg-white p-12 rounded-[2rem] border border-dashed border-slate-300 flex flex-col items-center text-center shadow-sm">
+                        <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined text-5xl text-slate-300">event_busy</span>
+                        </div>
+                        <h4 class="font-headline font-black text-2xl text-slate-900 mb-2">Chưa có lịch đặt sân nào</h4>
+                        <p class="text-slate-500 mb-8">Bạn chưa thực hiện giao dịch nào. Hãy tìm kiếm sân đấu yêu thích ngay!</p>
+                        <a th:href="@{/facilities}" class="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-primary transition-all text-decoration-none shadow-lg">Khám phá sân đấu</a>
+                    </div>
+
+                    <div id="noFilterResult" class="hidden bg-white p-12 rounded-[2rem] border border-dashed border-slate-300 flex-col items-center text-center shadow-sm">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">search_off</span>
+                        <h4 class="font-headline font-black text-xl text-slate-900 mb-2">Không có đơn nào</h4>
+                        <p class="text-slate-500">Không tìm thấy lịch đặt sân nào khớp với trạng thái bạn chọn.</p>
+                    </div>
+
+                    <article th:each="b : ${bookings}"
+                             class="booking-card bg-white rounded-[1.5rem] overflow-hidden group hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] transition-all duration-300 border border-slate-100 relative"
+                             th:classappend="${b.status.name() == 'CANCELLED'} ? 'opacity-80 grayscale-[30%] hover:grayscale-0' : ''"
+                             th:data-status="${b.status.name()}">
+
+                        <div class="flex flex-col md:flex-row p-6 gap-6 relative z-10">
+
+                            <div class="w-full md:w-48 h-36 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 relative">
+                                <div class="absolute top-2 left-2 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded font-label uppercase tracking-widest z-10" th:text="${b.sportType}">BÓNG ĐÁ</div>
+
+                                <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                     th:src="${#strings.containsIgnoreCase(b.sportType, 'CẦU LÔNG') or #strings.containsIgnoreCase(b.sportType, 'BADMINTON')} ? 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop' :
+                                             (${#strings.containsIgnoreCase(b.sportType, 'RỔ') or #strings.containsIgnoreCase(b.sportType, 'BASKETBALL')} ? 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=600&auto=format&fit=crop' :
+                                             (${#strings.containsIgnoreCase(b.sportType, 'TENNIS') or #strings.containsIgnoreCase(b.sportType, 'QUẦN VỢT')} ? 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=600&auto=format&fit=crop' :
+                                             (${#strings.containsIgnoreCase(b.sportType, 'PICKLEBALL')} ? 'https://images.unsplash.com/photo-1622397455829-9e8c07d3b8f6?q=80&w=600&auto=format&fit=crop' :
+                                             'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop')))"
+                                     alt="Hình sân"/>
+                            </div>
+
+                            <div class="flex-grow flex flex-col justify-between">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div>
+                                        <p class="text-[10px] font-bold font-label uppercase tracking-widest text-slate-400 mb-1 block">Mã GD: <span th:text="${b.bookingCode}" class="text-slate-600"></span></p>
+                                        <h3 class="text-xl md:text-2xl font-black font-headline text-slate-900 mb-1" th:text="${b.facilityName}">Tên cơ sở</h3>
+                                        <div class="flex items-center flex-wrap gap-2 text-slate-500 font-label text-xs sm:text-sm font-medium">
+                                            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">grid_view</span> <span th:text="${b.fieldName}"></span></span>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">calendar_today</span> <span th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy')}"></span></span>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="flex items-center gap-1 text-primary"><span class="material-symbols-outlined text-[16px]">schedule</span> <span th:text="${b.startTime + ' - ' + b.endTime}"></span></span>
+                                        </div>
+                                    </div>
+
+                                    <span class="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black font-label uppercase tracking-widest flex items-center gap-1.5 whitespace-nowrap"
+                                          th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                                          b.status.name() == 'PENDING'   ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                          b.status.name() == 'CANCELLED' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                          'bg-slate-50 text-slate-600 border border-slate-200'}">
+                                        <span class="w-1.5 h-1.5 rounded-full"
+                                              th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-emerald-500' :
+                                                              b.status.name() == 'PENDING'   ? 'bg-amber-500 animate-pulse' :
+                                                              b.status.name() == 'CANCELLED' ? 'bg-red-500' :
+                                                              'bg-slate-500'}"></span>
+                                        <span th:text="${b.status.name() == 'PENDING' ? 'Chờ thanh toán' :
+                                                       b.status.name() == 'CONFIRMED' ? 'Đã xác nhận' :
+                                                       b.status.name() == 'CANCELLED' ? 'Đã hủy' :
+                                                       b.status.name() == 'COMPLETED' ? 'Hoàn thành' : b.status}">
+                                        </span>
+                                    </span>
+                                </div>
+
+                                <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4">
+                                    <div class="font-label">
+                                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-0.5" th:text="${b.status.name() == 'CANCELLED' ? 'Đã hoàn tiền' : 'Tổng cộng'}">Tổng cộng</p>
+                                        <p class="text-2xl font-black text-slate-900" th:classappend="${b.status.name() == 'CANCELLED' ? 'line-through text-slate-400' : ''}" th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + 'đ'}">450.000đ</p>
+                                    </div>
+
+                                    <div class="flex gap-2 w-full sm:w-auto">
+                                        <form th:if="${b.status.name() == 'CONFIRMED'}"
+                                              th:action="@{/bookings/{id}/cancel(id=${b.id})}" method="post" class="flex-1 sm:flex-none m-0">
+                                            <button type="submit" class="w-full px-4 py-3 text-xs font-bold text-slate-500 border border-slate-200 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors uppercase tracking-widest font-label cursor-pointer"
+                                                    onclick="return confirm('Xác nhận hủy đơn đặt sân này?');">Hủy sân</button>
+                                        </form>
+
+                                        <a th:if="${b.status.name() == 'PENDING'}"
+                                           th:href="@{/payment/checkout(bookingCode=${b.bookingCode})}"
+                                           class="flex-1 sm:flex-none px-6 py-3 text-xs font-bold bg-[#005BAA] text-white rounded-xl hover:bg-[#004785] transition-colors uppercase tracking-widest font-label text-decoration-none shadow-lg shadow-[#005BAA]/30 flex items-center justify-center">Thanh toán ngay</a>
+
+                                        <a th:unless="${b.status.name() == 'PENDING'}"
+                                           th:href="@{/facilities}"
+                                           class="flex-1 sm:flex-none px-6 py-3 text-xs font-bold bg-primary text-white rounded-xl hover:bg-orange-700 transition-colors uppercase tracking-widest font-label text-decoration-none shadow-lg shadow-primary/30 flex items-center justify-center">Đặt lại sân</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <aside class="lg:col-span-4 space-y-6 sticky top-28 mb-10">
+
+                    <div class="bg-slate-950 text-white p-8 rounded-[2rem] relative overflow-hidden shadow-2xl">
+                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/40 rounded-full blur-[60px] pointer-events-none"></div>
+                        <div class="absolute -left-10 -top-10 w-32 h-32 bg-blue-500/20 rounded-full blur-[60px] pointer-events-none"></div>
+
+                        <div class="relative z-10">
+                            <h4 class="font-headline font-black text-2xl mb-8 flex items-center gap-3 italic uppercase tracking-tight">
+                                <span class="material-symbols-outlined text-primary text-[28px]">bar_chart</span> Thống kê cá nhân
+                            </h4>
+
+                            <div class="space-y-5 font-label text-sm font-medium">
+                                <div class="flex justify-between items-center border-b border-white/10 pb-5">
+                                    <span class="text-slate-400">Tổng số lượt đặt</span>
+                                    <span class="text-3xl font-black text-white" th:text="${#lists.size(bookings)}">12</span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-white/10 pb-5">
+                                    <span class="text-slate-400">Hạng hội viên</span>
+                                    <span class="text-base font-black text-amber-400 uppercase tracking-widest">Đồng</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-2">
+                                    <span class="text-slate-400">Chờ thanh toán</span>
+                                    <span class="text-lg font-black text-orange-500">
+                                        <th:block th:text="${bookings.?[status.name() == 'PENDING'].size()}"></th:block> đơn
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 flex flex-col items-center text-center shadow-sm">
+                        <div class="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-5 border border-orange-100">
+                            <span class="material-symbols-outlined text-primary text-3xl">sports_and_outdoors</span>
+                        </div>
+                        <h4 class="font-headline font-black text-xl text-slate-900 mb-2 italic uppercase">Sẵn sàng ra sân?</h4>
+                        <p class="text-sm text-slate-500 mb-6 leading-relaxed">Sức khỏe là vàng! Hãy tìm kiếm và đặt ngay sân chơi yêu thích của bạn hôm nay.</p>
+                        <a th:href="@{/facilities}" class="w-full bg-slate-100 text-slate-700 py-4 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all font-label text-decoration-none">Khám phá sân ngay</a>
+                    </div>
+                </aside>
+
+            </div>
         </div>
-      </div>
-    </th:block>
-  </body>
+    </div>
+
+    <script>
+        function filterBookings(status, btnElement) {
+            // 1. Đổi giao diện nút đang Active
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/30');
+                btn.classList.add('bg-white', 'text-slate-600');
+            });
+            btnElement.classList.remove('bg-white', 'text-slate-600');
+            btnElement.classList.add('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/30');
+
+            // 2. Lọc các thẻ Booking Card
+            const cards = document.querySelectorAll('.booking-card');
+            let hasVisibleCard = false;
+
+            cards.forEach(card => {
+                if (status === 'ALL' || card.getAttribute('data-status') === status) {
+                    card.style.display = ''; // Hiện card
+                    hasVisibleCard = true;
+                } else {
+                    card.style.display = 'none'; // Ẩn card
+                }
+            });
+
+            // 3. Hiện thông báo nếu lọc ra không có đơn nào
+            const emptyState = document.getElementById('emptyState');
+            const noFilterResult = document.getElementById('noFilterResult');
+
+            // Nếu vốn dĩ chưa có đơn nào từ đầu thì khỏi làm gì thêm
+            if (emptyState) return;
+
+            if (!hasVisibleCard) {
+                noFilterResult.classList.remove('hidden');
+                noFilterResult.classList.add('flex');
+            } else {
+                noFilterResult.classList.add('hidden');
+                noFilterResult.classList.remove('flex');
+            }
+        }
+    </script>
+</th:block>
+</body>
 </html>
