@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 @EnableWebSecurity
@@ -50,7 +51,8 @@ public class SecurityConfig {
                                  "/images/**", "/error/**", "/uploads/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
                 // VNPay callbacks không cần auth
-                .requestMatchers("/payment/vnpay-return", "/payment/vnpay-ipn").permitAll()
+                .requestMatchers("/payment/vnpay-return", "/payment/vnpay-ipn",
+                        "/payment/momo-return",  "/payment/momo-ipn").permitAll()
                 // Owner area
                 .requestMatchers("/owner/**").hasAnyRole("OWNER", "ADMIN", "SUPER_ADMIN")
                 // Admin area
@@ -81,12 +83,16 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                    .ignoringRequestMatchers("/api/**", "/payment/vnpay-ipn")
+                    .ignoringRequestMatchers("/api/**", "/payment/vnpay-ipn", "/payment/momo-ipn")
             )
             .sessionManagement(session -> session
                 .maximumSessions(1)
             );
 
         return http.build();
+    }
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

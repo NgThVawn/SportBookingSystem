@@ -4,12 +4,16 @@ import J2EE.SportBooingSystem.dto.response.BookingResponse;
 import J2EE.SportBooingSystem.entity.Booking;
 import J2EE.SportBooingSystem.enums.BookingStatus;
 import J2EE.SportBooingSystem.repository.BookingRepository;
+import J2EE.SportBooingSystem.service.MoMoService;
 import J2EE.SportBooingSystem.service.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -26,7 +30,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PaymentController {
 
+    @Value("${booking.payment-timeout-minutes:10}")
+    private int paymentTimeoutMinutes;
+
     private final VNPayService vnPayService;
+    private final MoMoService moMoService;
     private final BookingRepository bookingRepo;
 
     // ── 1. Trang checkout ────────────────────────────────────────
@@ -58,6 +66,7 @@ public class PaymentController {
         }
 
         model.addAttribute("booking", BookingResponse.from(booking));
+        model.addAttribute("paymentTimeoutMinutes", paymentTimeoutMinutes);
         return "payment/checkout";
     }
 
@@ -87,6 +96,32 @@ public class PaymentController {
         log.info("Redirecting user {} to VNPay for booking {}",
                 ud.getUsername(), bookingCode);
         return "redirect:" + paymentUrl;
+    }
+
+    @PostMapping("/momo")
+    @PreAuthorize("isAuthenticated()")
+// 1. ĐÃ XÓA @Transactional ở đây
+    public String createMomoPayment(@RequestParam String bookingCode,
+                                    @AuthenticationPrincipal UserDetails ud, // 2. Đồng bộ cách lấy User
+                                    RedirectAttributes ra) {
+
+        Booking booking = bookingRepo.findByBookingCodeEager(bookingCode)
+                .orElseThrow(() -> new IllegalArgumentException("Booking không tồn tại"));
+        if (!booking.getUser().getEmail().equals(ud.getUsername())) {
+            return "redirect:/bookings?error=forbidden";
+        }
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            return "redirect:/payment/checkout?bookingCode=" + bookingCode;
+        }
+        try {
+            String payUrl = moMoService.createPaymentUrl(booking);
+            log.info("Redirecting user {} to MoMo for booking {}", ud.getUsername(), bookingCode);
+            return "redirect:" + payUrl;
+        } catch (Exception e) {
+            log.error("Lỗi tạo thanh toán MoMo cho booking {}: {}", bookingCode, e.getMessage());
+            ra.addFlashAttribute("error", "Hệ thống MoMo đang bận hoặc lỗi mạng. Vui lòng thử lại sau!");
+            return "redirect:/payment/checkout?bookingCode=" + bookingCode;
+        }
     }
 
     // ── 3. Nhận kết quả từ VNPay (Return URL) ───────────────────
@@ -126,6 +161,32 @@ public class PaymentController {
         return "payment/result";
     }
 
+    @GetMapping("/momo-return")
+    public String momoReturn(@RequestParam Map<String, String> params, Model model) {
+        boolean success = moMoService.processPaymentReturn(params);
+
+        // orderId có dạng "BK202604038364-1743685667415" — cắt suffix timestamp để lấy bookingCode
+        String orderId     = params.getOrDefault("orderId", "");
+        String bookingCode = orderId.contains("-") ? orderId.substring(0, orderId.lastIndexOf('-')) : orderId;
+        int    resultCode  = Integer.parseInt(params.getOrDefault("resultCode", "-1"));
+
+        model.addAttribute("success",     success);
+        model.addAttribute("bookingCode", bookingCode);
+        model.addAttribute("resultCode",  resultCode);
+        model.addAttribute("message",     params.getOrDefault("message", ""));
+        model.addAttribute("transId",     params.getOrDefault("transId", ""));
+        model.addAttribute("amount",      params.getOrDefault("amount", "0"));
+        model.addAttribute("payType",     params.getOrDefault("payType", ""));
+
+        // Lấy thêm thông tin booking để hiển thị
+        if (!bookingCode.isBlank()) {
+            bookingRepo.findByBookingCodeEager(bookingCode).ifPresent(b ->
+                    model.addAttribute("booking", BookingResponse.from(b)));
+        }
+
+        return "payment/momo-result";
+    }
+
     // ── 4. IPN – Server-to-Server từ VNPay ─────────────────────
 
     /**
@@ -143,6 +204,22 @@ public class PaymentController {
         result.put("RspCode", rspCode);
         result.put("Message", "00".equals(rspCode) ? "Confirm Success" : "Confirm Fail");
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/momo-ipn")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> momoIpn(
+            @RequestBody Map<String, Object> body) {
+        log.info("MoMo IPN nhận được: {}", body);
+        String result = moMoService.processIpn(body);
+        Map<String, Object> response = Map.of(
+                "partnerCode", body.getOrDefault("partnerCode", ""),
+                "requestId",   body.getOrDefault("requestId", ""),
+                "orderId",     body.getOrDefault("orderId", ""),
+                "resultCode",  result.equals("0") ? 0 : Integer.parseInt(result),
+                "message",     result.equals("0") ? "Thành công" : "Lỗi"
+        );
+        return ResponseEntity.ok(response);
     }
 
     // ── Helper ───────────────────────────────────────────────────

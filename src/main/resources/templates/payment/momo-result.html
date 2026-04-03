@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Kết quả thanh toán MoMo</title>
+</head>
+<body>
+<div layout:fragment="content" class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+
+            <!-- THÀNH CÔNG -->
+            <div th:if="${success}" class="card border-success shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72"
+                             fill="none" viewBox="0 0 24 24" stroke="#198754" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-success fw-bold">Thanh toán thành công!</h3>
+                    <p class="text-muted">Đơn đặt sân của bạn đã được xác nhận.</p>
+
+                    <!-- Chi tiết giao dịch -->
+                    <div class="mt-4 text-start">
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <th class="text-muted fw-normal" style="width:45%">Mã đơn:</th>
+                                <td><span class="fw-semibold" th:text="${bookingCode}"></span></td>
+                            </tr>
+                            <tr th:if="${booking != null}">
+                                <th class="text-muted fw-normal">Sân:</th>
+                                <td th:text="${booking.fieldName + ' - ' + booking.facilityName}"></td>
+                            </tr>
+                            <tr th:if="${booking != null}">
+                                <th class="text-muted fw-normal">Thời gian:</th>
+                                <td th:text="${booking.startTime + ' - ' + booking.endTime + ', ' + #temporals.format(booking.bookingDate,'dd/MM/yyyy')}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">Mã giao dịch MoMo:</th>
+                                <td th:text="${transId}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">Phương thức:</th>
+                                <td th:text="${payType != null && !payType.empty ? payType : 'MoMo'}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">Số tiền:</th>
+                                <td>
+                                    <span class="fw-bold text-success"
+                                          th:text="${#numbers.formatInteger(amount, 1, 'COMMA') + ' đ'}">
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2 justify-content-center">
+                        <a th:href="@{/bookings}" class="btn btn-success">Xem lịch đặt sân</a>
+                        <a th:href="@{/facilities}" class="btn btn-outline-secondary">Đặt sân khác</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- THẤT BẠI / HỦY -->
+            <div th:unless="${success}" class="card border-danger shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72"
+                             fill="none" viewBox="0 0 24 24" stroke="#dc3545" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-danger fw-bold">Giao dịch thất bại!</h3>
+
+                    <!-- Mô tả lỗi theo resultCode MoMo -->
+                    <p class="text-muted" th:switch="${resultCode}">
+                        <span th:case="1001">Số dư ví MoMo không đủ.</span>
+                        <span th:case="1002">Giao dịch bị từ chối bởi nhà phát hành.</span>
+                        <span th:case="1003">Giao dịch đã bị hủy sau khi cấp phát.</span>
+                        <span th:case="1004">Số tiền vượt quá hạn mức giao dịch.</span>
+                        <span th:case="1006">Người dùng đã hủy giao dịch.</span>
+                        <span th:case="1007">Tài khoản MoMo chưa đăng ký dịch vụ.</span>
+                        <span th:case="*" th:text="${message != null && !message.empty ? message : 'Đã xảy ra lỗi trong quá trình thanh toán.'}"></span>
+                    </p>
+                    <p class="text-muted small" th:if="${resultCode != null}">
+                        Mã lỗi: <code th:text="${resultCode}"></code>
+                    </p>
+
+                    <div class="mt-4 d-flex gap-2 justify-content-center">
+                        <a th:href="@{/payment/checkout(bookingCode=${bookingCode})}"
+                           class="btn btn-danger">Thử lại thanh toán</a>
+                        <a th:href="@{/bookings}" class="btn btn-outline-secondary">Quay lại lịch đặt sân</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>
