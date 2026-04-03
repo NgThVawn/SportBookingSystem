@@ -7,6 +7,7 @@ import J2EE.SportBooingSystem.dto.response.BookingResponse;
 import J2EE.SportBooingSystem.entity.*;
 import J2EE.SportBooingSystem.enums.BookingStatus;
 import J2EE.SportBooingSystem.exception.ForbiddenException;
+import J2EE.SportBooingSystem.exception.ResourceNotFoundException;
 import J2EE.SportBooingSystem.repository.*;
 import J2EE.SportBooingSystem.service.BookingService;
 import J2EE.SportBooingSystem.service.PriceRuleService;
@@ -71,20 +72,7 @@ public class BookingServiceImpl implements BookingService {
         return bookingRepo.save(booking);
     }
 
-    @Override
-    @Transactional
-    public void cancelBooking(Long bookingId, String userEmail, String reason) {
-        Booking booking = bookingRepo.findById(bookingId).orElseThrow();
-        boolean isUser = booking.getUser().getEmail().equals(userEmail);
-        boolean isOwner = booking.getField().getFacility().getOwner().getEmail().equals(userEmail);
-        if (!isUser && !isOwner)
-            throw new ForbiddenException("Bạn không có quyền hủy booking này");
-        if (booking.getStatus() == BookingStatus.CANCELLED)
-            throw new IllegalStateException("Booking đã được hủy trước đó");
-        booking.setStatus(BookingStatus.CANCELLED);
-        booking.setCancelReason(reason);
-        bookingRepo.save(booking);
-    }
+
 
     @Override
     public List<BookingResponse> getBookingsByUser(String userEmail) {
@@ -116,13 +104,13 @@ public class BookingServiceImpl implements BookingService {
 
         List<OccupiedSlot> occupied = new ArrayList<>();
 
-        // Booking đã xác nhận
+
         bookingRepo.findByFieldAndBookingDateOrderByStartTime(field, date)
                 .stream()
                 .filter(b -> b.getStatus() != BookingStatus.CANCELLED)
                 .forEach(b -> occupied.add(new OccupiedSlot(b.getStartTime(), b.getEndTime(), "BOOKING")));
 
-        // Khung giờ bị chặn
+
         blockedRepo.findByFieldAndDateOrderByStartTime(field, date)
                 .forEach(bt -> occupied.add(new OccupiedSlot(bt.getStartTime(), bt.getEndTime(), "BLOCKED")));
 
@@ -183,4 +171,81 @@ public class BookingServiceImpl implements BookingService {
                     log.info("Auto-cancelled PENDING booking: {}", b.getBookingCode());
                 });
     }
+    @Override
+    @Transactional
+    public void confirmBooking(Long bookingId, String ownerEmail) {
+        Booking booking = bookingRepo.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn đặt sân"));
+
+        if (!booking.getField().getFacility().getOwner().getEmail().equals(ownerEmail)) {
+            throw new J2EE.SportBooingSystem.exception.ForbiddenException("Bạn không có quyền thao tác trên đơn này!");
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new IllegalStateException("Chỉ có thể duyệt đơn đang ở trạng thái CHỜ XÁC NHẬN (PENDING).");
+        }
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        bookingRepo.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public J2EE.SportBooingSystem.enums.BookingStatus cancelBooking(Long bookingId, String userEmail, String reason) {
+        Booking booking = bookingRepo.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn đặt sân"));
+
+        boolean isOwner = booking.getField().getFacility().getOwner().getEmail().equals(userEmail);
+        boolean isCustomer = booking.getUser().getEmail().equals(userEmail);
+
+        if (!isOwner && !isCustomer) {
+            throw new ForbiddenException("Bạn không có quyền thực hiện hành động này");
+        }
+
+        String actualReason = (reason != null && !reason.trim().isEmpty()) ? reason : "Không có lý do";
+
+        if (isOwner) {
+            booking.setStatus(BookingStatus.CANCELLED);
+            booking.setCancelReason("Chủ sân hủy: " + actualReason);
+            bookingRepo.save(booking);
+            return booking.getStatus(); 
+        }
+
+        if (isCustomer) {
+            LocalDateTime startDateTime = LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
+            LocalDateTime now = LocalDateTime.now();
+
+            if (now.isBefore(startDateTime.minusHours(24))) {
+                booking.setStatus(BookingStatus.CANCELLED);
+                booking.setCancelReason("Khách tự hủy (trước 24h): " + actualReason);
+            } else {
+                booking.setStatus(BookingStatus.CANCEL_PENDING);
+                booking.setCancelReason("Yêu cầu hủy sát giờ: " + actualReason);
+            }
+            bookingRepo.save(booking);
+        }
+        
+        return booking.getStatus(); 
+    }
+
+    @Override
+    @Transactional
+    public void approveCancelRequest(Long bookingId, String ownerEmail, boolean approve) {
+        Booking booking = bookingRepo.findById(bookingId).orElseThrow();
+        
+        // Kiểm tra quyền chủ sân
+        if (!booking.getField().getFacility().getOwner().getEmail().equals(ownerEmail)) {
+            throw new ForbiddenException("Không có quyền");
+        }
+
+        if (approve) {
+            booking.setStatus(BookingStatus.CANCELLED);
+            // Có thể thêm logic hoàn tiền ở đây nếu đã thanh toán VNPay
+        } else {
+            // Nếu từ chối cho hủy, đơn quay lại trạng thái CONFIRMED (bắt buộc đi đá hoặc mất tiền)
+            booking.setStatus(BookingStatus.CONFIRMED);
+        }
+        bookingRepo.save(booking);
+    }
+
 }

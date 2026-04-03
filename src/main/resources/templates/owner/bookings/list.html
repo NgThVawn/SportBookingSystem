@@ -1,59 +1,269 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
-<head><title>Quản lý đặt sân</title></head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đặt sân - Chủ sân</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        /* Tùy chỉnh làm đẹp giao diện */
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .dashboard-card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        .table-custom th { border-bottom: 2px solid #e9ecef; font-weight: 600; color: #6c757d; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+        .table-custom td { vertical-align: middle; padding: 1rem 0.75rem; border-bottom: 1px solid #f1f3f5; }
+        
+        /* Custom Badges Trạng thái */
+        .status-badge { padding: 0.5em 1em; font-weight: 600; border-radius: 30px; font-size: 0.8rem; }
+        .bg-soft-warning { background-color: #fff3cd; color: #856404; }
+        .bg-soft-info { background-color: #d1ecf1; color: #0c5460; }
+        .bg-soft-success { background-color: #d4edda; color: #155724; }
+        .bg-soft-danger { background-color: #f8d7da; color: #721c24; }
+        .bg-soft-secondary { background-color: #e2e3e5; color: #383d41; }
+    </style>
+</head>
 <body>
-<th:block th:fragment="content">
-    <div class="container py-4">
-        <h3 class="mb-4">Danh sách đặt sân</h3>
 
-        <form class="d-flex gap-2 mb-4" method="get">
-            <input type="date" name="date" class="form-control w-auto"
-                   th:value="${selectedDate != null ? #temporals.format(selectedDate,'yyyy-MM-dd') : ''}">
-            <button class="btn btn-outline-primary">Lọc theo ngày</button>
-            <a th:href="@{/owner/bookings}" class="btn btn-outline-secondary">Xem tất cả</a>
-        </form>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+        <div class="container-fluid px-md-5">
+            <a class="navbar-brand fw-bold" href="/owner"><i class="bi bi-shield-check text-warning me-2"></i>KINETIC OWNER</a>
+            <div class="d-flex text-white align-items-center">
+                <span class="me-3">Xin chào, <b th:text="${#authentication.name}">Chủ sân</b></span>
+                <form th:action="@{/auth/logout}" method="post" class="m-0">
+                    <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    </nav>
 
-        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-        <div th:if="${error}"   class="alert alert-danger"  th:text="${error}"></div>
+    <div class="container-fluid py-2 px-md-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-dark mb-0"><i class="bi bi-calendar-check text-primary me-2"></i>Quản lý Đơn đặt sân</h3>
+        </div>
 
-        <table class="table table-bordered table-hover">
-            <thead class="table-light">
-            <tr>
-                <th>Mã</th><th>Khách</th><th>Sân</th>
-                <th>Ngày</th><th>Giờ</th><th>Giá</th>
-                <th>Trạng thái</th><th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:if="${#lists.isEmpty(bookings)}">
-                <td colspan="8" class="text-center text-muted">Chưa có đơn đặt sân nào</td>
-            </tr>
-            <tr th:each="b : ${bookings}">
-                <td><small th:text="${b.bookingCode}"></small></td>
-                <td th:text="${b.user != null ? b.user.fullName : '—'}"></td>
-                <td th:text="${b.fieldName}"></td>
-                <td th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy')}"></td>
-                <td th:text="${b.startTime + ' – ' + b.endTime}"></td>
-                <td th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + '₫'}"></td>
-                <td>
-          <span class="badge"
-                th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-success' :
-                                  b.status.name() == 'CANCELLED' ? 'bg-danger' :
-                                  b.status.name() == 'COMPLETED' ? 'bg-secondary' : 'bg-warning'}"
-                th:text="${b.status}"></span>
-                </td>
-                <td>
-                    <form th:if="${b.status.name() == 'CONFIRMED'}"
-                          th:action="@{/owner/bookings/{id}/cancel(id=${b.id})}" method="post">
-                        <button class="btn btn-outline-danger btn-sm"
-                                onclick="return confirm('Hủy đơn đặt sân này?')">Hủy</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="card dashboard-card mb-4">
+            <div class="card-body p-4">
+                <form class="row g-3 align-items-end" method="get" th:action="@{/owner/bookings}">
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-semibold text-muted small">Lọc theo ngày đá</label>
+                        <input type="date" name="date" class="form-control form-control-lg bg-light border-0"
+                               th:value="${selectedDate != null ? #temporals.format(selectedDate,'yyyy-MM-dd') : ''}">
+                    </div>
+                    
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold text-muted small">Trạng thái đơn</label>
+                        <select name="status" class="form-select form-select-lg bg-light border-0">
+                            <option value="">-- Tất cả trạng thái --</option>
+                            <option value="PENDING" th:selected="${selectedStatus == 'PENDING'}">⌛ Chờ duyệt đơn</option>
+                            <option value="CANCEL_PENDING" th:selected="${selectedStatus == 'CANCEL_PENDING'}">❓ Khách xin hủy sát giờ</option>
+                            <option value="CONFIRMED" th:selected="${selectedStatus == 'CONFIRMED'}">✅ Đã duyệt (Chờ đá)</option>
+                            <option value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}">🏁 Đã hoàn thành</option>
+                            <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}">❌ Đã hủy</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-5 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg px-4 fw-semibold rounded-pill">
+                            <i class="bi bi-filter me-1"></i> Áp dụng
+                        </button>
+                        <a th:href="@{/owner/bookings}" class="btn btn-light btn-lg px-4 fw-semibold rounded-pill" th:if="${selectedDate != null || selectedStatus != null}">
+                            Xóa bộ lọc
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card dashboard-card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover mb-0">
+                        <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Mã Đơn</th>
+                            <th>Sân tập</th>
+                            <th>Thời gian đá</th>
+                            <th class="text-end">Tổng Tiền</th>
+                            <th>Ghi chú</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(bookings)}">
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 text-light"></i>
+                                Không tìm thấy đơn đặt sân nào phù hợp.
+                            </td>
+                        </tr>
+                        
+                        <tr th:each="b : ${bookings}">
+                            <td class="ps-4">
+                                <span class="font-monospace text-secondary fw-semibold bg-light px-2 py-1 border rounded" th:text="${b.bookingCode}"></span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary fs-6" th:text="${b.fieldName}"></span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy')}"></div>
+                                <div class="text-muted small"><i class="bi bi-clock me-1"></i><span th:text="${b.startTime}"></span> - <span th:text="${b.endTime}"></span></div>
+                            </td>
+                            <td class="text-end text-danger fw-bold fs-6" th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + '₫'}"></td>
+                            <td>
+                                <span th:if="${b.note != null && !b.note.isEmpty()}" class="text-muted small" title="Ghi chú" data-bs-toggle="tooltip" th:text="${b.note}"></span>
+                                <span th:unless="${b.note != null && !b.note.isEmpty()}" class="text-muted">—</span>
+                            </td>
+
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${
+                                          b.status.name() == 'CANCEL_PENDING' ? 'bg-soft-info' :
+                                          b.status.name() == 'CONFIRMED' ? 'bg-soft-success' :
+                                          b.status.name() == 'CANCELLED' ? 'bg-soft-danger' :
+                                          b.status.name() == 'COMPLETED' ? 'bg-soft-secondary' : 'bg-soft-warning'}"
+                                      th:text="${
+                                          b.status.name() == 'CANCEL_PENDING' ? 'Khách xin hủy' :
+                                          b.status.name() == 'PENDING' ? 'Chờ duyệt' :
+                                          b.status.name() == 'CONFIRMED' ? 'Đã duyệt' :
+                                          b.status.name() == 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}">
+                                </span>
+                            </td>
+
+                            <td class="text-center pe-4">
+                                <div class="d-flex gap-2 justify-content-center">
+
+                                    <th:block th:if="${b.status.name() == 'PENDING'}">
+                                        <form th:action="@{/owner/bookings/{id}/confirm(id=${b.id})}" method="post">
+                                            <button type="submit" class="btn btn-success btn-sm rounded-pill fw-semibold px-3" title="Duyệt đơn"
+                                                    onclick="return confirm('Xác nhận duyệt đơn đặt sân này?')">
+                                                <i class="bi bi-check-lg"></i> Duyệt
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="btn btn-danger btn-sm rounded-pill fw-semibold px-3" 
+                                                th:onclick="'openCancelModal(' + ${b.id} + ', \'PENDING\')'">
+                                            <i class="bi bi-x-lg"></i> Từ chối
+                                        </button>
+                                    </th:block>
+
+                                    <th:block th:if="${b.status.name() == 'CONFIRMED'}">
+                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-semibold px-3" 
+                                                th:onclick="'openCancelModal(' + ${b.id} + ', \'CONFIRMED\')'">
+                                            <i class="bi bi-x-circle"></i> Hủy đơn
+                                        </button>
+                                    </th:block>
+
+                                    <th:block th:if="${b.status.name() == 'CANCEL_PENDING'}">
+                                        <form th:action="@{/owner/bookings/{id}/approve-cancel(id=${b.id})}" method="post">
+                                            <input type="hidden" name="approve" value="true">
+                                            <button type="submit" class="btn btn-info text-white btn-sm rounded-pill fw-semibold px-3" 
+                                                    onclick="return confirm('Đồng ý cho khách hủy đơn này?')">
+                                                <i class="bi bi-check2-all"></i> Cho phép hủy
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/owner/bookings/{id}/approve-cancel(id=${b.id})}" method="post">
+                                            <input type="hidden" name="approve" value="false">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold px-3" 
+                                                    onclick="return confirm('Từ chối yêu cầu hủy của khách?')">
+                                                Bác bỏ
+                                            </button>
+                                        </form>
+                                    </th:block>
+
+                                    <span th:if="${b.status.name() == 'CANCELLED' || b.status.name() == 'COMPLETED'}" class="text-muted small">
+                                        —
+                                    </span>
+
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-</th:block>
+
+    <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <form id="cancelBookingForm" method="post" th:action="@{/}" th:data-base-url="@{/owner/bookings}">
+                    <div class="modal-header border-0 pb-0 px-4 pt-4">
+                        <h5 class="modal-title fw-bold" id="cancelModalTitle">Hủy/Từ chối đơn đặt sân</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body px-4">
+                        <p class="text-muted small mb-3">Vui lòng nhập lý do để khách hàng nắm được thông tin.</p>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Lý do (Bắt buộc)</label>
+                            <textarea class="form-control bg-light border-0" id="cancelReasonInput" name="reason" rows="3" 
+                                      placeholder="Ví dụ: Sân đang bảo trì đột xuất, sự cố mất điện..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">Xác nhận</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script th:inline="javascript">
+        // Khai báo biến toàn cục
+        let cancelModal;
+        let cancelForm;
+        let modalTitle;
+        let reasonInput;
+
+        // Bọc trong DOMContentLoaded để đảm bảo Bootstrap JS đã load xong
+        document.addEventListener('DOMContentLoaded', function () {
+            // Khởi tạo Tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Lấy các element gán vào biến
+            cancelForm = document.getElementById('cancelBookingForm');
+            modalTitle = document.getElementById('cancelModalTitle');
+            reasonInput = document.getElementById('cancelReasonInput');
+            
+            // Khởi tạo Modal an toàn
+            cancelModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
+        });
+
+        // Hàm mở Modal
+        function openCancelModal(bookingId, currentStatus) {
+            // Lấy baseURL an toàn và tự động map URL
+            const baseUrl = cancelForm.getAttribute('data-base-url');
+            cancelForm.action = baseUrl + '/' + bookingId + '/cancel';
+            
+            if (currentStatus === 'PENDING') {
+                modalTitle.innerHTML = '<i class="bi bi-x-circle text-danger me-2"></i>Từ chối đơn đặt sân';
+                reasonInput.value = 'Chủ sân từ chối: Hết sân / Lịch bận';
+            } else {
+                modalTitle.innerHTML = '<i class="bi bi-exclamation-triangle text-danger me-2"></i>Hủy đơn đã duyệt';
+                reasonInput.value = 'Sự cố kỹ thuật / Mưa bão đột xuất';
+            }
+            
+            cancelModal.show();
+        }
+    </script>
+
 </body>
 </html>
