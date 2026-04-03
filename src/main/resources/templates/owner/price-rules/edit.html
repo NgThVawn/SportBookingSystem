@@ -47,92 +47,102 @@
         <div class="flex items-center gap-2 text-sm font-medium">
             <span class="text-slate-400">Arena Manager</span>
             <span class="text-slate-300">/</span>
-            <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Cơ sở</a>
+            <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-orange-600 transition-colors text-decoration-none">Cơ sở</a>
             <span class="text-slate-300">/</span>
-            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none" th:text="${facility.name}">Sân</a>
+            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="text-slate-500 hover:text-orange-600 transition-colors text-decoration-none" th:text="${facility.name}">Sân</a>
             <span class="text-slate-300">/</span>
-            <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id},fldid=${field.id})}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Quy tắc giá</a>
+            <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id},fldid=${field.id})}" class="text-slate-500 hover:text-orange-600 transition-colors text-decoration-none">Quy tắc giá</a>
             <span class="text-slate-300">/</span>
             <span class="text-slate-800 font-bold">Chỉnh sửa</span>
         </div>
-        <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id},fldid=${field.id})}" class="text-sm text-orange-600 font-bold hover:underline">← Quay lại quản lý giá</a>
+        <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id},fldid=${field.id})}" class="text-sm text-orange-600 font-bold hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span> Quay lại danh sách
+        </a>
     </header>
 
-    <div class="p-8 flex-1">
-        <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
-            <span class="material-symbols-outlined">error</span>
+    <div class="p-8 flex-1 flex justify-center">
+        <div class="w-full max-w-3xl"> <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm animate-[pulse_0.5s_ease-in-out_1]">
+            <span class="material-symbols-outlined text-red-600">error</span>
             <span class="font-bold text-sm" th:text="${error}"></span>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            <section class="xl:col-span-2">
-                <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 class="font-headline font-black text-2xl text-slate-900 tracking-tight mb-1">Chỉnh sửa quy tắc giá</h2>
-                    <p class="text-slate-500 text-sm mb-6">
-                        Sân: <span class="font-bold" th:text="${field.name}">Tên sân</span>
-                    </p>
+            <div class="bg-slate-900 p-8 md:p-10 rounded-[2rem] shadow-2xl border border-slate-800 text-white relative overflow-hidden">
+                <div class="absolute -top-16 -right-16 w-48 h-48 bg-orange-500/20 blur-[60px] rounded-full pointer-events-none"></div>
+                <div class="absolute -bottom-16 -left-16 w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none"></div>
 
-                    <form th:action="@{/owner/facilities/{fid}/fields/{fldid}/price-rules/{rid}/edit(fid=${facility.id},fldid=${field.id},rid=${rule.id})}" method="post" th:object="${editRule}" class="space-y-4">
-                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="flex items-center justify-between border-b border-white/10 pb-6 mb-8 relative z-10">
+                    <div>
+                        <h2 class="font-headline font-black text-2xl text-white uppercase tracking-wider flex items-center gap-3 m-0 mb-1.5">
+                            <span class="material-symbols-outlined text-orange-500 text-[28px]">edit_note</span> Cập nhật Quy Tắc
+                        </h2>
+                        <p class="text-slate-400 text-sm font-medium m-0">
+                            Áp dụng cho sân: <strong class="text-white" th:text="${field.name}">Tên sân</strong>
+                        </p>
+                    </div>
+                </div>
 
-                        <div>
-                            <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Tên quy tắc *</label>
-                            <input th:field="*{name}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
-                            <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
-                        </div>
+                <form th:action="@{/owner/facilities/{fid}/fields/{fldid}/price-rules/{rid}/edit(fid=${facility.id},fldid=${field.id},rid=${rule.id})}" method="post" th:object="${editRule}" class="space-y-6 relative z-10">
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-                        <div>
-                            <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Loại ngày *</label>
-                            <select th:field="*{dayType}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
+                    <div>
+                        <label class="block text-[11px] font-label font-bold uppercase text-slate-400 mb-2 tracking-widest">Tên quy tắc *</label>
+                        <input th:field="*{name}" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 text-sm focus:bg-white/10 focus:ring-2 focus:ring-orange-500 outline-none placeholder:text-slate-500 font-medium" placeholder="VD: Khung giờ Vàng tối">
+                        <p class="text-[11px] text-red-400 mt-2 font-medium" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-label font-bold uppercase text-slate-400 mb-2 tracking-widest">Loại ngày áp dụng *</label>
+                        <div class="relative">
+                            <select th:field="*{dayType}" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 text-sm focus:bg-slate-800 focus:ring-2 focus:ring-orange-500 outline-none font-bold appearance-none cursor-pointer">
                                 <option th:each="dt : ${dayTypes}" th:value="${dt}" th:text="${dt.displayName}"></option>
                             </select>
-                            <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('dayType')}" th:errors="*{dayType}"></p>
+                            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
                         </div>
+                        <p class="text-[11px] text-red-400 mt-2 font-medium" th:if="${#fields.hasErrors('dayType')}" th:errors="*{dayType}"></p>
+                    </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Từ *</label>
-                                <input type="time" th:field="*{startTime}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
-                                <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}"></p>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Đến *</label>
-                                <input type="time" th:field="*{endTime}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
-                                <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('endTime')}" th:errors="*{endTime}"></p>
-                            </div>
-                        </div>
-
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Giá/giờ (₫) *</label>
-                            <input type="number" th:field="*{pricePerHour}" min="1000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
-                            <p class="text-xs text-red-600 mt-1" th:if="${#fields.hasErrors('pricePerHour')}" th:errors="*{pricePerHour}"></p>
+                            <label class="block text-[11px] font-label font-bold uppercase text-slate-400 mb-2 tracking-widest">Từ giờ *</label>
+                            <input type="time" th:field="*{startTime}" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 text-sm focus:bg-white/10 focus:ring-2 focus:ring-orange-500 outline-none font-bold [color-scheme:dark]">
+                            <p class="text-[11px] text-red-400 mt-2 font-medium" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}"></p>
                         </div>
-
                         <div>
-                            <label class="block text-xs font-label font-bold uppercase text-slate-500 mb-1">Ưu tiên</label>
-                            <input type="number" th:field="*{priority}" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none">
+                            <label class="block text-[11px] font-label font-bold uppercase text-slate-400 mb-2 tracking-widest">Đến giờ *</label>
+                            <input type="time" th:field="*{endTime}" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 text-sm focus:bg-white/10 focus:ring-2 focus:ring-orange-500 outline-none font-bold [color-scheme:dark]">
+                            <p class="text-[11px] text-red-400 mt-2 font-medium" th:if="${#fields.hasErrors('endTime')}" th:errors="*{endTime}"></p>
                         </div>
+                    </div>
 
-                        <div class="flex items-center gap-3 pt-2">
-                            <button type="submit" class="px-5 py-2.5 bg-orange-600 text-white font-bold text-sm rounded-xl hover:bg-orange-700 transition-all border-none cursor-pointer">
-                                Lưu thay đổi
-                            </button>
-                            <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id},fldid=${field.id})}" class="px-5 py-2.5 bg-slate-100 text-slate-700 font-bold text-sm rounded-xl hover:bg-slate-200 transition-all text-decoration-none">
-                                Hủy
-                            </a>
+                    <div>
+                        <label class="block text-[11px] font-label font-bold uppercase text-slate-400 mb-2 tracking-widest">Mức giá mới / Giờ (₫) *</label>
+                        <input type="number" th:field="*{pricePerHour}" min="1000" class="w-full bg-white/5 border border-white/10 text-orange-400 rounded-xl px-4 py-3.5 text-xl font-black focus:bg-white/10 focus:ring-2 focus:ring-orange-500 outline-none">
+                        <p class="text-[11px] text-red-400 mt-2 font-medium" th:if="${#fields.hasErrors('pricePerHour')}" th:errors="*{pricePerHour}"></p>
+                    </div>
+
+                    <div class="bg-white/5 p-5 rounded-xl border border-white/10">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-[11px] font-label font-bold uppercase text-slate-400 tracking-widest m-0">Độ ưu tiên</label>
+                            <span class="material-symbols-outlined text-[16px] text-orange-400" title="Số càng lớn, ưu tiên càng cao.">lightbulb</span>
                         </div>
-                    </form>
-                </div>
-            </section>
+                        <input type="number" th:field="*{priority}" min="0" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 text-sm font-bold focus:bg-white/10 focus:ring-2 focus:ring-orange-500 outline-none mb-3">
+                        <p class="text-[11px] text-slate-400 m-0 leading-relaxed font-medium">
+                            * Nếu có nhiều quy tắc trùng giờ nhau, hệ thống sẽ ưu tiên áp dụng mức giá của quy tắc có <strong class="text-orange-400">Độ ưu tiên lớn hơn</strong>.
+                        </p>
+                    </div>
 
-            <aside>
-                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-                    <h3 class="font-headline font-bold text-slate-900 mb-2">Lưu ý</h3>
-                    <p class="text-xs text-slate-500 leading-relaxed">
-                        Nếu nhiều quy tắc trùng khung giờ, hệ thống sẽ chọn quy tắc có mức ưu tiên cao hơn.
-                    </p>
-                </div>
-            </aside>
+                    <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/10">
+                        <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id},fldid=${field.id})}"
+                           class="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all text-center text-sm uppercase tracking-widest text-decoration-none">
+                            Hủy bỏ
+                        </a>
+                        <button type="submit" class="flex-[2] py-4 bg-orange-600 text-white font-black font-headline uppercase tracking-widest text-sm rounded-xl hover:bg-orange-500 shadow-lg shadow-orange-600/30 transition-all border-none cursor-pointer">
+                            LƯU THAY ĐỔI
+                        </button>
+                    </div>
+                </form>
+            </div>
+
         </div>
     </div>
 </main>

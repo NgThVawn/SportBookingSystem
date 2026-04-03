@@ -15,6 +15,7 @@ public class BookingResponse {
     private String facilityName;
     private String facilityAddress;
     private String sportType;
+    private String facilityImageUrl;
     private LocalDate bookingDate;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -30,6 +31,7 @@ public class BookingResponse {
                 .facilityName(b.getField().getFacility().getName())
                 .facilityAddress(b.getField().getFacility().getAddress())
                 .sportType(b.getField().getSportType().getDisplayName())
+                .facilityImageUrl(b.getField().getFacility().getPrimaryImageUrl())
                 .bookingDate(b.getBookingDate())
                 .startTime(b.getStartTime())
                 .endTime(b.getEndTime())
