@@ -81,7 +81,7 @@ public class VNPayServiceImpl implements VNPayService {
         vnpParams.put("vnp_ReturnUrl",  returnUrl);
         vnpParams.put("vnp_IpAddr",     clientIp != null ? clientIp : "127.0.0.1");
         vnpParams.put("vnp_CreateDate", now.format(dtf));
-        vnpParams.put("vnp_ExpireDate", now.plusMinutes(15).format(dtf));
+        vnpParams.put("vnp_ExpireDate", now.plusMinutes(10).format(dtf));
 
         // Build hash data và query string
         StringBuilder hashData = new StringBuilder();

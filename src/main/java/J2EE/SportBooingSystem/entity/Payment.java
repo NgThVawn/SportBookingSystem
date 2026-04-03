@@ -1,5 +1,6 @@
 package J2EE.SportBooingSystem.entity;
 
+import J2EE.SportBooingSystem.enums.PaymentMethod;
 import J2EE.SportBooingSystem.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,8 +25,8 @@ public class Payment {
     @Column(length = 50)
     private String vnpTransactionNo;
 
-    /** Mã đơn hàng gửi sang VNPay (= bookingCode) */
-    @Column(nullable = false, length = 20)
+    /** Mã đơn hàng gửi sang cổng thanh toán (bookingCode, hoặc bookingCode-timestamp với MoMo) */
+    @Column(nullable = false, length = 50)
     private String txnRef;
 
     /** Số tiền (VND) */
@@ -60,6 +61,14 @@ public class Payment {
     /** Nội dung đơn hàng gửi VNPay */
     @Column(length = 255)
     private String orderInfo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    @Builder.Default
+    private PaymentMethod paymentMethod = PaymentMethod.VNPAY;
+
+    @Column(length = 50)
+    private String momoTransId;
 
     @Column(nullable = false, updatable = false)
     @Builder.Default

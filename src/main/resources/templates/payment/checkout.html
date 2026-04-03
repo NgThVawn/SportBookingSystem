@@ -69,7 +69,7 @@
             <div class="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 relative z-10">
                 <span class="material-symbols-outlined text-amber-500 mt-0.5">timer</span>
                 <p class="text-sm font-medium text-amber-900 m-0 leading-relaxed">
-                    Đơn đặt sân sẽ tự động bị hủy nếu không hoàn tất thanh toán trong vòng <strong class="font-bold text-amber-700">30 phút</strong>.
+                    Đơn đặt sân sẽ tự động bị hủy nếu không hoàn tất thanh toán trong vòng <strong class="font-bold text-amber-700" th:text="${paymentTimeoutMinutes + ' phút'}">10 phút</strong>.
                 </p>
             </div>
 
@@ -82,7 +82,13 @@
                         Thanh toán VNPay
                     </button>
                 </form>
-
+                <form th:action="@{/payment/momo}" method="post" class="mt-2">
+                    <input type="hidden" name="bookingCode" th:value="${booking.bookingCode}">
+                    <button type="submit" class="w-full flex items-center justify-center gap-3 py-4 bg-[#005BAA] hover:bg-[#004785] text-white font-headline font-black text-lg uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#005BAA]/30 active:scale-95 border-none cursor-pointer">
+                        <img src="https://cdn.brandfetch.io/idn4xaCzTm/w/180/h/180/theme/dark/logo.png?c=1dxbfHSJFAPEGdCLU4o5B" alt="Momo Logo" class="h-6 brightness-0 invert">
+                        Thanh toán bằng MoMo
+                    </button>
+                </form>
                 <a href="/bookings" class="w-full flex items-center justify-center py-4 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold font-label text-xs uppercase tracking-widest rounded-xl transition-colors text-decoration-none border border-slate-200">
                     Để sau (Chờ thanh toán)
                 </a>
