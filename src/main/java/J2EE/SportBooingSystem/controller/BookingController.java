@@ -84,15 +84,23 @@ public class BookingController {
         }
     }
 
-    /** Hủy booking */
+   /** Hủy booking (User) */
     @PostMapping("/{id}/cancel")
     public String cancelBooking(@PathVariable Long id,
-                                @RequestParam(required = false) String reason,
+                                @RequestParam(required = false, defaultValue = "Khách hàng đổi ý") String reason,
                                 @AuthenticationPrincipal UserDetails ud,
                                 RedirectAttributes ra) {
         try {
-            bookingService.cancelBooking(id, ud.getUsername(), reason);
-            ra.addFlashAttribute("success", "Đã hủy booking thành công");
+            // Hứng trạng thái trả về từ Service
+            J2EE.SportBooingSystem.enums.BookingStatus newStatus = 
+                    bookingService.cancelBooking(id, ud.getUsername(), reason);
+
+            // Báo câu thông báo phù hợp
+            if (newStatus == J2EE.SportBooingSystem.enums.BookingStatus.CANCEL_PENDING) {
+                ra.addFlashAttribute("success", "Do bạn hủy sát giờ (dưới 24h), yêu cầu đã được gửi đến Chủ sân để chờ duyệt!");
+            } else {
+                ra.addFlashAttribute("success", "Đã hủy đơn đặt sân thành công!");
+            }
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }

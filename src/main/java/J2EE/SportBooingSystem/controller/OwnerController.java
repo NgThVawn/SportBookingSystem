@@ -635,28 +635,73 @@ public class OwnerController {
 
     /** ── Quản lý booking (Owner xem danh sách) ──────────────────── */
 
+    /** ── Quản lý booking (Owner) ──────────────────── */
+
     @GetMapping("/bookings")
     public String ownerBookings(@RequestParam(required = false)
                                 @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                                @RequestParam(required = false) String status, // Thêm filter theo trạng thái
                                 @AuthenticationPrincipal UserDetails ud,
                                 Model model) {
-        List<BookingResponse> bookings = date != null
-                ? bookingService.getBookingsByOwner(ud.getUsername()).stream()
-                  .filter(b -> b.getBookingDate().isEqual(date)).toList()
-                : bookingService.getBookingsByOwner(ud.getUsername());
+        List<BookingResponse> bookings = bookingService.getBookingsByOwner(ud.getUsername());
+        
+        // Lọc theo ngày nếu có
+        if (date != null) {
+            bookings = bookings.stream()
+                .filter(b -> b.getBookingDate().isEqual(date))
+                .toList();
+        }
+        
+        // Lọc theo trạng thái (PENDING, CONFIRMED, CANCELLED) nếu có
+        if (status != null && !status.isEmpty()) {
+            bookings = bookings.stream()
+                .filter(b -> b.getStatus().name().equalsIgnoreCase(status))
+                .toList();
+        }
+
         model.addAttribute("bookings", bookings);
         model.addAttribute("selectedDate", date);
+        model.addAttribute("selectedStatus", status);
         return "owner/bookings/list";
     }
 
+    // Nút Duyệt Đơn (Từ PENDING -> CONFIRMED)
+    @PostMapping("/bookings/{id}/confirm")
+    public String ownerConfirmBooking(@PathVariable Long id,
+                                      @AuthenticationPrincipal UserDetails ud,
+                                      RedirectAttributes ra) {
+        try {
+            bookingService.confirmBooking(id, ud.getUsername());
+            ra.addFlashAttribute("success", "Đã duyệt đơn đặt sân thành công!");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/bookings";
+    }
+
+    // Nút Từ chối / Hủy Đơn (Chuyển sang CANCELLED)
     @PostMapping("/bookings/{id}/cancel")
     public String ownerCancelBooking(@PathVariable Long id,
-                                     @RequestParam(required = false) String reason,
+                                     @RequestParam(required = false, defaultValue = "Chủ sân từ chối/hủy đơn") String reason,
                                      @AuthenticationPrincipal UserDetails ud,
                                      RedirectAttributes ra) {
         try {
             bookingService.cancelBooking(id, ud.getUsername(), reason);
-            ra.addFlashAttribute("success", "Đã hủy booking");
+            ra.addFlashAttribute("success", "Đã hủy đơn đặt sân.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/bookings";
+    }
+    @PostMapping("/bookings/{id}/approve-cancel")
+    public String approveCancel(@PathVariable Long id, 
+                                @RequestParam boolean approve,
+                                @AuthenticationPrincipal UserDetails ud,
+                                RedirectAttributes ra) {
+        try {
+            bookingService.approveCancelRequest(id, ud.getUsername(), approve);
+            String msg = approve ? "Đã chấp nhận yêu cầu hủy đơn." : "Đã từ chối yêu cầu hủy.";
+            ra.addFlashAttribute("success", msg);
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
@@ -669,4 +714,6 @@ public class OwnerController {
         model.addAttribute("sportTypes", SportType.values());
         return "owner/index";
     }
+    
+    
 }
