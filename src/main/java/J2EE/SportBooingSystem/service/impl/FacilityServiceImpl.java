@@ -133,15 +133,18 @@ public class FacilityServiceImpl implements FacilityService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Facility> search(String city, SportType sport, String name, Pageable pageable) {
+    public Page<Facility> search(String city, SportType sport, String name, Boolean favoritesOnly, Long userId, Pageable pageable) {
+        boolean isFavFilter = Boolean.TRUE.equals(favoritesOnly); // Đổi null thành false cho an toàn
+
         Page<Facility> page = facilityRepository.searchFacilities(
-            (city != null && !city.isBlank()) ? city : null,
-            sport,
-            (name != null && !name.isBlank()) ? name : null,
-            pageable
+                (city != null && !city.isBlank()) ? city : null,
+                sport,
+                (name != null && !name.isBlank()) ? name : null,
+                isFavFilter,
+                userId,
+                pageable
         );
-        // Force-initialize lazy 'fields' collection while the session is still open
-        // (@BatchSize(20) on Facility.fields batches this into a single IN query)
+        // Force-initialize lazy 'fields' collection
         page.getContent().forEach(f -> f.getFields().size());
         return page;
     }

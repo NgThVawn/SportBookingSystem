@@ -13,7 +13,10 @@ public interface FacilityService {
     Facility create(FacilityRequest request, String ownerEmail);
     Facility update(Long id, FacilityRequest request, String ownerEmail);
     Facility findById(Long id);
-    Page<Facility> search(String city, SportType sport, String name, Pageable pageable);
+
+    // Đã cập nhật lại tham số cho khớp với Impl
+    Page<Facility> search(String city, SportType sport, String name, Boolean favoritesOnly, Long userId, Pageable pageable);
+
     List<Facility> findAll();
     List<Facility> findByOwner(String ownerEmail);
     void changeStatus(Long id, FacilityStatus status, String ownerEmail);

@@ -27,6 +27,8 @@ public class BookingResponse {
     private BigDecimal totalPrice;
     private BookingStatus status;
     private String note;
+    private Boolean isReviewed;
+    private Long facilityId;
     private List<ExtraItem> extraItems;
 
     @Getter
@@ -81,6 +83,8 @@ public class BookingResponse {
                 .totalPrice(totalPrice)
                 .status(b.getStatus())
                 .note(b.getNote())
+                .isReviewed(b.getIsReviewed())
+                .facilityId(b.getField().getFacility().getId())
                 .extraItems(extraItems)
                 .build();
     }
