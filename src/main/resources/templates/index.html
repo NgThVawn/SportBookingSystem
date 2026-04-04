@@ -29,13 +29,77 @@
     <section class="relative z-20 -mt-12 px-6">
         <form th:action="@{/facilities}" method="get" class="max-w-screen-xl mx-auto bg-surface-container-lowest p-4 rounded-2xl shadow-2xl flex flex-wrap lg:flex-nowrap items-center gap-4 border border-outline-variant/30">
 
-            <div class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 bg-surface-container rounded-xl">
-                <span class="material-symbols-outlined text-zinc-400">location_on</span>
+            <div class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 bg-surface-container rounded-xl relative" id="city-search-wrapper">
+                <span class="material-symbols-outlined text-zinc-400 text-[20px]">location_on</span>
                 <div class="flex flex-col w-full">
                     <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-label">ĐỊA ĐIỂM</span>
-                    <input name="city" class="bg-transparent border-none p-0 text-sm font-semibold focus:ring-0 w-full outline-none" placeholder="Nhập khu vực..." type="text">
+                    <input type="text" name="city" id="city-search-input"
+                           class="bg-transparent border-none p-0 text-sm font-semibold text-zinc-800 focus:ring-0 outline-none w-full placeholder:text-zinc-400"
+                           placeholder="Thành phố, quận..."
+                           autocomplete="off"/>
                 </div>
+
+                <ul id="city-search-dropdown"
+                    class="absolute left-0 top-full mt-2 w-full bg-white rounded-xl shadow-lg z-50 overflow-y-auto hidden"
+                    style="border: 1px solid #e4e4e7; max-height: 260px; min-width: 240px;">
+                </ul>
             </div>
+
+            <script>
+                (function () {
+                    // ── City autocomplete ──────────────────────
+                    const cityInput    = document.getElementById('city-search-input');
+                    const cityDropdown = document.getElementById('city-search-dropdown');
+                    const cityWrapper  = document.getElementById('city-search-wrapper');
+
+                    if (cityInput) {
+                        let provinces = [];
+
+                        // Gọi API lấy danh sách tỉnh thành
+                        fetch('https://provinces.open-api.vn/api/?depth=1')
+                            .then(r => r.json())
+                            .then(data => { provinces = data; })
+                            .catch(() => {});
+
+                        // Lắng nghe sự kiện người dùng gõ phím
+                        cityInput.addEventListener('input', () => {
+                            const q = cityInput.value.trim().toLowerCase();
+                            cityDropdown.innerHTML = ''; // Xóa list cũ
+
+                            if (!q) { cityDropdown.classList.add('hidden'); return; }
+
+                            // Lọc kết quả (tối đa 8 kết quả)
+                            const matches = provinces
+                                .filter(p => p.name.toLowerCase().includes(q))
+                                .slice(0, 8);
+
+                            if (!matches.length) { cityDropdown.classList.add('hidden'); return; }
+
+                            // Hiển thị kết quả
+                            matches.forEach(p => {
+                                const li = document.createElement('li');
+                                li.className = 'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors';
+                                li.innerHTML = '<span class="material-symbols-outlined text-zinc-400 text-[16px]">location_on</span>' + p.name;
+
+                                // Xử lý khi click vào 1 tỉnh
+                                li.addEventListener('mousedown', (e) => {
+                                    e.preventDefault(); // Ngăn mất focus
+                                    cityInput.value = p.name;
+                                    cityDropdown.classList.add('hidden');
+                                });
+                                cityDropdown.appendChild(li);
+                            });
+
+                            cityDropdown.classList.remove('hidden');
+                        });
+
+                        // Ẩn dropdown khi click ra ngoài
+                        document.addEventListener('click', (e) => {
+                            if (!cityWrapper.contains(e.target)) cityDropdown.classList.add('hidden');
+                        });
+                    }
+                })();
+            </script>
 
             <div class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 bg-surface-container rounded-xl">
                 <span class="material-symbols-outlined text-zinc-400">search</span>
