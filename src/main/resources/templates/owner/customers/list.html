@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8"/>
+	<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+	<title>Khách hàng | Arena Kinetic Owner</title>
+	<link th:href="@{/css/app.css}" rel="stylesheet"/>
+	<link href="https://fonts.googleapis.com" rel="preconnect"/>
+	<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+	<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					colors: {
+						"on-surface": "#191c1d",
+						"surface-container-lowest": "#ffffff",
+						"surface-container-low": "#f3f4f5",
+						"surface": "#f8f9fa",
+						"primary": "#b02f00",
+					},
+					fontFamily: {
+						"headline": ["Epilogue"],
+						"body": ["Inter"],
+						"label": ["Lexend"]
+					},
+				},
+			},
+		}
+	</script>
+	<style>
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		}
+		.no-scrollbar::-webkit-scrollbar { display: none; }
+		.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+	</style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('customers')}"></div>
+
+<main class="ml-64 min-h-screen relative">
+	<header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10">
+		<div>
+			<h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Khách hàng</h2>
+			<p class="text-[11px] text-slate-500 font-label uppercase tracking-wider">Danh sách người dùng đã từng đặt sân</p>
+		</div>
+		<div class="flex items-center gap-3 px-4 py-2 rounded-full bg-orange-50 text-orange-700 text-sm font-semibold">
+			<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">groups</span>
+			<span th:text="${customers != null ? customers.size() + ' khách' : '0 khách'}">0 khách</span>
+		</div>
+	</header>
+
+	<div class="p-8 space-y-8">
+
+		<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+			<div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-slate-100">
+				<div class="w-12 h-12 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center mb-4">
+					<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+				</div>
+				<p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Tổng khách hàng</p>
+				<h3 class="font-headline text-2xl font-black text-on-surface" th:text="${customers != null ? customers.size() : 0}">0</h3>
+			</div>
+
+			<div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-slate-100">
+				<div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-4">
+					<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+				</div>
+				<p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Đang hoạt động</p>
+				<h3 class="font-headline text-2xl font-black text-on-surface" th:text="${customers != null ? #lists.size(customers.?[isBanned == null or !isBanned]) : 0}">0</h3>
+			</div>
+
+			<div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-slate-100">
+				<div class="w-12 h-12 rounded-xl bg-red-100 text-red-700 flex items-center justify-center mb-4">
+					<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">gpp_bad</span>
+				</div>
+				<p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Bị khóa</p>
+				<h3 class="font-headline text-2xl font-black text-on-surface" th:text="${customers != null ? #lists.size(customers.?[isBanned != null and isBanned]) : 0}">0</h3>
+			</div>
+
+			<div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-slate-100">
+				<div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+					<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+				</div>
+				<p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Có hạng thành viên</p>
+				<h3 class="font-headline text-2xl font-black text-on-surface" th:text="${customers != null ? #lists.size(customers.?[membershipLevel != null]) : 0}">0</h3>
+			</div>
+		</section>
+
+		<div th:if="${successMsg}" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 flex items-center gap-3 shadow-sm" th:text="${successMsg}"></div>
+		<div th:if="${errorMsg}" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 flex items-center gap-3 shadow-sm" th:text="${errorMsg}"></div>
+
+		<section class="bg-surface-container-lowest rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+			<div class="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+				<div>
+					<h3 class="font-headline text-lg font-bold text-on-surface">Danh sách khách hàng</h3>
+					<p class="text-sm text-slate-500">Quản lý thông tin người dùng đã từng giao dịch tại cơ sở của bạn.</p>
+				</div>
+
+				<div class="relative w-full md:w-80">
+					<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+					<input id="customerSearchInput" type="text" placeholder="Tìm theo tên, email, số điện thoại..."
+						   class="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"/>
+				</div>
+			</div>
+
+			<div class="overflow-x-auto">
+				<table class="min-w-full text-sm">
+					<thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-xs">
+					<tr>
+						<th class="px-5 py-4 text-left">Khách hàng</th>
+						<th class="px-5 py-4 text-left">Liên hệ</th>
+						<th class="px-5 py-4 text-left">Hạng</th>
+						<th class="px-5 py-4 text-left">Lượt đã đặt</th>
+						<th class="px-5 py-4 text-left">Trạng thái</th>
+					</tr>
+					</thead>
+					<tbody id="customersTableBody" class="divide-y divide-slate-100">
+					<tr th:if="${customers == null || #lists.isEmpty(customers)}">
+						<td colspan="5" class="text-center text-slate-500 py-16">
+							<span class="material-symbols-outlined text-5xl text-slate-300 block mb-3">groups</span>
+							Chưa có dữ liệu khách hàng để hiển thị.
+						</td>
+					</tr>
+
+					<tr class="customer-row hover:bg-slate-50/70 transition-colors align-top"
+						th:each="c : ${customers}"
+						th:data-name="${c.fullName != null ? #strings.toLowerCase(c.fullName) : ''}"
+						th:data-email="${c.email != null ? #strings.toLowerCase(c.email) : ''}"
+						th:data-phone="${c.phone != null ? #strings.toLowerCase(c.phone) : ''}">
+						<td class="px-5 py-4">
+							<div class="flex items-center gap-3">
+								<div class="w-10 h-10 rounded-full bg-orange-100 text-orange-700 font-bold flex items-center justify-center">
+									<span th:text="${c.fullName != null ? #strings.substring(c.fullName, 0, 1).toUpperCase() : 'U'}">U</span>
+								</div>
+								<div>
+									<p class="font-semibold text-on-surface" th:text="${c.fullName != null ? c.fullName : 'Người dùng'}">Người dùng</p>
+									<p class="text-xs text-slate-500" th:text="${c.createdAt != null ? 'Tham gia: ' + #temporals.format(c.createdAt, 'dd/MM/yyyy') : ''}"></p>
+								</div>
+							</div>
+						</td>
+
+						<td class="px-5 py-4">
+							<p class="text-slate-700" th:text="${c.email != null ? c.email : 'N/A'}">N/A</p>
+							<p class="text-xs text-slate-500 mt-1" th:text="${c.phone != null ? c.phone : 'Chưa cập nhật số điện thoại'}">Chưa cập nhật số điện thoại</p>
+						</td>
+
+						<td class="px-5 py-4">
+							<span class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700"
+								  th:text="${c.membershipLevel != null ? c.membershipLevel.name : 'STANDARD'}">STANDARD</span>
+						</td>
+
+						<td class="px-5 py-4 font-semibold text-slate-700" th:text="${c.completedBookings != null ? c.completedBookings : 0}">0</td>
+
+						<td class="px-5 py-4">
+							<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border"
+								  th:classappend="${c.isBanned != null and c.isBanned} ? ' bg-red-50 text-red-700 border-red-100' : ' bg-emerald-50 text-emerald-700 border-emerald-100'"
+								  th:text="${c.isBanned != null and c.isBanned} ? 'Bị khóa' : 'Hoạt động'">Hoạt động</span>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+	</div>
+</main>
+
+<script>
+	const searchInput = document.getElementById('customerSearchInput');
+	const rows = Array.from(document.querySelectorAll('.customer-row'));
+
+	if (searchInput) {
+		searchInput.addEventListener('input', () => {
+			const keyword = searchInput.value.toLowerCase().trim();
+			rows.forEach((row) => {
+				const name = row.dataset.name || '';
+				const email = row.dataset.email || '';
+				const phone = row.dataset.phone || '';
+				const matched = name.includes(keyword) || email.includes(keyword) || phone.includes(keyword);
+				row.style.display = matched ? '' : 'none';
+			});
+		});
+	}
+</script>
+
+</body>
+</html>

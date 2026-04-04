@@ -1,6 +1,7 @@
 package J2EE.SportBooingSystem.config;
 
 import J2EE.SportBooingSystem.security.CustomUserDetailsService;
+import J2EE.SportBooingSystem.security.RoleBasedAuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
+    private final RoleBasedAuthenticationSuccessHandler roleBasedAuthenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -70,8 +72,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/auth/login")
                 .usernameParameter("email")
                 .passwordParameter("password")
-
-                .defaultSuccessUrl("/", true) 
+                .successHandler(roleBasedAuthenticationSuccessHandler)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
             )

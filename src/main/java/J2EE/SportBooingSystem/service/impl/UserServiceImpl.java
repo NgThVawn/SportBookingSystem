@@ -183,6 +183,10 @@ public class UserServiceImpl implements UserService {
     public void changePassword(String email, String oldPassword, String newPassword) {
         User user = findByEmail(email);
 
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có ít nhất 8 ký tự");
+        }
+
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new RuntimeException("Mật khẩu hiện tại không chính xác");
         }

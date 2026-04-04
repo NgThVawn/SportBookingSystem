@@ -90,6 +90,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByOwnerEmail(@Param("ownerEmail") String ownerEmail);
 
     @Query("""
+        SELECT DISTINCT u FROM Booking b
+        JOIN b.user u
+        JOIN b.field f
+        JOIN f.facility fc
+        WHERE fc.owner.email = :ownerEmail
+        ORDER BY u.createdAt DESC
+    """)
+    List<User> findDistinctCustomersByOwnerEmail(@Param("ownerEmail") String ownerEmail);
+
+    @Query("""
         SELECT b FROM Booking b
         JOIN FETCH b.user
         JOIN FETCH b.field f

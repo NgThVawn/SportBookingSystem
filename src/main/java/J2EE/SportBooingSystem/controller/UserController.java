@@ -76,6 +76,10 @@ public class UserController {
                                  Authentication authentication,
                                  RedirectAttributes redirectAttributes) {
 
+        if (newPassword == null || newPassword.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 8 ký tự");
+            return "redirect:/profile/security";
+        }
 
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
