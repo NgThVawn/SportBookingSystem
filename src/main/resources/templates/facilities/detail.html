@@ -582,10 +582,10 @@
 
         function renderServiceItem(service) {
             const item = document.createElement('div');
-            item.className = 'flex items-center justify-between gap-2 bg-white/10 rounded-lg px-3 py-2';
+            item.className = 'flex items-center justify-between gap-3 bg-white/10 rounded-lg px-3 py-2';
 
             const left = document.createElement('div');
-            left.className = 'min-w-0';
+            left.className = 'min-w-0 flex-1';
 
             const name = document.createElement('p');
             name.className = 'm-0 text-xs font-bold text-white truncate';
@@ -597,10 +597,18 @@
 
             left.appendChild(name);
             left.appendChild(price);
+
+            if (service.appliesToSportType) {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex mt-1 text-[10px] px-2 py-1 rounded-full bg-amber-200/20 text-amber-200 font-bold';
+                badge.innerText = service.appliesToSportType;
+                left.appendChild(badge);
+            }
+
             item.appendChild(left);
 
             const controls = document.createElement('div');
-            controls.className = 'flex items-center gap-2';
+            controls.className = 'flex items-center gap-2 shrink-0 ml-2';
 
             const decBtn = document.createElement('button');
             decBtn.type = 'button';
@@ -639,13 +647,6 @@
             controls.appendChild(qtyLabel);
             controls.appendChild(incBtn);
             item.appendChild(controls);
-
-            if (service.appliesToSportType) {
-                const badge = document.createElement('span');
-                badge.className = 'text-[10px] px-2 py-1 rounded-full bg-amber-200/20 text-amber-200 font-bold';
-                badge.innerText = service.appliesToSportType;
-                item.appendChild(badge);
-            }
 
             return item;
         }
