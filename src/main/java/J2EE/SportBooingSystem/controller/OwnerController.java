@@ -691,7 +691,7 @@ public class OwnerController {
                                      RedirectAttributes ra) {
         try {
             bookingService.cancelBooking(id, ud.getUsername(), reason);
-            ra.addFlashAttribute("success", "Xóa đơn đặt sân thành công!");
+            ra.addFlashAttribute("success", "Hủy đơn đặt sân thành công!");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
