@@ -1,6 +1,7 @@
 package J2EE.SportBooingSystem.repository;
 
 import J2EE.SportBooingSystem.entity.User;
+import J2EE.SportBooingSystem.enums.AuthProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -18,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT COUNT(u) FROM User u WHERE u.isBanned = false AND u.isActive = true")
     long countActiveUsers();
+    Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerId);
 }
+
