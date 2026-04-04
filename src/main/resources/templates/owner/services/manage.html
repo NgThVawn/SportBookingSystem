@@ -56,11 +56,11 @@
     </header>
 
     <div class="p-8 flex-1">
-        <div th:if="${success}" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm">
+        <div id="flashSuccess" th:if="${success}" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm">
             <span class="material-symbols-outlined text-emerald-600">check_circle</span>
             <span class="font-bold text-sm" th:text="${success}"></span>
         </div>
-        <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
+        <div id="flashError" th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
             <span class="material-symbols-outlined text-red-600">error</span>
             <span class="font-bold text-sm" th:text="${error}"></span>
         </div>
@@ -92,6 +92,7 @@
                                 <th class="px-6 py-4">Dịch vụ</th>
                                 <th class="px-6 py-4">Giá</th>
                                 <th class="px-6 py-4">Đơn vị</th>
+                                <th class="px-6 py-4">Phạm vi áp dụng</th>
                                 <th class="px-6 py-4">Tồn kho</th>
                                 <th class="px-6 py-4">Trạng thái</th>
                                 <th class="px-6 py-4 text-right">Thao tác</th>
@@ -100,7 +101,7 @@
                             <tbody class="text-sm font-medium text-slate-700 divide-y divide-slate-50">
 
                             <tr th:if="${#lists.isEmpty(services)}">
-                                <td colspan="6" class="px-6 py-16 text-center text-slate-400">
+                                <td colspan="7" class="px-6 py-16 text-center text-slate-400">
                                     <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <span class="material-symbols-outlined text-3xl text-slate-300">inventory_2</span>
                                     </div>
@@ -116,6 +117,9 @@
                                 </td>
                                 <td class="px-6 py-4 font-black font-headline text-orange-600" th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + '₫'}">0₫</td>
                                 <td class="px-6 py-4" th:text="${svc.unit}">PER_ITEM</td>
+                                <td class="px-6 py-4">
+                                    <span class="text-xs font-bold text-indigo-700" th:text="${svc.appliesToSportType == null ? 'Tất cả loại sân' : svc.appliesToSportType.displayName}">Tất cả loại sân</span>
+                                </td>
                                 <td class="px-6 py-4" th:text="${svc.stock == null ? 'Không giới hạn' : svc.stock}">10</td>
                                 <td class="px-6 py-4">
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold"
@@ -139,7 +143,7 @@
                                             </button>
                                         </form>
 
-                                        <form th:action="@{/owner/facilities/{fid}/services/{sid}/delete(fid=${facility.id},sid=${svc.id})}" method="post" class="m-0 inline-block" onsubmit="return confirm('Xóa (ẩn) dịch vụ này?')">
+                                        <form th:action="@{/owner/facilities/{fid}/services/{sid}/delete(fid=${facility.id},sid=${svc.id})}" method="post" class="m-0 inline-block delete-service-form" th:data-service-name="${svc.name}">
                                             <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                             <button type="submit" class="px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors border-none cursor-pointer inline-flex items-center gap-1">
                                                 <span class="material-symbols-outlined text-[14px]">delete</span> Xóa
@@ -192,6 +196,14 @@
                             <input th:field="*{unit}" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-bold focus:bg-white/10 focus:ring-2 focus:ring-cyan-400 outline-none" placeholder="VD: lon, phần, bộ" required>
                         </div>
 
+                        <div>
+                            <label class="block text-[10px] font-label font-bold uppercase text-slate-400 mb-1.5 tracking-widest">Áp dụng cho</label>
+                            <select th:field="*{appliesToSportType}" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-bold focus:bg-white/10 focus:ring-2 focus:ring-cyan-400 outline-none">
+                                <option value="" class="text-slate-900">Tất cả loại sân</option>
+                                <option th:each="sport : ${sportTypes}" th:value="${sport}" th:text="${sport.displayName}" class="text-slate-900"></option>
+                            </select>
+                        </div>
+
                         <label class="flex items-center gap-2 text-sm text-slate-200">
                             <input type="checkbox" th:field="*{isActive}" class="rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-400">
                             Bật ngay sau khi tạo
@@ -205,7 +217,78 @@
             </aside>
         </div>
     </div>
+
+    <div id="deleteConfirmModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-red-600">warning</span>
+                    <h3 class="m-0 text-base font-black text-slate-900 font-headline">Xác nhận xóa dịch vụ</h3>
+                </div>
+                <div class="px-5 py-4">
+                    <p class="m-0 text-sm text-slate-600 leading-relaxed">
+                        Bạn có chắc muốn xóa (ẩn) dịch vụ
+                        <span id="deleteServiceName" class="font-bold text-slate-900">này</span>?
+                    </p>
+                </div>
+                <div class="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button id="cancelDeleteBtn" type="button" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-white">Hủy</button>
+                    <button id="confirmDeleteBtn" type="button" class="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-bold hover:bg-red-700">Xóa dịch vụ</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
+
+<script>
+    (function () {
+        const modal = document.getElementById('deleteConfirmModal');
+        const cancelBtn = document.getElementById('cancelDeleteBtn');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        const serviceNameEl = document.getElementById('deleteServiceName');
+        const forms = document.querySelectorAll('.delete-service-form');
+        let pendingForm = null;
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            pendingForm = null;
+        }
+
+        forms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                pendingForm = form;
+                const name = form.getAttribute('data-service-name') || 'này';
+                serviceNameEl.textContent = '"' + name + '"';
+                modal.classList.remove('hidden');
+            });
+        });
+
+        cancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal || e.target.classList.contains('bg-slate-950/60')) {
+                closeModal();
+            }
+        });
+
+        confirmBtn.addEventListener('click', function () {
+            if (pendingForm) pendingForm.submit();
+        });
+
+        const flashSuccess = document.getElementById('flashSuccess');
+        const flashError = document.getElementById('flashError');
+        [flashSuccess, flashError].forEach(el => {
+            if (!el) return;
+            setTimeout(() => {
+                el.style.transition = 'opacity 250ms ease, transform 250ms ease';
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-6px)';
+                setTimeout(() => el.remove(), 260);
+            }, 2800);
+        });
+    })();
+</script>
 
 </body>
 </html>

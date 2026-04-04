@@ -2,7 +2,9 @@ package J2EE.SportBooingSystem.controller.api;
 
 import J2EE.SportBooingSystem.dto.response.ApiResponse;
 import J2EE.SportBooingSystem.dto.response.AvailabilityResponse;
+import J2EE.SportBooingSystem.dto.response.ExtraServiceOptionResponse;
 import J2EE.SportBooingSystem.dto.response.PriceCalculationResponse;
+import J2EE.SportBooingSystem.service.ExtraServiceService;
 import J2EE.SportBooingSystem.service.BookingService;
 import J2EE.SportBooingSystem.service.PriceRuleService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/fields/{fieldId}")
@@ -19,6 +22,7 @@ public class AvailabilityApiController {
 
     private final BookingService bookingService;
     private final PriceRuleService priceRuleService;
+    private final ExtraServiceService extraServiceService;
 
   
     @GetMapping("/availability")
@@ -36,5 +40,13 @@ public class AvailabilityApiController {
             @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime start,
             @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime end) {
         return ApiResponse.success(priceRuleService.calculatePrice(fieldId, date, start, end));
+    }
+
+    @GetMapping("/services")
+    public ApiResponse<List<ExtraServiceOptionResponse>> getServicesForField(@PathVariable Long fieldId) {
+        var result = extraServiceService.findByField(fieldId).stream()
+                .map(ExtraServiceOptionResponse::from)
+                .toList();
+        return ApiResponse.success(result);
     }
 }

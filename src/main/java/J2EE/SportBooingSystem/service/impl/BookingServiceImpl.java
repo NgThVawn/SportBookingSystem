@@ -59,7 +59,7 @@ public class BookingServiceImpl implements BookingService {
         User user = userRepo.findByEmail(userEmail).orElseThrow();
         BigDecimal fieldPrice = priceRuleService.getTotalPrice(
                 field.getId(), req.getBookingDate(), req.getStartTime(), req.getEndTime());
-        List<BookingExtraService> selectedExtras = buildBookingExtraItems(req, field.getFacility().getId());
+        List<BookingExtraService> selectedExtras = buildBookingExtraItems(req, field);
         BigDecimal extraPrice = selectedExtras.stream()
             .map(BookingExtraService::getSubtotal)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -86,6 +86,7 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByUser(String userEmail) {
         User user = userRepo.findByEmail(userEmail).orElseThrow();
         return bookingRepo.findByUserOrderByCreatedAtDesc(user)
@@ -93,12 +94,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByOwner(String ownerEmail) {
         return bookingRepo.findByOwnerEmail(ownerEmail)
                 .stream().map(BookingResponse::from).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookingResponse getBookingByCode(String code, String requestorEmail) {
         Booking b = bookingRepo.findByBookingCode(code).orElseThrow();
         boolean isUser  = b.getUser().getEmail().equals(requestorEmail);
@@ -168,7 +171,7 @@ public class BookingServiceImpl implements BookingService {
         return "BK" + date + rand;
     }
 
-    private List<BookingExtraService> buildBookingExtraItems(BookingRequest req, Long facilityId) {
+    private List<BookingExtraService> buildBookingExtraItems(BookingRequest req, Field field) {
         if (req.getExtraItems() == null || req.getExtraItems().isEmpty()) {
             return List.of();
         }
@@ -195,8 +198,11 @@ public class BookingServiceImpl implements BookingService {
             if (service == null) {
                 throw new IllegalArgumentException("Dịch vụ đi kèm không tồn tại");
             }
-            if (!service.getFacility().getId().equals(facilityId)) {
+            if (!service.getFacility().getId().equals(field.getFacility().getId())) {
                 throw new IllegalArgumentException("Dịch vụ đi kèm không thuộc cơ sở của sân đã chọn");
+            }
+            if (service.getAppliesToSportType() != null && service.getAppliesToSportType() != field.getSportType()) {
+                throw new IllegalArgumentException("Dịch vụ '" + service.getName() + "' không áp dụng cho loại sân đã chọn");
             }
             if (!Boolean.TRUE.equals(service.getIsActive())) {
                 throw new IllegalArgumentException("Dịch vụ '" + service.getName() + "' hiện không hoạt động");

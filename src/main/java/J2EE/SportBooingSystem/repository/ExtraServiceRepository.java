@@ -13,4 +13,5 @@ public interface ExtraServiceRepository extends JpaRepository<ExtraService, Long
     List<ExtraService> findByFacility(Facility facility);
     List<ExtraService> findByIdIn(List<Long> ids);
     boolean existsByIdAndFacility_IdAndFacility_Owner_Email(Long id, Long facilityId, String ownerEmail);
+    boolean existsByFacility_IdAndNameIgnoreCase(Long facilityId, String name);
 }

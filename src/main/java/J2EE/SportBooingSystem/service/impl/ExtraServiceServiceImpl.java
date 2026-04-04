@@ -3,11 +3,13 @@ package J2EE.SportBooingSystem.service.impl;
 import J2EE.SportBooingSystem.dto.request.ExtraServiceRequest;
 import J2EE.SportBooingSystem.entity.ExtraService;
 import J2EE.SportBooingSystem.entity.Facility;
+import J2EE.SportBooingSystem.entity.Field;
 import J2EE.SportBooingSystem.exception.ForbiddenException;
 import J2EE.SportBooingSystem.exception.ResourceNotFoundException;
 import J2EE.SportBooingSystem.repository.ExtraServiceRepository;
 import J2EE.SportBooingSystem.service.ExtraServiceService;
 import J2EE.SportBooingSystem.service.FacilityService;
+import J2EE.SportBooingSystem.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +23,22 @@ public class ExtraServiceServiceImpl implements ExtraServiceService {
 
     private final ExtraServiceRepository extraServiceRepository;
     private final FacilityService facilityService;
+    private final FieldService fieldService;
 
     @Override
     @Transactional(readOnly = true)
     public List<ExtraService> findByFacility(Long facilityId) {
         Facility facility = facilityService.findById(facilityId);
         return extraServiceRepository.findByFacilityAndIsActiveTrue(facility);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExtraService> findByField(Long fieldId) {
+        Field field = fieldService.findById(fieldId);
+        return extraServiceRepository.findByFacilityAndIsActiveTrue(field.getFacility()).stream()
+                .filter(service -> service.getAppliesToSportType() == null || service.getAppliesToSportType() == field.getSportType())
+                .toList();
     }
 
     @Override
@@ -69,6 +81,7 @@ public class ExtraServiceServiceImpl implements ExtraServiceService {
                 .unit(request.getUnit())
                 .stock(request.getStock())
                 .isActive(Boolean.TRUE.equals(request.getIsActive()))
+            .appliesToSportType(request.getAppliesToSportType())
                 .build();
         return extraServiceRepository.save(service);
     }
@@ -88,6 +101,7 @@ public class ExtraServiceServiceImpl implements ExtraServiceService {
         service.setUnit(request.getUnit());
         service.setStock(request.getStock());
         service.setIsActive(Boolean.TRUE.equals(request.getIsActive()));
+        service.setAppliesToSportType(request.getAppliesToSportType());
         return service;
     }
 

@@ -337,6 +337,7 @@ public class OwnerController {
         model.addAttribute("facility", facility);
         model.addAttribute("services", extraServiceService.findAllByFacility(facilityId, ud.getUsername()));
         model.addAttribute("newService", new ExtraServiceRequest());
+        model.addAttribute("sportTypes", SportType.values());
         return "owner/services/manage";
     }
 
@@ -350,6 +351,7 @@ public class OwnerController {
         if (br.hasErrors()) {
             model.addAttribute("facility", facilityService.findById(facilityId));
             model.addAttribute("services", extraServiceService.findAllByFacility(facilityId, ud.getUsername()));
+            model.addAttribute("sportTypes", SportType.values());
             return "owner/services/manage";
         }
 
@@ -386,13 +388,15 @@ public class OwnerController {
             req.setUnit(service.getUnit());
             req.setStock(service.getStock());
             req.setIsActive(service.getIsActive());
+            req.setAppliesToSportType(service.getAppliesToSportType());
 
             model.addAttribute("facility", facility);
             model.addAttribute("service", service);
             model.addAttribute("editService", req);
+            model.addAttribute("sportTypes", SportType.values());
             return "owner/services/edit";
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", "Không thể mở trang chỉnh sửa dịch vụ. Vui lòng thử lại.");
             return "redirect:/owner/facilities/" + facilityId + "/services";
         }
     }
@@ -408,6 +412,7 @@ public class OwnerController {
         if (br.hasErrors()) {
             model.addAttribute("facility", facilityService.findById(facilityId));
             model.addAttribute("service", extraServiceService.findById(serviceId));
+            model.addAttribute("sportTypes", SportType.values());
             return "owner/services/edit";
         }
 
@@ -416,9 +421,10 @@ public class OwnerController {
             ra.addFlashAttribute("success", "Đã cập nhật dịch vụ");
             return "redirect:/owner/facilities/" + facilityId + "/services";
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", "Không thể cập nhật dịch vụ lúc này. Vui lòng kiểm tra dữ liệu và thử lại.");
             model.addAttribute("facility", facilityService.findById(facilityId));
             model.addAttribute("service", extraServiceService.findById(serviceId));
+            model.addAttribute("sportTypes", SportType.values());
             return "owner/services/edit";
         }
     }

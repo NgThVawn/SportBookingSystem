@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface ExtraServiceService {
     List<ExtraService> findByFacility(Long facilityId);
+    List<ExtraService> findByField(Long fieldId);
     List<ExtraService> findAllByFacility(Long facilityId, String ownerEmail);
     ExtraService findById(Long id);
     List<ExtraService> findAllByIds(List<Long> ids);

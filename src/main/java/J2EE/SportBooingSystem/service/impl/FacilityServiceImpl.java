@@ -106,11 +106,9 @@ public class FacilityServiceImpl implements FacilityService {
     @Override
     @Transactional(readOnly = true)
     public Facility findById(Long id) {
-        Facility facility = facilityRepository.findById(id)
+        Facility facility = facilityRepository.findByIdWithOwner(id)
             .orElseThrow(() -> new ResourceNotFoundException("Facility not found: " + id));
-            
-        facility.getImages().size(); 
-        
+
         return facility;
     }
 

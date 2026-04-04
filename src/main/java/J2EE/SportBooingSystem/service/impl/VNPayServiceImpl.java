@@ -48,16 +48,19 @@ public class VNPayServiceImpl implements VNPayService {
 
     @Override
     public String createPaymentUrl(Booking booking, String clientIp) {
-        // Tạo Payment record nếu chưa có
+        // Tạo/cập nhật Payment record với số tiền mới nhất (bao gồm dịch vụ đi kèm)
         Payment payment = paymentRepo.findByBooking(booking).orElseGet(() ->
-                paymentRepo.save(Payment.builder()
-                        .booking(booking)
-                        .txnRef(booking.getBookingCode())
-                        .amount(booking.getTotalPrice())
-                        .status(PaymentStatus.PENDING)
-                        .orderInfo("Dat san " + booking.getBookingCode())
-                        .build())
+            Payment.builder()
+                .booking(booking)
+                .txnRef(booking.getBookingCode())
+                .status(PaymentStatus.PENDING)
+                .orderInfo("Dat san " + booking.getBookingCode())
+                .build()
         );
+        payment.setAmount(booking.getTotalPrice());
+        payment.setTxnRef(booking.getBookingCode());
+        payment.setStatus(PaymentStatus.PENDING);
+        paymentRepo.save(payment);
 
         // Số tiền × 100 (VNPay dùng đơn vị tiền × 100)
         long amount = booking.getTotalPrice()

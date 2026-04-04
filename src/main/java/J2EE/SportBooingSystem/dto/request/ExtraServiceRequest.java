@@ -1,5 +1,6 @@
 package J2EE.SportBooingSystem.dto.request;
 
+import J2EE.SportBooingSystem.enums.SportType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,4 +38,6 @@ public class ExtraServiceRequest {
 
     @NotNull(message = "Trạng thái hoạt động không được để trống")
     private Boolean isActive;
+
+    private SportType appliesToSportType;
 }
