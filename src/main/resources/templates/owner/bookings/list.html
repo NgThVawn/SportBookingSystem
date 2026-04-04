@@ -130,11 +130,11 @@
             </div>
         </section>
 
-        <div th:if="${success}" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 flex items-center gap-3 shadow-sm">
+        <div th:if="${success}" id="alertSuccess" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 flex items-center gap-3 shadow-sm transition-opacity duration-500 opacity-100">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
             <span th:text="${success}"></span>
         </div>
-        <div th:if="${error}" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 flex items-center gap-3 shadow-sm">
+        <div th:if="${error}" id="alertError" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 flex items-center gap-3 shadow-sm transition-opacity duration-500 opacity-100">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">error</span>
             <span th:text="${error}"></span>
         </div>
@@ -160,7 +160,7 @@
                         <th class="px-5 py-4 text-center">Thao tác</th>
                     </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
                     <tr th:if="${#lists.isEmpty(bookings)}">
                         <td colspan="7" class="text-center text-slate-500 py-16">
                             <span class="material-symbols-outlined text-5xl text-slate-300 block mb-3">inbox</span>
@@ -168,7 +168,7 @@
                         </td>
                     </tr>
 
-                    <tr th:each="b : ${bookings}" class="hover:bg-slate-50/70 transition-colors align-top">
+                    <tr th:each="b : ${bookings}" class="booking-row hover:bg-slate-50/70 transition-colors align-top">
                         <td class="px-5 py-4">
                             <span class="inline-flex font-mono text-xs font-semibold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200" th:text="${b.bookingCode}"></span>
                         </td>
@@ -205,10 +205,9 @@
                         <td class="px-5 py-4">
                             <div class="flex flex-wrap justify-center gap-2">
                                 <th:block th:if="${b.status.name() == 'PENDING'}">
-                                    <form th:action="@{/owner/bookings/{id}/confirm(id=${b.id})}" method="post" class="m-0">
+                                    <form th:action="@{/owner/bookings/{id}/confirm(id=${b.id})}" method="post" class="m-0 js-booking-action-form" data-action-type="approve">
                                         <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                        <button type="submit" class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors" title="Duyệt đơn"
-                                                onclick="return confirm('Xác nhận duyệt đơn đặt sân này?')">
+                                        <button type="submit" class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors" title="Duyệt đơn">
                                             <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check</span>
                                             <span>Duyệt</span>
                                         </button>
@@ -232,20 +231,18 @@
                                 </th:block>
 
                                 <th:block th:if="${b.status.name() == 'CANCEL_PENDING'}">
-                                    <form th:action="@{/owner/bookings/{id}/approve-cancel(id=${b.id})}" method="post" class="m-0">
+                                    <form th:action="@{/owner/bookings/{id}/approve-cancel(id=${b.id})}" method="post" class="m-0 js-booking-action-form" data-action-type="approve-cancel">
                                         <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                         <input type="hidden" name="approve" value="true">
-                                        <button type="submit" class="inline-flex items-center gap-1 rounded-xl bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700 transition-colors"
-                                                onclick="return confirm('Đồng ý cho khách hủy đơn này?')">
+                                        <button type="submit" class="inline-flex items-center gap-1 rounded-xl bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700 transition-colors">
                                             <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">task_alt</span>
                                             <span>Cho phép hủy</span>
                                         </button>
                                     </form>
-                                    <form th:action="@{/owner/bookings/{id}/approve-cancel(id=${b.id})}" method="post" class="m-0">
+                                    <form th:action="@{/owner/bookings/{id}/approve-cancel(id=${b.id})}" method="post" class="m-0 js-booking-action-form" data-action-type="reject-cancel">
                                         <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                         <input type="hidden" name="approve" value="false">
-                                        <button type="submit" class="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
-                                                onclick="return confirm('Từ chối yêu cầu hủy của khách?')">
+                                        <button type="submit" class="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors">
                                             <span class="material-symbols-outlined text-[16px]">block</span>
                                             <span>Bác bỏ</span>
                                         </button>
@@ -261,9 +258,47 @@
                     </tbody>
                 </table>
             </div>
+
+            <div id="paginationContainer" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 hidden">
+                <span class="text-sm text-slate-500">
+                    Đang hiển thị <span id="pageInfo" class="font-bold text-slate-800"></span>
+                </span>
+
+                <div class="flex items-center gap-1">
+                    <button id="btnPrev" type="button" onclick="changePage(-1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                    </button>
+
+                    <div id="pageNumbers" class="flex gap-1"></div>
+
+                    <button id="btnNext" type="button" onclick="changePage(1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </section>
     </div>
 </main>
+
+<div id="bookingConfirmModal" class="fixed inset-0 z-[95] hidden items-center justify-center px-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" data-close-modal="true"></div>
+    <div class="relative z-10 w-full max-w-md rounded-3xl bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.25)] border border-slate-100">
+        <div class="flex items-start gap-4">
+            <div id="bookingConfirmIcon" class="mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-700">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+            <div class="flex-1">
+                <h4 id="bookingConfirmTitle" class="font-headline text-xl font-bold text-slate-900">Xác nhận thao tác</h4>
+                <p id="bookingConfirmMessage" class="mt-2 text-sm leading-6 text-slate-600">Bạn có chắc chắn muốn tiếp tục thao tác này?</p>
+            </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3">
+            <button id="bookingConfirmCancel" type="button" class="rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition-colors">Hủy</button>
+            <button id="bookingConfirmSubmit" type="button" class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">Xác nhận</button>
+        </div>
+    </div>
+</div>
 
 <div id="cancelBookingModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-4">
     <div class="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
@@ -315,6 +350,95 @@
         autoHide(errorAlert);
     });
 
+    (function () {
+        const modal = document.getElementById('bookingConfirmModal');
+        const modalTitle = document.getElementById('bookingConfirmTitle');
+        const modalMessage = document.getElementById('bookingConfirmMessage');
+        const modalIconWrap = document.getElementById('bookingConfirmIcon');
+        const modalIcon = modalIconWrap ? modalIconWrap.querySelector('.material-symbols-outlined') : null;
+        const cancelBtn = document.getElementById('bookingConfirmCancel');
+        const submitBtn = document.getElementById('bookingConfirmSubmit');
+        let targetForm = null;
+
+        function applyModalStyle(actionType) {
+            if (actionType === 'approve') {
+                modalTitle.textContent = 'Xác nhận duyệt đơn';
+                modalMessage.textContent = 'Đơn đặt sân sẽ được chuyển sang trạng thái đã duyệt. Bạn có chắc chắn muốn tiếp tục?';
+                submitBtn.textContent = 'Duyệt đơn';
+                submitBtn.className = 'rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors';
+                modalIconWrap.className = 'mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-700';
+                if (modalIcon) modalIcon.textContent = 'check_circle';
+                return;
+            }
+
+            if (actionType === 'approve-cancel') {
+                modalTitle.textContent = 'Chấp thuận hủy đơn';
+                modalMessage.textContent = 'Bạn đồng ý cho khách hủy đơn này. Thao tác này sẽ đổi trạng thái đơn sang đã hủy.';
+                submitBtn.textContent = 'Cho phép hủy';
+                submitBtn.className = 'rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-700 transition-colors';
+                modalIconWrap.className = 'mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-cyan-100 text-cyan-700';
+                if (modalIcon) modalIcon.textContent = 'task_alt';
+                return;
+            }
+
+            modalTitle.textContent = 'Từ chối yêu cầu hủy';
+            modalMessage.textContent = 'Yêu cầu hủy của khách sẽ bị bác bỏ và đơn quay lại trạng thái đã duyệt. Bạn có chắc chắn?';
+            submitBtn.textContent = 'Bác bỏ yêu cầu';
+            submitBtn.className = 'rounded-xl bg-slate-700 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition-colors';
+            modalIconWrap.className = 'mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-slate-100 text-slate-700';
+            if (modalIcon) modalIcon.textContent = 'block';
+        }
+
+        function openModal(form) {
+            if (!modal) return;
+            targetForm = form;
+            applyModalStyle(form.getAttribute('data-action-type'));
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            targetForm = null;
+        }
+
+        document.querySelectorAll('.js-booking-action-form').forEach((form) => {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                openModal(form);
+            });
+        });
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closeModal);
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                if (targetForm) {
+                    targetForm.submit();
+                }
+            });
+        }
+
+        if (modal) {
+            modal.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target && target.getAttribute('data-close-modal') === 'true') {
+                    closeModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    })();
+
     let cancelModal;
     let cancelForm;
     let modalTitle;
@@ -348,11 +472,11 @@
 
         if (currentStatus === 'PENDING') {
             modalTitle.textContent = 'Từ chối đơn đặt sân';
-            reasonInput.value = 'Chủ sân từ chối: Hết sân / Lịch bận';
         } else {
             modalTitle.textContent = 'Hủy đơn đã duyệt';
-            reasonInput.value = 'Sự cố kỹ thuật / Mưa bão đột xuất';
         }
+
+        reasonInput.value = '';
 
         cancelModal.classList.remove('hidden');
         cancelModal.classList.add('flex');
@@ -362,6 +486,101 @@
     function closeCancelModal() {
         cancelModal.classList.add('hidden');
         cancelModal.classList.remove('flex');
+    }
+
+    const itemsPerPage = 5;
+    let currentPage = 1;
+    const allRows = Array.from(document.querySelectorAll('.booking-row'));
+    let totalPages = Math.ceil(allRows.length / itemsPerPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+
+    function displayRows() {
+        allRows.forEach((row) => row.style.display = 'none');
+
+        if (allRows.length === 0) {
+            if (paginationContainer) {
+                paginationContainer.classList.add('hidden');
+            }
+            return;
+        }
+
+        if (paginationContainer) {
+            paginationContainer.classList.remove('hidden');
+        }
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        allRows.forEach((row, index) => {
+            if (index >= start && index < end) {
+                row.style.display = '';
+            }
+        });
+
+        const currentEnd = end > allRows.length ? allRows.length : end;
+        const pageInfo = document.getElementById('pageInfo');
+        if (pageInfo) {
+            pageInfo.innerHTML = `${start + 1} - ${currentEnd} trong số <span class="text-primary">${allRows.length}</span> đơn`;
+        }
+
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+
+        if (btnPrev) {
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.className = currentPage === 1
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        if (btnNext) {
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.className = currentPage === totalPages
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        if (!pageNumbersContainer) {
+            return;
+        }
+
+        pageNumbersContainer.innerHTML = '';
+
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.type = 'button';
+            btn.onclick = () => {
+                currentPage = i;
+                displayRows();
+            };
+
+            if (i === currentPage) {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-white bg-orange-600 font-bold text-sm shadow-md border-none cursor-pointer';
+            } else {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 font-bold text-sm transition-colors cursor-pointer border-none bg-transparent';
+            }
+            pageNumbersContainer.appendChild(btn);
+        }
+
+        if (totalPages <= 1 && paginationContainer) {
+            paginationContainer.classList.add('hidden');
+        }
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        displayRows();
+    }
+
+    if (allRows.length > 0) {
+        totalPages = Math.ceil(allRows.length / itemsPerPage) || 1;
+        displayRows();
     }
 </script>
 

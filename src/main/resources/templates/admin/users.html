@@ -74,8 +74,8 @@
                         <th class="px-5 py-4 text-left">Thao tác</th>
                     </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                    <tr th:each="u : ${users}" class="align-top hover:bg-slate-50/70 transition-colors">
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                    <tr th:each="u : ${users}" class="user-row align-top hover:bg-slate-50/70 transition-colors">
                         <td class="px-5 py-4 font-semibold text-slate-500" th:text="${u.id}"></td>
                         <td class="px-5 py-4 font-semibold text-on-surface" th:text="${u.fullName}"></td>
                         <td class="px-5 py-4 text-slate-600" th:text="${u.email}"></td>
@@ -122,6 +122,24 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div id="paginationContainer" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 hidden">
+                <span class="text-sm text-slate-500">
+                    Đang hiển thị <span id="pageInfo" class="font-bold text-slate-800"></span>
+                </span>
+
+                <div class="flex items-center gap-1">
+                    <button id="btnPrev" type="button" onclick="changePage(-1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                    </button>
+
+                    <div id="pageNumbers" class="flex gap-1"></div>
+
+                    <button id="btnNext" type="button" onclick="changePage(1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                    </button>
+                </div>
             </div>
         </section>
     </div>
@@ -204,6 +222,87 @@
 </div>
 
 <script>
+    const itemsPerPage = 5;
+    let currentPage = 1;
+    const allRows = Array.from(document.querySelectorAll('.user-row'));
+    const paginationContainer = document.getElementById('paginationContainer');
+    let totalPages = Math.ceil(allRows.length / itemsPerPage) || 1;
+
+    function displayRows() {
+        allRows.forEach((row) => row.style.display = 'none');
+
+        if (allRows.length === 0) {
+            if (paginationContainer) paginationContainer.classList.add('hidden');
+            return;
+        }
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        allRows.forEach((row, index) => {
+            if (index >= start && index < end) {
+                row.style.display = '';
+            }
+        });
+
+        const currentEnd = end > allRows.length ? allRows.length : end;
+        const pageInfo = document.getElementById('pageInfo');
+        if (pageInfo) {
+            pageInfo.innerHTML = `${start + 1} - ${currentEnd} trong số <span class="text-primary">${allRows.length}</span> người dùng`;
+        }
+
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+
+        if (btnPrev) {
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.className = currentPage === 1
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        if (btnNext) {
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.className = currentPage === totalPages
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        if (!pageNumbersContainer) return;
+
+        pageNumbersContainer.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.type = 'button';
+            btn.onclick = () => {
+                currentPage = i;
+                displayRows();
+            };
+
+            if (i === currentPage) {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-white bg-primary font-bold text-sm shadow-md border-none cursor-pointer';
+            } else {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 font-bold text-sm transition-colors cursor-pointer border-none bg-transparent';
+            }
+            pageNumbersContainer.appendChild(btn);
+        }
+
+        if (paginationContainer) {
+            paginationContainer.classList.toggle('hidden', totalPages <= 1);
+        }
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        displayRows();
+    }
+
     let activeBanForm = null;
     let activePromoteForm = null;
     let activeUnbanForm = null;
@@ -358,6 +457,10 @@
             activeDemoteForm.submit();
         }
     });
+
+    if (allRows.length > 0) {
+        displayRows();
+    }
 </script>
 
 </body>

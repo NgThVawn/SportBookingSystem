@@ -71,7 +71,7 @@ public class AdminController {
     @GetMapping("/facilities")
     public String manageFacilities(@RequestParam(defaultValue = "0") int page, Model model) {
         var facilities = facilityService.findAllForAdmin(
-                PageRequest.of(page, 15, Sort.by(Sort.Direction.DESC, "createdAt"))
+            PageRequest.of(page, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
         );
         model.addAttribute("facilities", facilities);
 

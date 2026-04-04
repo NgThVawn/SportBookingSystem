@@ -135,7 +135,7 @@ public class PaymentController {
      * VNPay redirect user về đây sau khi thanh toán
      */
     @GetMapping("/vnpay-return")
-    @Transactional(readOnly = true)
+    @Transactional
     public String vnpayReturn(@RequestParam Map<String, String> params,
                               Model model) {
         log.info("VNPay return received: vnp_TxnRef={}, vnp_ResponseCode={}",
@@ -197,7 +197,7 @@ public class PaymentController {
     }
 
     @GetMapping("/momo-return")
-    @Transactional(readOnly = true)
+    @Transactional
     public String momoReturn(@RequestParam Map<String, String> params, Model model) {
         boolean success = moMoService.processPaymentReturn(params);
 
