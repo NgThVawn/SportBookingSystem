@@ -3,7 +3,10 @@ package J2EE.SportBooingSystem.controller;
 import J2EE.SportBooingSystem.enums.FacilityStatus;
 import J2EE.SportBooingSystem.entity.Facility;
 import J2EE.SportBooingSystem.entity.User;
+import J2EE.SportBooingSystem.enums.NotificationType;
+import J2EE.SportBooingSystem.repository.FacilityRepository;
 import J2EE.SportBooingSystem.service.FacilityService;
+import J2EE.SportBooingSystem.service.NotificationService;
 import J2EE.SportBooingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +31,8 @@ public class AdminController {
 
     private final FacilityService facilityService;
     private final UserService userService;
+    private final NotificationService notificationService;
+    private final FacilityRepository facilityRepository;
 
     @GetMapping("")
     public String dashboard(Model model, @AuthenticationPrincipal UserDetails ud) {
@@ -82,6 +87,26 @@ public class AdminController {
         try {
             FacilityStatus newStatus = FacilityStatus.valueOf(status.toUpperCase());
             facilityService.changeStatusByAdmin(id, newStatus);
+            facilityRepository.findById(id).ifPresent(facility -> {
+                if (newStatus == FacilityStatus.OPEN) {
+                    notificationService.send(
+                            facility.getOwner(),
+                            NotificationType.FACILITY_APPROVED,
+                            "Cơ sở đã được duyệt",
+                            "Cơ sở \"" + facility.getName() + "\" của bạn đã được Admin phê duyệt và đang hoạt động.",
+                            "/owner/facilities"
+                    );
+                } else if (newStatus == FacilityStatus.BLOCKED) {
+                    notificationService.send(
+                            facility.getOwner(),
+                            NotificationType.FACILITY_REJECTED,
+                            "Cơ sở bị khóa",
+                            "Cơ sở \"" + facility.getName()
+                                    + "\" của bạn đã bị Admin khóa. Liên hệ hỗ trợ để biết thêm chi tiết.",
+                            "/owner/facilities"
+                    );
+                }
+            });
             ra.addFlashAttribute("successMsg", "Đã cập nhật trạng thái cơ sở thành công!");
         } catch (Exception e) {
             ra.addFlashAttribute("errorMsg", "Lỗi: " + e.getMessage());

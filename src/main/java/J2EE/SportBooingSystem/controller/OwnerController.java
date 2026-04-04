@@ -783,16 +783,22 @@ public class OwnerController {
         return "owner/index";
     }
 
-        private long countFacilitiesByStatus(List<Facility> facilities, FacilityStatus status) {
-        return facilities.stream()
-            .filter(facility -> facility.getStatus() == status)
-            .count();
-        }
+    private long countFacilitiesByStatus(List<Facility> facilities, FacilityStatus status) {
+    return facilities.stream()
+        .filter(facility -> facility.getStatus() == status)
+        .count();
+    }
 
-        private long countBookingsByStatus(List<Booking> bookings, BookingStatus status) {
-        return bookings.stream()
-            .filter(booking -> booking.getStatus() == status)
-            .count();
-        }
+    private long countBookingsByStatus(List<Booking> bookings, BookingStatus status) {
+    return bookings.stream()
+        .filter(booking -> booking.getStatus() == status)
+        .count();
+    }
+
+    @GetMapping("/notifications")
+    @PreAuthorize("isAuthenticated()")
+    public String notificationsPage() {
+        return "notifications/list";
+    }
 
 }

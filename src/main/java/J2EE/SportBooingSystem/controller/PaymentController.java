@@ -20,6 +20,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import J2EE.SportBooingSystem.service.NotificationService;
+import J2EE.SportBooingSystem.enums.NotificationType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,7 @@ public class PaymentController {
     private final VNPayService vnPayService;
     private final MoMoService moMoService;
     private final BookingRepository bookingRepo;
+    private final NotificationService notificationService;
 
     // ── 1. Trang checkout ────────────────────────────────────────
 
@@ -155,8 +158,38 @@ public class PaymentController {
         model.addAttribute("payDate", params.get("vnp_PayDate"));
 
         if (bookingCode != null) {
-            bookingRepo.findByBookingCodeEager(bookingCode)
-                    .ifPresent(b -> model.addAttribute("booking", BookingResponse.from(b)));
+            bookingRepo.findByBookingCodeEager(bookingCode).ifPresent(b -> {
+                model.addAttribute("booking", BookingResponse.from(b));
+                // Gửi thông báo sau khi xử lý thanh toán
+                if (success) {
+                    notificationService.send(
+                            b.getUser(),
+                            NotificationType.PAYMENT_SUCCESS,
+                            "Thanh toán thành công",
+                            "Đã thanh toán booking " + b.getBookingCode()
+                                    + " - " + b.getField().getName()
+                                    + " ngày " + b.getBookingDate() + " qua VNPay.",
+                            "/bookings"
+                    );
+                    notificationService.send(
+                            b.getField().getFacility().getOwner(),
+                            NotificationType.PAYMENT_RECEIVED,
+                            "Nhận được thanh toán",
+                            "Booking " + b.getBookingCode() + " của " + b.getUser().getFullName()
+                                    + " đã được thanh toán qua VNPay.",
+                            "/owner/bookings"
+                    );
+                } else {
+                    notificationService.send(
+                            b.getUser(),
+                            NotificationType.PAYMENT_FAILED,
+                            "Thanh toán thất bại",
+                            "Thanh toán booking " + b.getBookingCode() + " qua VNPay không thành công. "
+                                    + "Mã lỗi: " + params.getOrDefault("vnp_ResponseCode", "?"),
+                            "/payment/checkout?bookingCode=" + b.getBookingCode()
+                    );
+                }
+            });
         }
         return "payment/result";
     }
@@ -180,8 +213,37 @@ public class PaymentController {
 
         // Lấy thêm thông tin booking để hiển thị
         if (!bookingCode.isBlank()) {
-            bookingRepo.findByBookingCodeEager(bookingCode).ifPresent(b ->
-                    model.addAttribute("booking", BookingResponse.from(b)));
+            bookingRepo.findByBookingCodeEager(bookingCode).ifPresent(b -> {
+                model.addAttribute("booking", BookingResponse.from(b));
+                if (success) {
+                    notificationService.send(
+                            b.getUser(),
+                            NotificationType.PAYMENT_SUCCESS,
+                            "Thanh toán thành công",
+                            "Đã thanh toán booking " + b.getBookingCode()
+                                    + " - " + b.getField().getName()
+                                    + " ngày " + b.getBookingDate() + " qua MoMo.",
+                            "/bookings"
+                    );
+                    notificationService.send(
+                            b.getField().getFacility().getOwner(),
+                            NotificationType.PAYMENT_RECEIVED,
+                            "Nhận được thanh toán",
+                            "Booking " + b.getBookingCode() + " của " + b.getUser().getFullName()
+                                    + " đã được thanh toán qua MoMo.",
+                            "/owner/bookings"
+                    );
+                } else {
+                    notificationService.send(
+                            b.getUser(),
+                            NotificationType.PAYMENT_FAILED,
+                            "Thanh toán thất bại",
+                            "Thanh toán booking " + b.getBookingCode() + " qua MoMo không thành công. "
+                                    + "Mã lỗi: " + resultCode,
+                            "/payment/checkout?bookingCode=" + b.getBookingCode()
+                    );
+                }
+            });
         }
 
         return "payment/momo-result";

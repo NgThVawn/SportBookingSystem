@@ -45,7 +45,15 @@
             </th:block>
 
             <th:block sec:authorize="isAuthenticated()">
-                <a th:href="@{/notifications}" class="material-symbols-outlined text-zinc-600 hover:text-primary transition-colors text-decoration-none mt-1">notifications</a>
+                <a th:href="@{/profile/notifications}" class="relative text-decoration-none flex items-center justify-center" title="Thông báo">
+                    <span class="material-symbols-outlined text-zinc-600 hover:text-primary transition-colors text-[28px]">notifications</span>
+
+                    <span id="notif-badge"
+                          th:text="${unreadNotifCount != null && unreadNotifCount > 0 ? (unreadNotifCount > 99 ? '99+' : unreadNotifCount) : '0'}"
+                          style="position:absolute;top:-4px;right:-6px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:9999px;min-width:18px;height:18px;align-items:center;justify-content:center;padding:0 4px;font-family:'Lexend',sans-serif;"
+                          th:styleappend="${unreadNotifCount != null && unreadNotifCount > 0 ? 'display:flex;' : 'display:none;'}">
+                    </span>
+                </a>
 
                 <div class="relative group cursor-pointer ml-2">
 
