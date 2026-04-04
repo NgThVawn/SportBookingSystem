@@ -1,6 +1,8 @@
 package J2EE.SportBooingSystem.controller;
 
 import J2EE.SportBooingSystem.enums.FacilityStatus;
+import J2EE.SportBooingSystem.entity.Facility;
+import J2EE.SportBooingSystem.entity.User;
 import J2EE.SportBooingSystem.service.FacilityService;
 import J2EE.SportBooingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
 @RequestMapping("/admin")
 @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
@@ -22,6 +28,40 @@ public class AdminController {
 
     private final FacilityService facilityService;
     private final UserService userService;
+
+    @GetMapping("")
+    public String dashboard(Model model, @AuthenticationPrincipal UserDetails ud) {
+        User currentUser = userService.findByEmail(ud.getUsername());
+        List<User> users = userService.findAll();
+        List<Facility> facilities = facilityService.findAll();
+        List<Facility> recentFacilities = facilityService.findAllForAdmin(
+                PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
+        ).getContent();
+
+        List<User> recentUsers = users.stream()
+                .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
+
+        long bannedUsers = users.stream().filter(user -> Boolean.TRUE.equals(user.getIsBanned())).count();
+        long pendingFacilities = facilities.stream()
+                .filter(facility -> facility.getStatus() == FacilityStatus.PENDING_APPROVAL)
+                .count();
+        long activeFacilities = facilities.stream()
+                .filter(facility -> facility.getStatus() == FacilityStatus.OPEN)
+                .count();
+
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("totalUsers", users.size());
+        model.addAttribute("bannedUsers", bannedUsers);
+        model.addAttribute("totalFacilities", facilityService.count());
+        model.addAttribute("activeFacilities", activeFacilities);
+        model.addAttribute("pendingFacilities", pendingFacilities);
+        model.addAttribute("recentFacilities", recentFacilities);
+        model.addAttribute("recentUsers", recentUsers);
+
+        return "admin/index";
+    }
 
     @GetMapping("/facilities")
     public String manageFacilities(@RequestParam(defaultValue = "0") int page, Model model) {

@@ -55,7 +55,7 @@
                 <span class="text-slate-800 font-bold">Sân con</span>
             </div>
         </div>
-        <a th:href="@{/owner/facilities}" class="text-sm text-orange-600 font-bold hover:underline">← Quay lại danh sách cơ sở</a>
+        <a th:href="@{/owner/facilities}" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-orange-600 text-white text-sm font-bold hover:bg-orange-700 transition-colors text-decoration-none">Quay lại</a>
     </header>
 
     <div class="p-8 flex-1">
@@ -145,9 +145,9 @@
                                     <option value="MAINTENANCE" th:selected="${f.status.name() == 'MAINTENANCE'}">Maintenance</option>
                                 </select>
 
-                                <form th:action="@{/owner/facilities/{facId}/fields/{fieldId}/delete(facId=${facility.id}, fieldId=${f.id})}" method="post" class="m-0" onsubmit="return confirm('Bạn có chắc muốn xóa sân này?');">
+                                <form th:action="@{/owner/facilities/{facId}/fields/{fieldId}/delete(facId=${facility.id}, fieldId=${f.id})}" method="post" class="m-0 delete-field-form">
                                     <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                    <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border-none bg-transparent cursor-pointer" title="Xóa sân">
+                                    <button type="button" class="open-delete-field-modal w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border-none bg-transparent cursor-pointer" title="Xóa sân">
                                         <span class="material-symbols-outlined text-[18px]">delete</span>
                                     </button>
                                 </form>
@@ -183,6 +183,29 @@
     </div>
 </main>
 
+<div id="deleteFieldModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+        <div class="mb-4 flex items-start gap-3">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">delete</span>
+            </div>
+            <div>
+                <h3 class="font-headline text-xl font-bold text-on-surface">Xác nhận xóa sân</h3>
+                <p class="mt-1 text-sm text-slate-500">Sân sẽ bị xóa khỏi cơ sở và không thể khôi phục sau khi xác nhận.</p>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+            Hãy kiểm tra lại trước khi xóa để tránh mất dữ liệu không mong muốn.
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+            <button type="button" id="cancelDeleteFieldModal" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Hủy</button>
+            <button type="button" id="confirmDeleteFieldModal" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700">Xác nhận xóa</button>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const successAlert = document.getElementById('alertSuccess');
@@ -199,6 +222,41 @@
 
         autoHide(successAlert);
         autoHide(errorAlert);
+    });
+
+    let activeDeleteFieldForm = null;
+    const deleteFieldModal = document.getElementById('deleteFieldModal');
+    const cancelDeleteFieldModal = document.getElementById('cancelDeleteFieldModal');
+    const confirmDeleteFieldModal = document.getElementById('confirmDeleteFieldModal');
+
+    function openDeleteFieldModal(form) {
+        activeDeleteFieldForm = form;
+        deleteFieldModal.classList.remove('hidden');
+        deleteFieldModal.classList.add('flex');
+    }
+
+    function closeDeleteFieldModal() {
+        activeDeleteFieldForm = null;
+        deleteFieldModal.classList.add('hidden');
+        deleteFieldModal.classList.remove('flex');
+    }
+
+    document.querySelectorAll('.open-delete-field-modal').forEach(button => {
+        button.addEventListener('click', () => openDeleteFieldModal(button.closest('form')));
+    });
+
+    cancelDeleteFieldModal.addEventListener('click', closeDeleteFieldModal);
+
+    deleteFieldModal.addEventListener('click', (event) => {
+        if (event.target === deleteFieldModal) {
+            closeDeleteFieldModal();
+        }
+    });
+
+    confirmDeleteFieldModal.addEventListener('click', () => {
+        if (activeDeleteFieldForm) {
+            activeDeleteFieldForm.submit();
+        }
     });
 
     function searchFields() {

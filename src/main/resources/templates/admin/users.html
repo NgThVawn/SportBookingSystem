@@ -1,109 +1,364 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Quản lý Người Dùng - Admin</title>
-    <style>
-        body { font-family: "Segoe UI", Arial, sans-serif; background: #f4f6f9; padding: 20px; }
-        h2 { color: #333; margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px;}
-        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { padding: 12px 10px; border: 1px solid #dee2e6; text-align: left; vertical-align: middle; }
-        th { background-color: #343a40; color: white; }
-        tr:nth-child(even) { background-color: #f8f9fa; }
-        
-        .message { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        
-        .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; color: white;}
-        .btn-ban { background-color: #dc3545; }
-        .btn-unban { background-color: #28a745; }
-        .btn-promote { background-color: #6f42c1; }
-        .btn-demote { background-color: #fd7e14; }
-        
-        .role-tag { display: inline-block; padding: 2px 6px; background: #17a2b8; color: white; border-radius: 4px; font-size: 11px; margin-right: 3px;}
-        .banned-text { color: #dc3545; font-weight: bold; font-size: 13px;}
-        .active-text { color: #28a745; font-weight: bold; font-size: 13px;}
-    </style>
-</head>
-<body>
-
-    <h2>Quản lý Tài Khoản (Admin Dashboard)</h2>
-
-    <div class="message success" th:if="${successMsg}" th:text="${successMsg}"></div>
-    <div class="message error" th:if="${errorMsg}" th:text="${errorMsg}"></div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Họ Tên</th>
-                <th>Email</th>
-                <th>SĐT</th>
-                <th>Quyền hạn</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="u : ${users}">
-                <td th:text="${u.id}"></td>
-                <td th:text="${u.fullName}"></td>
-                <td th:text="${u.email}"></td>
-                <td th:text="${u.phone}"></td>
-                
-                <td>
-                    <span th:each="role : ${u.roles}" class="role-tag" th:text="${role.name}"></span>
-                </td>
-                
-                <td>
-                    <div th:if="${u.isBanned}">
-                        <span class="banned-text">Bị khóa</span><br/>
-                        <span style="font-size: 11px; color: #666;" th:text="'Lý do: ' + ${u.banReason}"></span>
-                    </div>
-                    <div th:unless="${u.isBanned}">
-                        <span class="active-text">Hoạt động</span>
-                    </div>
-                </td>
-                
-                <td style="display: flex; gap: 5px;">
-                    
-                    <form th:if="${!u.isBanned}" th:action="@{/admin/users/{id}/ban(id=${u.id})}" method="post" onsubmit="return askBanReason(this);">
-                        <input type="hidden" name="reason" class="ban-reason-input" />
-                        <button type="submit" class="btn btn-ban">Khóa (Ban)</button>
-                    </form>
-                    
-                    <form th:if="${u.isBanned}" th:action="@{/admin/users/{id}/unban(id=${u.id})}" method="post">
-                        <button type="submit" class="btn btn-unban">Mở khóa</button>
-                    </form>
-                    
-                    <div th:with="isAdmin=${#strings.contains(u.roles.toString(), 'ADMIN')}">
-                        <form th:if="${!isAdmin}" th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post" onsubmit="return confirm('Bạn chắc chắn muốn cấp quyền Quản trị (Admin) cho người này?');">
-                            <button type="submit" class="btn btn-promote">Lên Admin</button>
-                        </form>
-                        
-                        <form th:if="${isAdmin}" th:action="@{/admin/users/{id}/demote(id=${u.id})}" method="post" onsubmit="return confirm('Chỉ SUPER_ADMIN mới có thể hạ quyền. Xác nhận tiến hành?');">
-                            <button type="submit" class="btn btn-demote">Hạ quyền Admin</button>
-                        </form>
-                    </div>
-
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <script>
-        // JS để hỏi lý do khóa tài khoản trước khi gửi Form
-        function askBanReason(form) {
-            let reason = prompt("Vui lòng nhập lý do khóa tài khoản này:");
-            if (reason != null && reason.trim() !== "") {
-                form.querySelector('.ban-reason-input').value = reason;
-                return true; // Cho phép gửi form
-            } else {
-                alert("Bạn phải nhập lý do để khóa!");
-                return false; // Chặn gửi form
-            }
+    <link th:href="@{/css/app.css}" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#101827",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f5f7fb",
+                        "primary": "#b02f00",
+                        "surface": "#f3f6fb",
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    },
+                },
+            },
         }
     </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<div th:replace="~{admin/fragments/admin_sidebar :: sidebar('users')}"></div>
+
+<main class="ml-64 min-h-screen relative">
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10">
+        <div>
+            <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Quản lý Tài Khoản</h2>
+            <p class="text-xs text-slate-500 font-label uppercase tracking-wider">Admin Dashboard</p>
+        </div>
+        <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-orange-50 text-orange-700 text-sm font-semibold">
+            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">group</span>
+            <span th:text="${users != null ? users.size() + ' người dùng' : '0 người dùng'}">0 người dùng</span>
+        </div>
+    </header>
+
+    <div class="p-8 space-y-6">
+
+        <div th:if="${successMsg}" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 font-medium" th:text="${successMsg}"></div>
+        <div th:if="${errorMsg}" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 font-medium" th:text="${errorMsg}"></div>
+
+        <section class="bg-surface-container-lowest rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-xs">
+                    <tr>
+                        <th class="px-5 py-4 text-left">ID</th>
+                        <th class="px-5 py-4 text-left">Họ Tên</th>
+                        <th class="px-5 py-4 text-left">Email</th>
+                        <th class="px-5 py-4 text-left">SĐT</th>
+                        <th class="px-5 py-4 text-left">Quyền hạn</th>
+                        <th class="px-5 py-4 text-left">Trạng thái</th>
+                        <th class="px-5 py-4 text-left">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                    <tr th:each="u : ${users}" class="align-top hover:bg-slate-50/70 transition-colors">
+                        <td class="px-5 py-4 font-semibold text-slate-500" th:text="${u.id}"></td>
+                        <td class="px-5 py-4 font-semibold text-on-surface" th:text="${u.fullName}"></td>
+                        <td class="px-5 py-4 text-slate-600" th:text="${u.email}"></td>
+                        <td class="px-5 py-4 text-slate-600" th:text="${u.phone}"></td>
+
+                        <td class="px-5 py-4">
+                            <div class="flex flex-wrap gap-2">
+                                <span th:each="role : ${u.roles}" class="inline-flex rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-orange-700" th:text="${role.name}"></span>
+                            </div>
+                        </td>
+
+                        <td class="px-5 py-4">
+                            <div th:if="${u.isBanned}">
+                                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">Bị khóa</span><br/>
+                                <span class="mt-2 block text-xs text-slate-500" th:text="'Lý do: ' + ${u.banReason}"></span>
+                            </div>
+                            <div th:unless="${u.isBanned}">
+                                <span class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Hoạt động</span>
+                            </div>
+                        </td>
+
+                        <td class="px-5 py-4">
+                            <div class="flex flex-wrap gap-2">
+                                <form th:if="${!u.isBanned}" th:action="@{/admin/users/{id}/ban(id=${u.id})}" method="post" class="ban-form">
+                                    <input type="hidden" name="reason" class="ban-reason-input" />
+                                    <button type="button" class="open-ban-modal rounded-lg bg-orange-600 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-700 transition-colors">Khóa</button>
+                                </form>
+
+                                <form th:if="${u.isBanned}" th:action="@{/admin/users/{id}/unban(id=${u.id})}" method="post" class="unban-form">
+                                    <button type="button" class="open-unban-modal rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors">Mở khóa</button>
+                                </form>
+
+                                <div th:with="isAdmin=${#strings.contains(u.roles.toString(), 'ADMIN')}">
+                                    <form th:if="${!isAdmin}" th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post" class="promote-form">
+                                        <button type="button" class="open-promote-modal rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors">Lên Admin</button>
+                                    </form>
+
+                                    <form th:if="${isAdmin}" th:action="@{/admin/users/{id}/demote(id=${u.id})}" method="post" class="demote-form">
+                                        <button type="button" class="open-demote-modal rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-600 transition-colors">Hạ quyền</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div id="banReasonModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+        <div class="mb-4">
+            <h3 class="font-headline text-xl font-bold text-on-surface">Nhập lý do khóa tài khoản</h3>
+            <p class="mt-1 text-sm text-slate-500">Lý do sẽ được lưu lại để phục vụ kiểm tra và hỗ trợ người dùng.</p>
+        </div>
+
+        <label for="banReasonText" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">Lý do khóa</label>
+        <textarea id="banReasonText"
+                  rows="4"
+                  maxlength="500"
+                  placeholder="Ví dụ: Vi phạm quy định cộng đồng, spam nội dung..."
+                  class="w-full rounded-xl border border-orange-200 bg-orange-50/40 px-3 py-2 text-sm text-slate-700 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"></textarea>
+        <p id="banReasonError" class="mt-2 hidden text-xs font-medium text-red-600">Vui lòng nhập lý do tối thiểu 5 ký tự.</p>
+
+        <div class="mt-5 flex justify-end gap-2">
+            <button type="button" id="cancelBanModal" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Hủy</button>
+            <button type="button" id="confirmBanModal" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700">Xác nhận khóa</button>
+        </div>
+    </div>
+</div>
+
+<div id="promoteModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+        <div class="mb-4">
+            <h3 class="font-headline text-xl font-bold text-on-surface">Xác nhận nâng quyền Admin</h3>
+            <p class="mt-1 text-sm text-slate-500">Người dùng sẽ có quyền quản trị và truy cập khu vực admin sau khi xác nhận.</p>
+        </div>
+
+        <div class="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+            Hãy chắc chắn bạn tin cậy tài khoản này trước khi cấp quyền.
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+            <button type="button" id="cancelPromoteModal" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Hủy</button>
+            <button type="button" id="confirmPromoteModal" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700">Xác nhận nâng quyền</button>
+        </div>
+    </div>
+</div>
+
+<div id="unbanModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+        <div class="mb-4">
+            <h3 class="font-headline text-xl font-bold text-on-surface">Xác nhận mở khóa tài khoản</h3>
+            <p class="mt-1 text-sm text-slate-500">Tài khoản sẽ được kích hoạt lại và người dùng có thể đăng nhập bình thường.</p>
+        </div>
+
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Hành động này sẽ gỡ trạng thái khóa ngay lập tức.
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+            <button type="button" id="cancelUnbanModal" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Hủy</button>
+            <button type="button" id="confirmUnbanModal" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Xác nhận mở khóa</button>
+        </div>
+    </div>
+</div>
+
+<div id="demoteModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+        <div class="mb-4">
+            <h3 class="font-headline text-xl font-bold text-on-surface">Xác nhận hạ quyền Admin</h3>
+            <p class="mt-1 text-sm text-slate-500">Tài khoản sẽ bị thu hồi quyền quản trị và chỉ còn quyền cơ bản tương ứng.</p>
+        </div>
+
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Hãy chắc chắn thao tác này là cần thiết trước khi xác nhận.
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+            <button type="button" id="cancelDemoteModal" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Hủy</button>
+            <button type="button" id="confirmDemoteModal" class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600">Xác nhận hạ quyền</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeBanForm = null;
+    let activePromoteForm = null;
+    let activeUnbanForm = null;
+    let activeDemoteForm = null;
+    const banModal = document.getElementById("banReasonModal");
+    const banReasonText = document.getElementById("banReasonText");
+    const banReasonError = document.getElementById("banReasonError");
+    const cancelBanModal = document.getElementById("cancelBanModal");
+    const confirmBanModal = document.getElementById("confirmBanModal");
+    const promoteModal = document.getElementById("promoteModal");
+    const cancelPromoteModal = document.getElementById("cancelPromoteModal");
+    const confirmPromoteModal = document.getElementById("confirmPromoteModal");
+    const unbanModal = document.getElementById("unbanModal");
+    const cancelUnbanModal = document.getElementById("cancelUnbanModal");
+    const confirmUnbanModal = document.getElementById("confirmUnbanModal");
+    const demoteModal = document.getElementById("demoteModal");
+    const cancelDemoteModal = document.getElementById("cancelDemoteModal");
+    const confirmDemoteModal = document.getElementById("confirmDemoteModal");
+
+    function openBanModal(form) {
+        activeBanForm = form;
+        banReasonText.value = "";
+        banReasonError.classList.add("hidden");
+        banModal.classList.remove("hidden");
+        banModal.classList.add("flex");
+        banReasonText.focus();
+    }
+
+    function closeBanModal() {
+        activeBanForm = null;
+        banModal.classList.add("hidden");
+        banModal.classList.remove("flex");
+    }
+
+    function openPromoteModal(form) {
+        activePromoteForm = form;
+        promoteModal.classList.remove("hidden");
+        promoteModal.classList.add("flex");
+    }
+
+    function closePromoteModal() {
+        activePromoteForm = null;
+        promoteModal.classList.add("hidden");
+        promoteModal.classList.remove("flex");
+    }
+
+    function openUnbanModal(form) {
+        activeUnbanForm = form;
+        unbanModal.classList.remove("hidden");
+        unbanModal.classList.add("flex");
+    }
+
+    function closeUnbanModal() {
+        activeUnbanForm = null;
+        unbanModal.classList.add("hidden");
+        unbanModal.classList.remove("flex");
+    }
+
+    function openDemoteModal(form) {
+        activeDemoteForm = form;
+        demoteModal.classList.remove("hidden");
+        demoteModal.classList.add("flex");
+    }
+
+    function closeDemoteModal() {
+        activeDemoteForm = null;
+        demoteModal.classList.add("hidden");
+        demoteModal.classList.remove("flex");
+    }
+
+    document.querySelectorAll(".open-ban-modal").forEach((button) => {
+        button.addEventListener("click", () => {
+            openBanModal(button.closest("form"));
+        });
+    });
+
+    document.querySelectorAll(".open-promote-modal").forEach((button) => {
+        button.addEventListener("click", () => {
+            openPromoteModal(button.closest("form"));
+        });
+    });
+
+    document.querySelectorAll(".open-unban-modal").forEach((button) => {
+        button.addEventListener("click", () => {
+            openUnbanModal(button.closest("form"));
+        });
+    });
+
+    document.querySelectorAll(".open-demote-modal").forEach((button) => {
+        button.addEventListener("click", () => {
+            openDemoteModal(button.closest("form"));
+        });
+    });
+
+    cancelBanModal.addEventListener("click", closeBanModal);
+    cancelPromoteModal.addEventListener("click", closePromoteModal);
+    cancelUnbanModal.addEventListener("click", closeUnbanModal);
+    cancelDemoteModal.addEventListener("click", closeDemoteModal);
+
+    banModal.addEventListener("click", (event) => {
+        if (event.target === banModal) {
+            closeBanModal();
+        }
+    });
+
+    promoteModal.addEventListener("click", (event) => {
+        if (event.target === promoteModal) {
+            closePromoteModal();
+        }
+    });
+
+    unbanModal.addEventListener("click", (event) => {
+        if (event.target === unbanModal) {
+            closeUnbanModal();
+        }
+    });
+
+    demoteModal.addEventListener("click", (event) => {
+        if (event.target === demoteModal) {
+            closeDemoteModal();
+        }
+    });
+
+    confirmBanModal.addEventListener("click", () => {
+        const reason = banReasonText.value.trim();
+        if (reason.length < 5) {
+            banReasonError.classList.remove("hidden");
+            banReasonText.focus();
+            return;
+        }
+
+        if (activeBanForm) {
+            activeBanForm.querySelector(".ban-reason-input").value = reason;
+            activeBanForm.submit();
+        }
+    });
+
+    confirmPromoteModal.addEventListener("click", () => {
+        if (activePromoteForm) {
+            activePromoteForm.submit();
+        }
+    });
+
+    confirmUnbanModal.addEventListener("click", () => {
+        if (activeUnbanForm) {
+            activeUnbanForm.submit();
+        }
+    });
+
+    confirmDemoteModal.addEventListener("click", () => {
+        if (activeDemoteForm) {
+            activeDemoteForm.submit();
+        }
+    });
+</script>
 
 </body>
 </html>
