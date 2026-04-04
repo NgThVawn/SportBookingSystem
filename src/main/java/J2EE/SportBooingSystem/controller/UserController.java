@@ -1,6 +1,7 @@
 package J2EE.SportBooingSystem.controller;
 
 import J2EE.SportBooingSystem.entity.User;
+import J2EE.SportBooingSystem.security.SecurityUtils;
 import J2EE.SportBooingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class UserController {
 
     private final UserService userService;
+    private final SecurityUtils securityUtils;
 
     @GetMapping
     public String profile(
@@ -31,7 +33,7 @@ public class UserController {
             return "redirect:/auth/login";
         }
 
-        String email = authentication.getName();
+        String email = securityUtils.getCurrentUserEmail();
         User user = userService.findByEmail(email);
         model.addAttribute("user", user);
 
@@ -55,7 +57,7 @@ public class UserController {
             return "redirect:/auth/login";
         }
 
-        String email = authentication.getName();
+        String email = securityUtils.getCurrentUserEmail();
         userService.updateProfile(email, fullName, phone, avatar);
 
         // Chuyển hướng về lại trang profile kèm thông báo thành công
@@ -64,7 +66,7 @@ public class UserController {
 
     @GetMapping("/security")
     public String securityPage(Model model, Authentication authentication) {
-        User user = userService.findByEmail(authentication.getName());
+        User user = userService.findByEmail(securityUtils.getCurrentUserEmail());
         model.addAttribute("user", user);
         return "profile/security"; // Tạo file mới security.html trong thư mục profile
     }
@@ -87,7 +89,7 @@ public class UserController {
         }
 
         try {
-            userService.changePassword(authentication.getName(), oldPassword, newPassword);
+            userService.changePassword(securityUtils.getCurrentUserEmail(), oldPassword, newPassword);
             redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());

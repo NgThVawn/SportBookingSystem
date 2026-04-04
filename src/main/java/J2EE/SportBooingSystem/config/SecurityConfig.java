@@ -2,6 +2,9 @@ package J2EE.SportBooingSystem.config;
 
 import J2EE.SportBooingSystem.security.CustomUserDetailsService;
 import J2EE.SportBooingSystem.security.RoleBasedAuthenticationSuccessHandler;
+import J2EE.SportBooingSystem.security.oauth2.CustomOAuth2UserService;
+import J2EE.SportBooingSystem.security.oauth2.CustomOidcUserService;
+import J2EE.SportBooingSystem.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +27,9 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final RoleBasedAuthenticationSuccessHandler roleBasedAuthenticationSuccessHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -75,6 +81,15 @@ public class SecurityConfig {
                 .successHandler(roleBasedAuthenticationSuccessHandler)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                    .loginPage("/auth/login")
+                    .userInfoEndpoint(userInfo -> userInfo
+                            .userService(customOAuth2UserService)   // Facebook (OAuth2)
+                            .oidcUserService(customOidcUserService) // Google (OIDC)
+                    )
+                    .successHandler(oAuth2AuthenticationSuccessHandler)
+                    .failureUrl("/auth/login?error=oauth2")
             )
             .logout(logout -> logout
                 .logoutUrl("/auth/logout")

@@ -40,10 +40,12 @@ public class CustomUserDetailsService implements UserDetailsService {
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
             .collect(Collectors.toList());
 
+        String password = user.getPassword() != null ? user.getPassword() : "{noop}oauth2_user_no_password";
+
         return org.springframework.security.core.userdetails.User
-            .withUsername(user.getEmail())
-            .password(user.getPassword())
-            .authorities(authorities)
-            .build();
+                .withUsername(user.getEmail())
+                .password(password)
+                .authorities(authorities)
+                .build();
     }
 }

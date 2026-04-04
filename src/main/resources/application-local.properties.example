@@ -1,0 +1,41 @@
+# ==============================================================
+# HƯỚNG DẪN:
+#   1. Sao chép file này thành application-local.properties
+#   2. Điền thông tin thật vào application-local.properties
+#   3. File application-local.properties đã bị gitignore
+#      → không bao giờ bị commit lên Git
+# ==============================================================
+
+# --------------------------------------------------------------
+# Database – thay đổi nếu MySQL của bạn có password
+# --------------------------------------------------------------
+spring.datasource.url=jdbc:mysql://localhost:3306/sport_booking?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=YOUR_MYSQL_PASSWORD
+
+# --------------------------------------------------------------
+# VNPay – lấy từ https://sandbox.vnpayment.vn/
+# --------------------------------------------------------------
+vnpay.tmn-code=YOUR_VNPAY_TMN_CODE
+vnpay.hash-secret=YOUR_VNPAY_HASH_SECRET
+
+# --------------------------------------------------------------
+# MoMo – lấy từ https://developers.momo.vn/
+# --------------------------------------------------------------
+momo.partner-code=YOUR_MOMO_PARTNER_CODE
+momo.access-key=YOUR_MOMO_ACCESS_KEY
+momo.secret-key=YOUR_MOMO_SECRET_KEY
+
+# --------------------------------------------------------------
+# Google OAuth2 – lấy từ https://console.cloud.google.com/
+# Authorized redirect URI: http://localhost:8080/login/oauth2/code/google
+# --------------------------------------------------------------
+spring.security.oauth2.client.registration.google.client-id=YOUR_GOOGLE_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+
+# --------------------------------------------------------------
+# Facebook OAuth2 – lấy từ https://developers.facebook.com/
+# Valid OAuth Redirect URI: http://localhost:8080/login/oauth2/code/facebook
+# --------------------------------------------------------------
+spring.security.oauth2.client.registration.facebook.client-id=YOUR_FACEBOOK_APP_ID
+spring.security.oauth2.client.registration.facebook.client-secret=YOUR_FACEBOOK_APP_SECRET
