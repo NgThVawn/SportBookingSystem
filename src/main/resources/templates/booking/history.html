@@ -7,8 +7,17 @@
 <body>
 <th:block th:fragment="content">
 
-    <div class="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8 font-body text-slate-800">
+    <div class="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8 font-body text-slate-800 relative">
         <div class="max-w-7xl mx-auto">
+
+            <div th:if="${success}" class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span th:text="${success}" class="font-medium text-sm"></span>
+            </div>
+            <div th:if="${error}" class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm">
+                <span class="material-symbols-outlined">error</span>
+                <span th:text="${error}" class="font-medium text-sm"></span>
+            </div>
 
             <header class="mb-10">
                 <h1 class="text-4xl md:text-5xl font-black font-headline tracking-tighter text-slate-900 mb-2 uppercase italic">Lịch sử đặt sân</h1>
@@ -19,6 +28,9 @@
                 <button onclick="filterBookings('ALL', this)" class="filter-btn bg-primary text-white px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 shadow-lg shadow-primary/30 transition-all border-none cursor-pointer">Tất cả</button>
                 <button onclick="filterBookings('CONFIRMED', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Đã xác nhận</button>
                 <button onclick="filterBookings('PENDING', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Chờ thanh toán</button>
+                
+                <button onclick="filterBookings('CANCEL_PENDING', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Chờ duyệt hủy</button>
+                
                 <button onclick="filterBookings('COMPLETED', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Hoàn thành</button>
                 <button onclick="filterBookings('CANCELLED', this)" class="filter-btn bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-full font-label text-sm font-bold flex-shrink-0 hover:bg-slate-50 transition-all border-none cursor-pointer">Đã hủy</button>
             </div>
@@ -51,14 +63,6 @@
 
                             <div class="w-full md:w-48 h-36 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 relative">
                                 <div class="absolute top-2 left-2 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded font-label uppercase tracking-widest z-10" th:text="${b.sportType}">BÓNG ĐÁ</div>
-
-<!--                                <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"-->
-<!--                                     th:src="${#strings.containsIgnoreCase(b.sportType, 'CẦU LÔNG') or #strings.containsIgnoreCase(b.sportType, 'BADMINTON')} ? 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop' :-->
-<!--                                             (${#strings.containsIgnoreCase(b.sportType, 'RỔ') or #strings.containsIgnoreCase(b.sportType, 'BASKETBALL')} ? 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=600&auto=format&fit=crop' :-->
-<!--                                             (${#strings.containsIgnoreCase(b.sportType, 'TENNIS') or #strings.containsIgnoreCase(b.sportType, 'QUẦN VỢT')} ? 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=600&auto=format&fit=crop' :-->
-<!--                                             (${#strings.containsIgnoreCase(b.sportType, 'PICKLEBALL')} ? 'https://images.unsplash.com/photo-1622397455829-9e8c07d3b8f6?q=80&w=600&auto=format&fit=crop' :-->
-<!--                                             'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop')))"-->
-<!--                                     alt="Hình sân"/>-->
                                 <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                      th:src="${b.facilityImageUrl != null and !b.facilityImageUrl.isEmpty() ? b.facilityImageUrl : 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop'}"
                                      alt="Hình sân"/>
@@ -79,19 +83,25 @@
                                     </div>
 
                                     <span class="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black font-label uppercase tracking-widest flex items-center gap-1.5 whitespace-nowrap"
-                                          th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                                                          b.status.name() == 'PENDING'   ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                                          b.status.name() == 'CANCELLED' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                                          'bg-slate-50 text-slate-600 border border-slate-200'}">
+                                          th:classappend="${
+                                              b.status.name() == 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                              b.status.name() == 'PENDING'   ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                              b.status.name() == 'CANCEL_PENDING' ? 'bg-sky-50 text-sky-600 border border-sky-100' :
+                                              b.status.name() == 'CANCELLED' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                              'bg-slate-50 text-slate-600 border border-slate-200'}">
                                         <span class="w-1.5 h-1.5 rounded-full"
-                                              th:classappend="${b.status.name() == 'CONFIRMED' ? 'bg-emerald-500' :
-                                                              b.status.name() == 'PENDING'   ? 'bg-amber-500 animate-pulse' :
-                                                              b.status.name() == 'CANCELLED' ? 'bg-red-500' :
-                                                              'bg-slate-500'}"></span>
-                                        <span th:text="${b.status.name() == 'PENDING' ? 'Chờ thanh toán' :
-                                                       b.status.name() == 'CONFIRMED' ? 'Đã xác nhận' :
-                                                       b.status.name() == 'CANCELLED' ? 'Đã hủy' :
-                                                       b.status.name() == 'COMPLETED' ? 'Hoàn thành' : b.status}">
+                                              th:classappend="${
+                                                  b.status.name() == 'CONFIRMED' ? 'bg-emerald-500' :
+                                                  b.status.name() == 'PENDING'   ? 'bg-amber-500 animate-pulse' :
+                                                  b.status.name() == 'CANCEL_PENDING' ? 'bg-sky-500 animate-pulse' :
+                                                  b.status.name() == 'CANCELLED' ? 'bg-red-500' :
+                                                  'bg-slate-500'}"></span>
+                                        <span th:text="${
+                                              b.status.name() == 'PENDING' ? 'Chờ thanh toán' :
+                                              b.status.name() == 'CANCEL_PENDING' ? 'Đang xin hủy' :
+                                              b.status.name() == 'CONFIRMED' ? 'Đã xác nhận' :
+                                              b.status.name() == 'CANCELLED' ? 'Đã hủy' :
+                                              b.status.name() == 'COMPLETED' ? 'Hoàn thành' : b.status}">
                                         </span>
                                     </span>
                                 </div>
@@ -103,17 +113,24 @@
                                     </div>
 
                                     <div class="flex gap-2 w-full sm:w-auto">
-                                        <form th:if="${b.status.name() == 'CONFIRMED'}"
-                                              th:action="@{/bookings/{id}/cancel(id=${b.id})}" method="post" class="flex-1 sm:flex-none m-0">
-                                            <button type="submit" class="w-full px-4 py-3 text-xs font-bold text-slate-500 border border-slate-200 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors uppercase tracking-widest font-label cursor-pointer"
-                                                    onclick="return confirm('Xác nhận hủy đơn đặt sân này?');">Hủy sân</button>
-                                        </form>
+                                        
+                                        <button th:if="${b.status.name() == 'CONFIRMED'}"
+                                                type="button" 
+                                                th:onclick="'openCancelModal(' + ${b.id} + ')'"
+                                                class="flex-1 sm:flex-none px-4 py-3 text-xs font-bold text-slate-500 border border-slate-200 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors uppercase tracking-widest font-label cursor-pointer text-center">
+                                            Hủy sân
+                                        </button>
+
+                                        <div th:if="${b.status.name() == 'CANCEL_PENDING'}"
+                                             class="flex-1 sm:flex-none px-4 py-3 text-xs font-bold text-sky-600 bg-sky-50 border border-sky-100 rounded-xl uppercase tracking-widest font-label text-center flex items-center justify-center gap-2">
+                                            <span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Đang chờ duyệt
+                                        </div>
 
                                         <a th:if="${b.status.name() == 'PENDING'}"
                                            th:href="@{/payment/checkout(bookingCode=${b.bookingCode})}"
                                            class="flex-1 sm:flex-none px-6 py-3 text-xs font-bold bg-[#005BAA] text-white rounded-xl hover:bg-[#004785] transition-colors uppercase tracking-widest font-label text-decoration-none shadow-lg shadow-[#005BAA]/30 flex items-center justify-center">Thanh toán ngay</a>
 
-                                        <a th:unless="${b.status.name() == 'PENDING'}"
+                                        <a th:unless="${b.status.name() == 'PENDING' || b.status.name() == 'CANCEL_PENDING'}"
                                            th:href="@{/facilities}"
                                            class="flex-1 sm:flex-none px-6 py-3 text-xs font-bold bg-primary text-white rounded-xl hover:bg-orange-700 transition-colors uppercase tracking-widest font-label text-decoration-none shadow-lg shadow-primary/30 flex items-center justify-center">Đặt lại sân</a>
                                     </div>
@@ -124,7 +141,6 @@
                 </div>
 
                 <aside class="lg:col-span-4 space-y-6 sticky top-28 mb-10">
-
                     <div class="bg-slate-950 text-white p-8 rounded-[2rem] relative overflow-hidden shadow-2xl">
                         <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/40 rounded-full blur-[60px] pointer-events-none"></div>
                         <div class="absolute -left-10 -top-10 w-32 h-32 bg-blue-500/20 rounded-full blur-[60px] pointer-events-none"></div>
@@ -167,36 +183,68 @@
         </div>
     </div>
 
+    <div id="userCancelModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-slate-100">
+            <form id="userCancelForm" method="post" th:action="@{/}" th:data-base-url="@{/bookings}">
+                <div class="p-6 md:p-8">
+                    <div class="flex justify-between items-center mb-5">
+                        <h3 class="text-2xl font-black font-headline text-slate-900 uppercase italic">Xác nhận hủy sân</h3>
+                        <button type="button" onclick="closeCancelModal()" class="text-slate-400 hover:text-slate-800 transition-colors bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                    
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex gap-3">
+                        <span class="material-symbols-outlined text-amber-500 text-[20px] mt-0.5">info</span>
+                        <p class="text-slate-600 text-sm m-0 leading-relaxed">
+                            Nếu thời gian bắt đầu đá <b>còn dưới 24h</b>, yêu cầu hủy của bạn sẽ cần chờ Chủ sân phê duyệt.
+                        </p>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="cancelReason" class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2 font-label">Lý do hủy (bắt buộc)</label>
+                        <textarea id="cancelReason" name="reason" rows="3" required
+                                  class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all bg-slate-50 placeholder:text-slate-400"
+                                  placeholder="Ví dụ: Bận việc đột xuất, sự cố cá nhân..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 px-6 py-5 flex gap-3 justify-end border-t border-slate-100">
+                    <button type="button" onclick="closeCancelModal()" class="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-200 transition-colors">Quay lại</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 flex items-center gap-2">
+                        Xác nhận Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        // --- LOGIC LỌC ĐƠN HÀNG ---
         function filterBookings(status, btnElement) {
-           document.querySelectorAll('.filter-btn').forEach(btn => {
-            // Trả về trạng thái chưa chọn (màu trắng + có hover)
-            btn.classList.remove('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/30');
-            btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
-        });
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/30');
+                btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+            });
 
-        // Thiết lập trạng thái Đang chọn cho nút được click (màu xanh + bỏ hover)
-        btnElement.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
-        btnElement.classList.add('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/30');
+            btnElement.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+            btnElement.classList.add('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/30');
 
-        // 2. Lọc các thẻ Booking Card (Giữ nguyên logic của bạn)
             const cards = document.querySelectorAll('.booking-card');
             let hasVisibleCard = false;
 
             cards.forEach(card => {
                 if (status === 'ALL' || card.getAttribute('data-status') === status) {
-                    card.style.display = ''; // Hiện card
+                    card.style.display = '';
                     hasVisibleCard = true;
                 } else {
-                    card.style.display = 'none'; // Ẩn card
+                    card.style.display = 'none';
                 }
             });
 
-            // 3. Hiện thông báo nếu lọc ra không có đơn nào
             const emptyState = document.getElementById('emptyState');
             const noFilterResult = document.getElementById('noFilterResult');
 
-            // Nếu vốn dĩ chưa có đơn nào từ đầu thì khỏi làm gì thêm
             if (emptyState) return;
 
             if (!hasVisibleCard) {
@@ -207,6 +255,32 @@
                 noFilterResult.classList.remove('flex');
             }
         }
+
+        // --- LOGIC BẬT/TẮT MODAL HỦY SÂN ---
+        const cancelModal = document.getElementById('userCancelModal');
+        const cancelForm = document.getElementById('userCancelForm');
+        const cancelReason = document.getElementById('cancelReason');
+
+        function openCancelModal(bookingId) {
+            // Lấy baseURL an toàn và map ID vào URL submit
+            const baseUrl = cancelForm.getAttribute('data-base-url');
+            cancelForm.action = baseUrl + '/' + bookingId + '/cancel';
+            
+            // Xóa dữ liệu cũ và hiện modal
+            cancelReason.value = '';
+            cancelModal.classList.remove('hidden');
+        }
+
+        function closeCancelModal() {
+            cancelModal.classList.add('hidden');
+        }
+
+        // Đóng modal nếu người dùng bấm ra ngoài vùng tối (backdrop)
+        cancelModal.addEventListener('click', function(e) {
+            if (e.target === cancelModal) {
+                closeCancelModal();
+            }
+        });
     </script>
 </th:block>
 </body>
