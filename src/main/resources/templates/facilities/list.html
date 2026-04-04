@@ -46,15 +46,22 @@
             <div class="flex flex-wrap lg:flex-nowrap items-center gap-3">
 
                 <!-- City input -->
-                <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-100 rounded-xl flex-1 min-w-[160px]">
+                <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-100 rounded-xl flex-1 min-w-[160px] relative" id="city-search-wrapper">
                     <span class="material-symbols-outlined text-zinc-400 text-[20px]">location_on</span>
                     <div class="flex flex-col w-full">
                         <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest font-label">Khu vực</span>
-                        <input type="text" name="city"
+                        <input type="text" name="city" id="city-search-input"
                                class="bg-transparent border-none p-0 text-sm font-semibold text-zinc-800 focus:ring-0 outline-none w-full placeholder:text-zinc-400"
                                placeholder="Thành phố, quận..."
-                               th:value="${selectedCity}"/>
+                               th:value="${selectedCity}"
+                               autocomplete="off"/>
                     </div>
+
+                    <!-- Dropdown gợi ý -->
+                    <ul id="city-search-dropdown"
+                        class="absolute left-0 top-full mt-2 w-full bg-white rounded-xl shadow-lg z-50 overflow-y-auto hidden"
+                        style="border: 1px solid #e4e4e7; max-height: 260px; min-width: 240px;">
+                    </ul>
                 </div>
 
                 <!-- Name input -->
@@ -354,152 +361,176 @@
 <!-- ═══════════════════════════════════════════════════════════════
      JAVASCRIPT
 ════════════════════════════════════════════════════════════════ -->
-<script th:inline="javascript">
-(function () {
-    // ── Sport icon mapping ─────────────────────────────────────
-    const SPORT_ICONS = {
-        FOOTBALL:   'sports_soccer',
-        TENNIS:     'sports_tennis',
-        BADMINTON:  'sports',
-        BASKETBALL: 'sports_basketball',
-        VOLLEYBALL: 'sports_volleyball',
-        PICKLEBALL: 'sports_tennis',
-        DEFAULT:    'sports'
-    };
+    <script th:inline="javascript">
+        (function () {
+            const SPORT_ICONS = {
+                FOOTBALL:   'sports_soccer',
+                TENNIS:     'sports_tennis',
+                BADMINTON:  'sports',
+                BASKETBALL: 'sports_basketball',
+                VOLLEYBALL: 'sports_volleyball',
+                PICKLEBALL: 'sports_tennis',
+                DEFAULT:    'sports'
+            };
 
-    function applyIcon(el, sport) {
-        el.textContent = SPORT_ICONS[sport] || SPORT_ICONS.DEFAULT;
-    }
+            function applyIcon(el, sport) {
+                el.textContent = SPORT_ICONS[sport] || SPORT_ICONS.DEFAULT;
+            }
 
-    // ── Apply icons to sport dropdown options ──────────────────
-    document.querySelectorAll('.sport-opt[data-icon]').forEach(li => {
-        const icon = li.querySelector('.sport-icon');
-        if (icon) applyIcon(icon, li.dataset.icon);
-    });
-
-    // ── Apply icons to sport filter chips ─────────────────────
-    document.querySelectorAll('.sport-chip[data-sport]').forEach(chip => {
-        const icon = chip.querySelector('.sport-chip-icon');
-        if (icon) applyIcon(icon, chip.dataset.sport);
-    });
-
-    // ── Apply icons to card sport tags ─────────────────────────
-    document.querySelectorAll('.sport-tag[data-sport]').forEach(tag => {
-        const icon = tag.querySelector('.sport-tag-icon');
-        if (icon) applyIcon(icon, tag.dataset.sport);
-    });
-
-    // ── Sport dropdown ─────────────────────────────────────────
-    const wrap     = document.getElementById('sport-select-wrap');
-    const menu     = document.getElementById('sport-menu');
-    const input    = document.getElementById('sport-input');
-    const text     = document.getElementById('sport-text');
-    const chevron  = document.getElementById('sport-chevron');
-
-    if (wrap && menu) {
-        wrap.addEventListener('click', e => {
-            e.stopPropagation();
-            const open = !menu.classList.contains('hidden');
-            menu.classList.toggle('hidden', open);
-            chevron.style.transform = open ? '' : 'rotate(180deg)';
-        });
-
-        document.querySelectorAll('.sport-opt').forEach(opt => {
-            opt.addEventListener('click', e => {
-                e.stopPropagation();
-                input.value = opt.dataset.value;
-                text.textContent  = opt.dataset.text;
-                text.className = opt.dataset.value
-                    ? 'text-sm font-semibold text-primary'
-                    : 'text-sm font-semibold text-zinc-800';
-                menu.classList.add('hidden');
-                chevron.style.transform = '';
+            document.querySelectorAll('.sport-opt[data-icon]').forEach(li => {
+                const icon = li.querySelector('.sport-icon');
+                if (icon) applyIcon(icon, li.dataset.icon);
             });
-        });
 
-        document.addEventListener('click', () => {
-            menu.classList.add('hidden');
-            chevron.style.transform = '';
-        });
-    }
+            document.querySelectorAll('.sport-chip[data-sport]').forEach(chip => {
+                const icon = chip.querySelector('.sport-chip-icon');
+                if (icon) applyIcon(icon, chip.dataset.sport);
+            });
 
-    // ── Favorite toggle ────────────────────────────────────────
-    document.querySelectorAll('.fav-btn').forEach(btn => {
-        btn.addEventListener('click', async e => {
-            e.preventDefault();
-            e.stopPropagation();
+            document.querySelectorAll('.sport-tag[data-sport]').forEach(tag => {
+                const icon = tag.querySelector('.sport-tag-icon');
+                if (icon) applyIcon(icon, tag.dataset.sport);
+            });
 
-            const id   = btn.dataset.id;
-            const icon = btn.querySelector('.material-symbols-outlined');
-            const isFav = btn.dataset.fav === 'true';
+            const wrap    = document.getElementById('sport-select-wrap');
+            const menu    = document.getElementById('sport-menu');
+            const input   = document.getElementById('sport-input');
+            const text    = document.getElementById('sport-text');
+            const chevron = document.getElementById('sport-chevron');
 
-            // Optimistic UI update
-            btn.dataset.fav = (!isFav).toString();
-            
-            if (!isFav) { // Nếu đang rỗng -> Chuyển thành đặc
-                icon.style.fontVariationSettings = "'FILL' 1";
-                // Heart pop animation
-                btn.classList.add('scale-125');
-                setTimeout(() => btn.classList.remove('scale-125'), 200);
-            } else {      // Nếu đang đặc -> Chuyển thành rỗng
-                icon.style.fontVariationSettings = "'FILL' 0";
-            }
-
-            try {
-                // Đảm bảo lấy Token CSRF
-                const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-                const headers = { 'Content-Type': 'application/json' };
-                if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
-
-                const res = await fetch(`/api/v1/favorites/toggle/${id}`, {
-                    method: 'POST',
-                    headers: headers
+            if (wrap && menu) {
+                wrap.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const open = !menu.classList.contains('hidden');
+                    menu.classList.toggle('hidden', open);
+                    chevron.style.transform = open ? '' : 'rotate(180deg)';
                 });
-                
-                if (res.status === 401 || res.status === 403) {
-                    alert("Vui lòng đăng nhập để lưu sân yêu thích!");
-                    window.location.href = "/auth/login";
-                    return;
-                }
-                
-                if (!res.ok) throw new Error();
-                
-                const json = await res.json();
-                
-                // Sync with server response
-                const serverFav = json.data?.isFavorite ?? !isFav;
-                btn.dataset.fav = serverFav.toString();
-                if (serverFav) {
-                    icon.style.fontVariationSettings = "'FILL' 1";
-                } else {
-                    icon.style.fontVariationSettings = "'FILL' 0";
-                }
-            } catch {
-                // Revert on error
-                btn.dataset.fav = isFav.toString();
-                if (isFav) {
-                    icon.style.fontVariationSettings = "'FILL' 1";
-                } else {
-                    icon.style.fontVariationSettings = "'FILL' 0";
-                }
+
+                document.querySelectorAll('.sport-opt').forEach(opt => {
+                    opt.addEventListener('click', e => {
+                        e.stopPropagation();
+                        input.value = opt.dataset.value;
+                        text.textContent = opt.dataset.text;
+                        text.className = opt.dataset.value
+                            ? 'text-sm font-semibold text-primary'
+                            : 'text-sm font-semibold text-zinc-800';
+                        menu.classList.add('hidden');
+                        chevron.style.transform = '';
+                    });
+                });
+
+                document.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                    chevron.style.transform = '';
+                });
             }
-        });
-    });
 
-    // ── Card stagger entrance animation ───────────────────────
-    const cards = document.querySelectorAll('.grid > div');
-    cards.forEach((card, i) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-        setTimeout(() => {
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, 60 + i * 60);
-    });
+            document.querySelectorAll('.fav-btn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-})();
+                    const id   = btn.dataset.id;
+                    const icon = btn.querySelector('.material-symbols-outlined');
+                    const isFav = btn.dataset.fav === 'true';
+
+                    btn.dataset.fav = (!isFav).toString();
+                    if (!isFav) {
+                        icon.style.fontVariationSettings = "'FILL' 1";
+                        btn.classList.add('scale-125');
+                        setTimeout(() => btn.classList.remove('scale-125'), 200);
+                    } else {
+                        icon.style.fontVariationSettings = "'FILL' 0";
+                    }
+
+                    try {
+                        const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+                        const res = await fetch(`/api/v1/favorites/toggle/${id}`, {
+                            method: 'POST',
+                            headers: headers
+                        });
+
+                        if (res.status === 401 || res.status === 403) {
+                            alert("Vui lòng đăng nhập để lưu sân yêu thích!");
+                            window.location.href = "/auth/login";
+                            return;
+                        }
+
+                        if (!res.ok) throw new Error();
+
+                        const json = await res.json();
+                        const serverFav = json.data?.isFavorite ?? !isFav;
+                        btn.dataset.fav = serverFav.toString();
+                        icon.style.fontVariationSettings = serverFav ? "'FILL' 1" : "'FILL' 0";
+                    } catch {
+                        btn.dataset.fav = isFav.toString();
+                        icon.style.fontVariationSettings = isFav ? "'FILL' 1" : "'FILL' 0";
+                    }
+                });
+            });
+
+            const cards = document.querySelectorAll('.grid > div');
+            cards.forEach((card, i) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 60 + i * 60);
+            });
+
+            // ── City autocomplete ──────────────────────────────────────
+            const cityInput    = document.getElementById('city-search-input');
+            const cityDropdown = document.getElementById('city-search-dropdown');
+            const cityWrapper  = document.getElementById('city-search-wrapper');
+
+            if (cityInput) {
+                let provinces = [];
+
+                fetch('https://provinces.open-api.vn/api/?depth=1')
+                    .then(r => r.json())
+                    .then(data => { provinces = data; })
+                    .catch(() => {});
+
+                cityInput.addEventListener('input', () => {
+                    const q = cityInput.value.trim().toLowerCase();
+                    cityDropdown.innerHTML = '';
+
+                    if (!q) { cityDropdown.classList.add('hidden'); return; }
+
+                    const matches = provinces
+                        .filter(p => p.name.toLowerCase().includes(q))
+                        .slice(0, 8);
+
+                    if (!matches.length) { cityDropdown.classList.add('hidden'); return; }
+
+                    matches.forEach(p => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors';
+                        li.innerHTML = '<span class="material-symbols-outlined text-zinc-400 text-[16px]">location_on</span>' + p.name;
+                        li.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            cityInput.value = p.name;
+                            cityDropdown.classList.add('hidden');
+                        });
+                        cityDropdown.appendChild(li);
+                    });
+
+                    cityDropdown.classList.remove('hidden');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!cityWrapper.contains(e.target)) cityDropdown.classList.add('hidden');
+                });
+            }
+
+        })();
+    </script>
 </script>
 </th:block>
 </body>
