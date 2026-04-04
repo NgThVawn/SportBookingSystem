@@ -44,137 +44,370 @@
 <div th:replace="~{owner/fragments/owner_sidebar :: sidebar('dashboard')}"></div>
 
 <main class="ml-64 min-h-screen relative">
-
     <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10">
-        <div class="flex items-center gap-4">
-            <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Tổng quan hệ thống</h2>
+        <div>
+            <div class="flex items-center gap-2 text-xs font-label uppercase tracking-wider text-slate-500">
+                <span>Arena Manager</span>
+                <span>/</span>
+                <span>Dashboard</span>
+            </div>
+            <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Tổng quan chủ sân</h2>
         </div>
         <div class="flex items-center gap-6">
-            <div class="relative group">
-                <span class="material-symbols-outlined text-slate-500 cursor-pointer group-hover:text-primary transition-colors">notifications</span>
-                <span class="absolute -top-1 -right-1 w-2 h-2 bg-orange-600 rounded-full animate-pulse"></span>
-            </div>
+            <a th:href="@{/owner/bookings}" class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-700 hover:border-orange-300 hover:text-orange-700 transition-colors text-decoration-none">
+                <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+                Đơn đặt sân
+            </a>
+            <a th:href="@{/owner/facilities/create}" class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition-colors text-decoration-none">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+                Thêm cơ sở
+            </a>
             <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
                 <div class="text-right">
-                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${user?.fullName != null ? user.fullName : #authentication.name}">Chủ Sân Arena</p>
-                    <p class="text-[10px] text-slate-500 font-label tracking-wide uppercase">Elite Manager</p>
+                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentOwner != null && currentOwner.fullName != null ? currentOwner.fullName : #authentication.name}">Chủ sân</p>
+                    <p class="text-[10px] text-slate-500 font-label tracking-wide uppercase">Owner</p>
                 </div>
-
                 <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
-                    <img th:if="${user?.avatarUrl != null}" th:src="${user.avatarUrl}" class="w-full h-full object-cover">
-                    <span th:unless="${user?.avatarUrl != null}" th:text="${user?.fullName != null ? #strings.substring(user.fullName, 0, 1).toUpperCase() : 'O'}"></span>
+                    <img th:if="${currentOwner != null && currentOwner.avatarUrl != null}" th:src="${currentOwner.avatarUrl}" class="w-full h-full object-cover" alt="Avatar">
+                    <span th:unless="${currentOwner != null && currentOwner.avatarUrl != null}" th:text="${currentOwner != null && currentOwner.fullName != null ? #strings.substring(currentOwner.fullName, 0, 1).toUpperCase() : 'O'}"></span>
                 </div>
             </div>
         </div>
     </header>
 
     <div class="p-8 space-y-8">
+        <div th:if="${successMsg}" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 flex items-center gap-3 shadow-sm">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            <span th:text="${successMsg}"></span>
+        </div>
+        <div th:if="${errorMsg}" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 flex items-center gap-3 shadow-sm">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">error</span>
+            <span th:text="${errorMsg}"></span>
+        </div>
 
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+        
+
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+            <article class="rounded-2xl bg-surface-container-lowest p-5 shadow-sm border border-slate-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
                     </div>
-                    <span class="flex items-center gap-1 text-emerald-600 text-xs font-label bg-emerald-50 px-2 py-1 rounded-full">
-                        <span class="material-symbols-outlined text-xs">trending_up</span> +12.5%
-                    </span>
                 </div>
-                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Doanh thu tháng này</p>
+                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Doanh thu tháng</p>
                 <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${monthlyRevenue != null ? #numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">0đ</h3>
-            </div>
+            </article>
 
-            <div class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group border-b-4 border-orange-500/10">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+            <article class="rounded-2xl bg-surface-container-lowest p-5 shadow-sm border border-slate-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stadium</span>
                     </div>
                 </div>
-                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Cơ sở đang quản lý</p>
-                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${totalFacilities != null ? totalFacilities : '0'}">0</h3>
-            </div>
+                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Cơ sở</p>
+                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${totalFacilities != null ? totalFacilities : 0}">0</h3>
+            </article>
 
-            <div class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+            <article class="rounded-2xl bg-surface-container-lowest p-5 shadow-sm border border-slate-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
                     </div>
-                    <span class="flex items-center gap-1 text-orange-600 text-xs font-label bg-orange-50 px-2 py-1 rounded-full">Tăng 5%</span>
                 </div>
-                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Tỷ lệ lấp đầy</p>
-                <h3 class="font-headline text-2xl font-black text-on-surface">78.5%</h3>
-            </div>
+                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Tổng sân con</p>
+                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${totalFields != null ? totalFields : 0}">0</h3>
+            </article>
 
-            <div class="bg-orange-600 p-6 rounded-xl transition-all duration-300 shadow-lg shadow-orange-600/20 group relative overflow-hidden">
-                <div class="relative z-10">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-white">
-                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_add</span>
-                        </div>
+            <article class="rounded-2xl bg-surface-container-lowest p-5 shadow-sm border border-slate-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">task_alt</span>
                     </div>
-                    <p class="text-orange-100 text-xs font-label uppercase tracking-wider mb-1">Lịch chờ duyệt</p>
-                    <h3 class="font-headline text-2xl font-black text-white" th:text="${pendingBookings != null ? pendingBookings + ' Đơn' : '0 Đơn'}">0 Đơn</h3>
                 </div>
-                <div class="absolute -right-4 -bottom-4 opacity-10">
-                    <span class="material-symbols-outlined text-white text-8xl">forum</span>
+                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Sân đang mở</p>
+                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${openFields != null ? openFields : 0}">0</h3>
+            </article>
+
+            <article class="rounded-2xl bg-surface-container-lowest p-5 shadow-sm border border-slate-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">hourglass_top</span>
+                    </div>
                 </div>
-            </div>
+                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Đơn chờ duyệt</p>
+                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${pendingBookings != null ? pendingBookings : 0}">0</h3>
+            </article>
+
+            <article class="rounded-2xl bg-surface-container-lowest p-5 shadow-sm border border-slate-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">schedule_send</span>
+                    </div>
+                </div>
+                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Yêu cầu hủy</p>
+                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${cancelPendingBookings != null ? cancelPendingBookings : 0}">0</h3>
+            </article>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <section class="lg:col-span-2 space-y-4">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-headline font-bold text-lg flex items-center gap-2">
-                        <span class="material-symbols-outlined text-orange-600">schedule</span> Lịch đặt sân hôm nay
-                    </h3>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <section class="xl:col-span-2 space-y-4">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <h3 class="font-headline font-bold text-lg flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-600">notification_important</span>
+                            Đơn chờ duyệt
+                        </h3>
+                        <p class="text-sm text-slate-500 mt-1">Duyệt nhanh hoặc từ chối trực tiếp các đơn mới phát sinh.</p>
+                    </div>
+                    <a th:href="@{/owner/bookings}" class="text-sm font-semibold text-orange-700 hover:text-orange-800 text-decoration-none">Xem toàn bộ</a>
                 </div>
-                <div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm p-8 flex items-center justify-center border border-dashed border-slate-300">
-                    <p class="text-slate-400 font-label">Khu vực biểu đồ lịch biểu (Đã giữ nguyên mã HTML gốc của bạn)</p>
+
+                <div class="bg-surface-container-lowest rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
+                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-900">Danh sách đơn mới</p>
+                                <p class="text-sm text-slate-500">Hiển thị 5 đơn chờ xử lý gần nhất</p>
+                            </div>
+                        </div>
+                        <div class="hidden md:flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-orange-700 text-xs font-bold uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">hourglass_top</span>
+                            <span th:text="${pendingBookings != null ? pendingBookings : 0}">0</span>
+                        </div>
+                    </div>
+
+                    <div class="p-6 space-y-4">
+                        <div th:if="${recentBookings == null or recentBookings.isEmpty()}" class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center text-slate-500">
+                            <span class="material-symbols-outlined text-5xl text-slate-300 block mb-3">inbox</span>
+                            Chưa có đơn nào đang chờ duyệt.
+                        </div>
+
+                        <article th:each="booking : ${recentBookings}" class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                <div class="space-y-3">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-700">
+                                            <span class="material-symbols-outlined text-[14px]">confirmation_number</span>
+                                            <span th:text="${booking.bookingCode}">BK0000</span>
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
+                                            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">hourglass_top</span>
+                                            Chờ duyệt
+                                        </span>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="font-headline text-lg font-bold text-on-surface" th:text="${booking.customerName}">Tên khách</h4>
+                                        <p class="text-sm text-slate-500 mt-1" th:text="${booking.facilityName + ' • ' + booking.fieldName}">Cơ sở • Sân</p>
+                                    </div>
+
+                                    <div class="grid gap-2 text-sm text-slate-600 md:grid-cols-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px] text-slate-400">event</span>
+                                            <span th:text="${#temporals.format(booking.bookingDate, 'dd/MM/yyyy')}">01/01/2026</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px] text-slate-400">schedule</span>
+                                            <span th:text="${booking.startTime + ' - ' + booking.endTime}">07:00 - 08:00</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px] text-slate-400">payments</span>
+                                            <span class="font-semibold text-orange-700" th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT') + 'đ'}">120,000đ</span>
+                                        </div>
+                                    </div>
+
+                                    <p th:if="${booking.note != null && !booking.note.isEmpty()}" class="text-sm text-slate-500 bg-slate-50 rounded-xl px-4 py-3" th:text="${booking.note}"></p>
+                                </div>
+
+                                <div class="min-w-[170px] flex flex-col gap-2">
+                                    <form th:action="@{/owner/bookings/{id}/confirm(id=${booking.id})}" method="post" class="m-0 js-booking-action-form" data-action-type="approve">
+                                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
+                                            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                                            Duyệt đơn
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/owner/bookings/{id}/cancel(id=${booking.id})}" method="post" class="m-0 js-booking-action-form" data-action-type="delete">
+                                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <input type="hidden" name="reason" value="Xóa đơn từ dashboard owner">
+                                        <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
+                                            <span class="material-symbols-outlined text-[18px]">close</span>
+                                            Xóa đơn
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             </section>
 
-            <section class="space-y-4">
-                <h3 class="font-headline font-bold text-lg flex items-center gap-2">
-                    <span class="material-symbols-outlined text-orange-600">notification_important</span> Chờ duyệt
-                    <span th:text="'(' + ${pendingBookings != null ? pendingBookings : '0'} + ')'"></span>
-                </h3>
-
-                <div class="space-y-3">
-
-                    <div th:if="${recentBookings == null or recentBookings.isEmpty()}" class="bg-surface-container-lowest p-6 rounded-xl text-center text-slate-500 shadow-sm">
-                        Chưa có yêu cầu đặt sân mới nào.
+            <section class="space-y-6">
+                <div class="rounded-3xl bg-surface-container-lowest shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100">
+                        <h3 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-600">stadium</span>
+                            Cơ sở cần chú ý
+                        </h3>
+                        <p class="text-sm text-slate-500 mt-1">Những cơ sở đang chờ duyệt hoặc bị khóa cần theo dõi.</p>
                     </div>
 
-                    <div th:each="booking : ${recentBookings}" class="bg-surface-container-lowest p-4 rounded-xl shadow-sm border-l-4 border-orange-500 group transition-all hover:scale-[1.02]">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <p class="font-bold text-sm" th:text="${booking.customerName}">Tên Khách</p>
-                                <p class="text-[10px] text-slate-500 font-label" th:text="${booking.facilityName + ' • ' + booking.timeSlot}">Sân • Giờ</p>
+                    <div class="p-6 space-y-3">
+                        <div th:if="${attentionFacilities == null or attentionFacilities.isEmpty()}" class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center text-slate-500">
+                            <span class="material-symbols-outlined text-4xl text-slate-300 block mb-2">verified</span>
+                            Không có cơ sở nào cần chú ý.
+                        </div>
+
+                        <article th:each="facility : ${attentionFacilities}" class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="font-bold text-slate-900 truncate" th:text="${facility.name}">Tên cơ sở</p>
+                                    <p class="text-xs text-slate-500 mt-1" th:text="${facility.address}">Địa chỉ</p>
+                                </div>
+                                <span class="shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wider border"
+                                      th:classappend="${facility.status.name() == 'PENDING_APPROVAL' ? ' bg-amber-50 text-amber-700 border-amber-100' : ' bg-red-50 text-red-700 border-red-100'}"
+                                      th:text="${facility.status.name() == 'PENDING_APPROVAL' ? 'Chờ duyệt' : 'Bị khóa'}">
+                                </span>
                             </div>
-                            <div class="px-2 py-1 bg-orange-50 text-orange-600 text-[10px] font-black rounded uppercase">CK</div>
-                        </div>
+                            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                                <span class="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 border border-slate-200">
+                                    <span class="material-symbols-outlined text-[14px]">grid_view</span>
+                                    <span th:text="${(openFieldCounts != null and openFieldCounts[facility.id] != null ? openFieldCounts[facility.id] : 0) + ' sân mở'}">0 sân mở</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 border border-slate-200">
+                                    <span class="material-symbols-outlined text-[14px]">location_on</span>
+                                    <span th:text="${facility.city}">City</span>
+                                </span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
 
-                        <div class="grid grid-cols-2 gap-2 mt-4">
-                            <button class="py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors">Từ chối</button>
-                            <button class="py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-orange-600/10">Duyệt ngay</button>
+                <div class="rounded-3xl bg-slate-950 text-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.2)]">
+                    <p class="text-xs uppercase tracking-[0.2em] text-white/55 font-label mb-3">Số liệu nhanh</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
+                            <p class="text-white/55 text-[11px] uppercase tracking-widest mb-2">Đã xác nhận</p>
+                            <p class="font-headline text-2xl font-black" th:text="${confirmedBookings != null ? confirmedBookings : 0}">0</p>
+                        </div>
+                        <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
+                            <p class="text-white/55 text-[11px] uppercase tracking-widest mb-2">Hoàn thành</p>
+                            <p class="font-headline text-2xl font-black" th:text="${completedBookings != null ? completedBookings : 0}">0</p>
+                        </div>
+                        <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
+                            <p class="text-white/55 text-[11px] uppercase tracking-widest mb-2">Cơ sở mở</p>
+                            <p class="font-headline text-2xl font-black" th:text="${openFacilities != null ? openFacilities : 0}">0</p>
+                        </div>
+                        <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
+                            <p class="text-white/55 text-[11px] uppercase tracking-widest mb-2">Cơ sở chờ</p>
+                            <p class="font-headline text-2xl font-black" th:text="${pendingFacilities != null ? pendingFacilities : 0}">0</p>
                         </div>
                     </div>
-
                 </div>
             </section>
         </div>
-
     </div>
 </main>
 
-<div class="fixed bottom-8 right-8 z-50 flex items-center gap-3 bg-white px-4 py-3 rounded-full shadow-2xl border border-slate-100 animate-bounce">
-    <div class="relative">
-        <span class="block w-3 h-3 bg-orange-600 rounded-full"></span>
-        <span class="absolute inset-0 w-3 h-3 bg-orange-600 rounded-full animate-ping"></span>
+<div id="bookingConfirmModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" data-close-modal="true"></div>
+    <div class="relative z-10 w-full max-w-md rounded-3xl bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.25)] border border-slate-100">
+        <div class="flex items-start gap-4">
+            <div id="bookingConfirmIcon" class="mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-700">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+            <div class="flex-1">
+                <h4 id="bookingConfirmTitle" class="font-headline text-xl font-bold text-slate-900">Xác nhận thao tác</h4>
+                <p id="bookingConfirmMessage" class="mt-2 text-sm leading-6 text-slate-600">Bạn có chắc chắn muốn tiếp tục thao tác này?</p>
+            </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3">
+            <button id="bookingConfirmCancel" type="button" class="rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition-colors">Hủy</button>
+            <button id="bookingConfirmSubmit" type="button" class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">Xác nhận</button>
+        </div>
     </div>
-    <p class="text-xs font-bold text-slate-800">4 người đang xem lịch sân</p>
 </div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('bookingConfirmModal');
+        const modalTitle = document.getElementById('bookingConfirmTitle');
+        const modalMessage = document.getElementById('bookingConfirmMessage');
+        const modalIconWrap = document.getElementById('bookingConfirmIcon');
+        const modalIcon = modalIconWrap ? modalIconWrap.querySelector('.material-symbols-outlined') : null;
+        const cancelBtn = document.getElementById('bookingConfirmCancel');
+        const submitBtn = document.getElementById('bookingConfirmSubmit');
+        let targetForm = null;
+
+        function openModal(form) {
+            const actionType = form.getAttribute('data-action-type');
+            targetForm = form;
+
+            if (actionType === 'delete') {
+                modalTitle.textContent = 'Xác nhận xóa đơn';
+                modalMessage.textContent = 'Đơn đặt sân sẽ bị xóa khỏi danh sách xử lý. Bạn có chắc chắn muốn tiếp tục?';
+                submitBtn.textContent = 'Xóa đơn';
+                submitBtn.className = 'rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700 transition-colors';
+                modalIconWrap.className = 'mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-red-100 text-red-700';
+                if (modalIcon) modalIcon.textContent = 'delete';
+            } else {
+                modalTitle.textContent = 'Xác nhận duyệt đơn';
+                modalMessage.textContent = 'Đơn đặt sân sẽ được chuyển sang trạng thái đã duyệt. Bạn có chắc chắn muốn tiếp tục?';
+                submitBtn.textContent = 'Duyệt đơn';
+                submitBtn.className = 'rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors';
+                modalIconWrap.className = 'mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-700';
+                if (modalIcon) modalIcon.textContent = 'check_circle';
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            targetForm = null;
+        }
+
+        document.querySelectorAll('.js-booking-action-form').forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                openModal(form);
+            });
+        });
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closeModal);
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                if (targetForm) {
+                    targetForm.submit();
+                }
+            });
+        }
+
+        if (modal) {
+            modal.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target && target.getAttribute('data-close-modal') === 'true') {
+                    closeModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    })();
+</script>
 
 </body>
 </html>

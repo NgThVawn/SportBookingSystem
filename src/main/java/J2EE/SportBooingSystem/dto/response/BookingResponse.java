@@ -11,6 +11,7 @@ import java.time.LocalTime;
 public class BookingResponse {
     private Long id;
     private String bookingCode;
+    private String customerName;
     private String fieldName;
     private String facilityName;
     private String facilityAddress;
@@ -27,6 +28,7 @@ public class BookingResponse {
         return BookingResponse.builder()
                 .id(b.getId())
                 .bookingCode(b.getBookingCode())
+                .customerName(b.getUser().getFullName())
                 .fieldName(b.getField().getName())
                 .facilityName(b.getField().getFacility().getName())
                 .facilityAddress(b.getField().getFacility().getAddress())

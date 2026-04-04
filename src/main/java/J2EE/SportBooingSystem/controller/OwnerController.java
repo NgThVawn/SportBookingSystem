@@ -3,6 +3,7 @@ package J2EE.SportBooingSystem.controller;
 import J2EE.SportBooingSystem.dto.request.*;
 import J2EE.SportBooingSystem.dto.response.BookingResponse;
 import J2EE.SportBooingSystem.entity.*;
+import J2EE.SportBooingSystem.enums.BookingStatus;
 import J2EE.SportBooingSystem.enums.DayType;
 import J2EE.SportBooingSystem.enums.FacilityStatus;
 import J2EE.SportBooingSystem.enums.SportType;
@@ -26,7 +27,10 @@ import J2EE.SportBooingSystem.repository.BlockedTimeRepository;
 import J2EE.SportBooingSystem.repository.FieldRepository;
 import J2EE.SportBooingSystem.repository.PriceRuleRepository;
 import J2EE.SportBooingSystem.service.PriceRuleService;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -672,7 +676,7 @@ public class OwnerController {
                                       RedirectAttributes ra) {
         try {
             bookingService.confirmBooking(id, ud.getUsername());
-            ra.addFlashAttribute("success", "Đã duyệt đơn đặt sân thành công!");
+            ra.addFlashAttribute("success", "Duyệt đơn đặt sân thành công!");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
@@ -687,7 +691,7 @@ public class OwnerController {
                                      RedirectAttributes ra) {
         try {
             bookingService.cancelBooking(id, ud.getUsername(), reason);
-            ra.addFlashAttribute("success", "Đã hủy đơn đặt sân.");
+            ra.addFlashAttribute("success", "Xóa đơn đặt sân thành công!");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
@@ -707,13 +711,88 @@ public class OwnerController {
         }
         return "redirect:/owner/bookings";
     }
+
     @GetMapping("")
     public String ownerDashboard(Model model, Authentication authentication) {
         String email = authentication.getName();
         User currentOwner = userService.findByEmail(email);
+
+        List<Facility> facilities = facilityService.findByOwner(email);
+        List<Booking> bookings = bookingRepo.findByOwnerEmail(email);
+        LocalDate today = LocalDate.now();
+
+        long totalFacilities = facilities.size();
+        long pendingFacilities = countFacilitiesByStatus(facilities, FacilityStatus.PENDING_APPROVAL);
+        long blockedFacilities = countFacilitiesByStatus(facilities, FacilityStatus.BLOCKED);
+        long openFacilities = countFacilitiesByStatus(facilities, FacilityStatus.OPEN);
+        long totalFields = fieldRepo.countByFacility_Owner_Email(email);
+        long openFields = fieldRepo.countByFacility_Owner_EmailAndStatus(email, J2EE.SportBooingSystem.enums.FieldStatus.OPEN);
+
+        long totalBookings = bookings.size();
+        long pendingBookings = countBookingsByStatus(bookings, BookingStatus.PENDING);
+        long cancelPendingBookings = countBookingsByStatus(bookings, BookingStatus.CANCEL_PENDING);
+        long confirmedBookings = countBookingsByStatus(bookings, BookingStatus.CONFIRMED);
+        long completedBookings = countBookingsByStatus(bookings, BookingStatus.COMPLETED);
+        long todayBookings = bookings.stream()
+            .filter(booking -> booking.getBookingDate().isEqual(today))
+            .count();
+
+        BigDecimal monthlyRevenue = bookings.stream()
+            .filter(booking -> booking.getBookingDate().getYear() == today.getYear())
+            .filter(booking -> booking.getBookingDate().getMonth() == today.getMonth())
+            .filter(booking -> booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.COMPLETED)
+            .map(Booking::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<BookingResponse> recentBookings = bookings.stream()
+            .filter(booking -> booking.getStatus() == BookingStatus.PENDING)
+            .sorted(Comparator.comparing(Booking::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+            .limit(5)
+            .map(BookingResponse::from)
+            .toList();
+
+        List<Facility> attentionFacilities = facilities.stream()
+            .filter(facility -> facility.getStatus() == FacilityStatus.PENDING_APPROVAL || facility.getStatus() == FacilityStatus.BLOCKED)
+            .sorted(Comparator.comparing(Facility::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+            .limit(6)
+            .toList();
+
+        Map<Long, Long> openFieldCounts = facilities.stream()
+            .collect(LinkedHashMap::new,
+                (map, facility) -> map.put(facility.getId(), fieldRepo.countByFacility_IdAndStatus(facility.getId(), J2EE.SportBooingSystem.enums.FieldStatus.OPEN)),
+                Map::putAll);
+
         model.addAttribute("sportTypes", SportType.values());
+        model.addAttribute("currentOwner", currentOwner);
+        model.addAttribute("totalFacilities", totalFacilities);
+        model.addAttribute("pendingFacilities", pendingFacilities);
+        model.addAttribute("blockedFacilities", blockedFacilities);
+        model.addAttribute("openFacilities", openFacilities);
+        model.addAttribute("totalFields", totalFields);
+        model.addAttribute("openFields", openFields);
+        model.addAttribute("totalBookings", totalBookings);
+        model.addAttribute("pendingBookings", pendingBookings);
+        model.addAttribute("cancelPendingBookings", cancelPendingBookings);
+        model.addAttribute("confirmedBookings", confirmedBookings);
+        model.addAttribute("completedBookings", completedBookings);
+        model.addAttribute("todayBookings", todayBookings);
+        model.addAttribute("monthlyRevenue", monthlyRevenue);
+        model.addAttribute("recentBookings", recentBookings);
+        model.addAttribute("attentionFacilities", attentionFacilities);
+        model.addAttribute("openFieldCounts", openFieldCounts);
         return "owner/index";
     }
-    
-    
+
+        private long countFacilitiesByStatus(List<Facility> facilities, FacilityStatus status) {
+        return facilities.stream()
+            .filter(facility -> facility.getStatus() == status)
+            .count();
+        }
+
+        private long countBookingsByStatus(List<Booking> bookings, BookingStatus status) {
+        return bookings.stream()
+            .filter(booking -> booking.getStatus() == status)
+            .count();
+        }
+
 }
