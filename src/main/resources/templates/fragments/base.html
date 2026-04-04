@@ -87,5 +87,104 @@
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- WebSocket: SockJS + STOMP -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<!-- Toast container (dùng chung toàn site) -->
+<div id="notif-toast-container"
+     style="position:fixed;top:88px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:360px">
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const _currentUserId = /*[[${user?.id}]]*/ null;
+
+    if (_currentUserId) {
+        const socket = new SockJS('/ws');
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null; // Tắt log debug
+
+        stompClient.connect({}, function () {
+            // Subscribe vào topic riêng của user
+            stompClient.subscribe('/topic/notifications/user/' + _currentUserId, function (frame) {
+                const notif = JSON.parse(frame.body);
+                // Tăng badge
+                updateNotifBadge(1);
+                // Hiện toast
+                showNotifToast(notif);
+            });
+        }, function (error) {
+            console.warn('WebSocket connection error:', error);
+        });
+    }
+
+    function updateNotifBadge(delta) {
+        const badge = document.getElementById('notif-badge');
+        if (!badge) return;
+        const current = parseInt(badge.textContent || '0', 10);
+        const next = current + delta;
+        badge.textContent = next > 99 ? '99+' : String(next);
+        badge.style.display = next > 0 ? 'flex' : 'none';
+    }
+
+    function showNotifToast(notif) {
+        const container = document.getElementById('notif-toast-container');
+        if (!container) return;
+
+        const typeColors = {
+            PAYMENT_SUCCESS: '#22c55e',
+            PAYMENT_FAILED: '#ef4444',
+            BOOKING_CONFIRMED: '#3b82f6',
+            BOOKING_CANCELLED: '#f97316',
+            BOOKING_AUTO_CANCELLED: '#ef4444',
+            BOOKING_CANCEL_REQUEST: '#f97316',
+            CANCEL_APPROVED: '#22c55e',
+            CANCEL_REJECTED: '#ef4444',
+            FACILITY_APPROVED: '#22c55e',
+            FACILITY_REJECTED: '#ef4444',
+            DEFAULT: '#b02f00'
+        };
+        const color = typeColors[notif.type] || typeColors.DEFAULT;
+
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background:white;border-radius:12px;padding:14px 16px;
+            box-shadow:0 4px 24px rgba(0,0,0,0.13);border-left:4px solid ${color};
+            display:flex;flex-direction:column;gap:4px;animation:slideIn 0.3s ease;
+            cursor:pointer;`;
+        toast.innerHTML = `
+            <div style="font-weight:700;font-size:14px;color:#191c1d">${escapeHtml(notif.title)}</div>
+            <div style="font-size:13px;color:#5b4039;line-height:1.4">${escapeHtml(notif.message)}</div>
+        `;
+
+        if (notif.link) {
+            toast.addEventListener('click', () => window.location.href = notif.link);
+        }
+
+        // Tự đóng sau 6 giây
+        container.prepend(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.4s';
+            setTimeout(() => toast.remove(), 400);
+        }, 6000);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(text || ''));
+        return div.innerHTML;
+    }
+    /*]]>*/
+</script>
+
+<style>
+    @keyframes slideIn {
+        from { transform: translateX(110%); opacity: 0; }
+        to   { transform: translateX(0);   opacity: 1; }
+    }
+</style>
 </body>
 </html>

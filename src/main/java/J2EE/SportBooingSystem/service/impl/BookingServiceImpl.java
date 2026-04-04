@@ -10,6 +10,8 @@ import J2EE.SportBooingSystem.exception.ForbiddenException;
 import J2EE.SportBooingSystem.exception.ResourceNotFoundException;
 import J2EE.SportBooingSystem.repository.*;
 import J2EE.SportBooingSystem.service.BookingService;
+import J2EE.SportBooingSystem.service.NotificationService;
+import J2EE.SportBooingSystem.enums.NotificationType;
 import J2EE.SportBooingSystem.service.PriceRuleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class BookingServiceImpl implements BookingService {
     private final FieldRepository fieldRepo;
     private final UserRepository userRepo;
     private final PriceRuleService priceRuleService;
+    private final NotificationService notificationService;
     @Value("${booking.payment-timeout-minutes:5}")
     private int paymentTimeoutMinutes;
 
@@ -69,7 +72,31 @@ public class BookingServiceImpl implements BookingService {
                 .note(req.getNote())
                 .build();
 
-        return bookingRepo.save(booking);
+        Booking saved = bookingRepo.save(booking);
+
+        // Thông báo cho USER
+        notificationService.send(
+                user,
+                NotificationType.BOOKING_CREATED,
+                "Đặt sân thành công",
+                "Booking " + saved.getBookingCode() + " - " + field.getName()
+                        + " ngày " + saved.getBookingDate() + " lúc " + saved.getStartTime()
+                        + " đã được tạo. Vui lòng thanh toán trong " + paymentTimeoutMinutes + " phút.",
+                "/payment/checkout?bookingCode=" + saved.getBookingCode()
+        );
+
+        // Thông báo cho OWNER cơ sở
+        notificationService.send(
+                field.getFacility().getOwner(),
+                NotificationType.NEW_BOOKING,
+                "Booking mới tại " + field.getFacility().getName(),
+                "Khách hàng " + user.getFullName() + " đặt sân " + field.getName()
+                        + " ngày " + saved.getBookingDate() + " (" + saved.getStartTime()
+                        + " – " + saved.getEndTime() + ").",
+                "/owner/bookings"
+        );
+
+        return saved;
     }
 
 
@@ -133,6 +160,14 @@ public class BookingServiceImpl implements BookingService {
                 .forEach(b -> {
                     b.setStatus(BookingStatus.COMPLETED);
                     bookingRepo.save(b);
+                    notificationService.send(
+                            b.getUser(),
+                            NotificationType.BOOKING_COMPLETED,
+                            "Booking hoàn thành",
+                            "Booking " + b.getBookingCode() + " - " + b.getField().getName()
+                                    + " ngày " + b.getBookingDate() + " đã hoàn thành. Cảm ơn bạn đã sử dụng dịch vụ!",
+                            "/bookings"
+                    );
                 });
     }
 
@@ -169,6 +204,23 @@ public class BookingServiceImpl implements BookingService {
                     b.setCancelReason("Tự động hủy do chưa thanh toán sau " + paymentTimeoutMinutes + " phút");
                     bookingRepo.save(b);
                     log.info("Auto-cancelled PENDING booking: {}", b.getBookingCode());
+                    notificationService.send(
+                            b.getUser(),
+                            NotificationType.BOOKING_AUTO_CANCELLED,
+                            "Booking bị hủy tự động",
+                            "Booking " + b.getBookingCode() + " - " + b.getField().getName()
+                                    + " đã bị hủy do chưa thanh toán sau " + paymentTimeoutMinutes + " phút.",
+                            "/bookings"
+                    );
+                    // Thông báo OWNER
+                    notificationService.send(
+                            b.getField().getFacility().getOwner(),
+                            NotificationType.BOOKING_AUTO_CANCELLED_OWNER,
+                            "Booking hủy tự động",
+                            "Booking " + b.getBookingCode() + " của khách " + b.getUser().getFullName()
+                                    + " đã bị hủy tự động do chưa thanh toán.",
+                            "/owner/bookings"
+                    );
                 });
     }
     @Override
@@ -187,6 +239,15 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepo.save(booking);
+        notificationService.send(
+                booking.getUser(),
+                NotificationType.BOOKING_CONFIRMED,
+                "Booking đã được xác nhận",
+                "Chủ sân đã xác nhận booking " + booking.getBookingCode()
+                        + " - " + booking.getField().getName()
+                        + " ngày " + booking.getBookingDate() + ".",
+                "/bookings"
+        );
     }
 
     @Override
@@ -208,7 +269,16 @@ public class BookingServiceImpl implements BookingService {
             booking.setStatus(BookingStatus.CANCELLED);
             booking.setCancelReason("Chủ sân hủy: " + actualReason);
             bookingRepo.save(booking);
-            return booking.getStatus(); 
+            // Thông báo USER
+            notificationService.send(
+                    booking.getUser(),
+                    NotificationType.BOOKING_CANCELLED,
+                    "Booking bị hủy",
+                    "Chủ sân đã hủy booking " + booking.getBookingCode()
+                            + ". Lý do: " + actualReason,
+                    "/bookings"
+            );
+            return booking.getStatus();
         }
 
         if (isCustomer) {
@@ -218,11 +288,30 @@ public class BookingServiceImpl implements BookingService {
             if (now.isBefore(startDateTime.minusHours(24))) {
                 booking.setStatus(BookingStatus.CANCELLED);
                 booking.setCancelReason("Khách tự hủy (trước 24h): " + actualReason);
+                bookingRepo.save(booking);
+                notificationService.send(
+                        booking.getField().getFacility().getOwner(),
+                        NotificationType.BOOKING_CUSTOMER_CANCELLED,
+                        "Khách đã hủy booking",
+                        "Khách hàng " + booking.getUser().getFullName()
+                                + " đã hủy booking " + booking.getBookingCode()
+                                + " ngày " + booking.getBookingDate() + ".",
+                        "/owner/bookings"
+                );
             } else {
                 booking.setStatus(BookingStatus.CANCEL_PENDING);
                 booking.setCancelReason("Yêu cầu hủy sát giờ: " + actualReason);
+                bookingRepo.save(booking);
+                notificationService.send(
+                        booking.getField().getFacility().getOwner(),
+                        NotificationType.BOOKING_CANCEL_REQUEST,
+                        "Yêu cầu hủy booking",
+                        "Khách hàng " + booking.getUser().getFullName()
+                                + " yêu cầu hủy booking " + booking.getBookingCode()
+                                + " ngày " + booking.getBookingDate() + ". Vui lòng duyệt hoặc từ chối.",
+                        "/owner/bookings"
+                );
             }
-            bookingRepo.save(booking);
         }
         
         return booking.getStatus(); 
@@ -246,6 +335,26 @@ public class BookingServiceImpl implements BookingService {
             booking.setStatus(BookingStatus.CONFIRMED);
         }
         bookingRepo.save(booking);
+        if (approve) {
+            bookingRepo.save(booking);
+            notificationService.send(
+                    booking.getUser(),
+                    NotificationType.CANCEL_APPROVED,
+                    "Yêu cầu hủy được chấp thuận",
+                    "Chủ sân đã đồng ý hủy booking " + booking.getBookingCode() + ".",
+                    "/bookings"
+            );
+        } else {
+            bookingRepo.save(booking);
+            notificationService.send(
+                    booking.getUser(),
+                    NotificationType.CANCEL_REJECTED,
+                    "Yêu cầu hủy bị từ chối",
+                    "Chủ sân không đồng ý hủy booking " + booking.getBookingCode()
+                            + ". Booking trở về trạng thái ĐÃ XÁC NHẬN.",
+                    "/bookings"
+            );
+        }
     }
 
 }

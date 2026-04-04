@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>Thông báo</title>
+</head>
+<body>
+<section>
+    <div class="max-w-2xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black font-headline text-on-surface">Thông báo</h1>
+            <button id="btn-read-all"
+                    class="text-sm font-semibold text-secondary hover:underline bg-transparent border-none cursor-pointer">
+                Đánh dấu tất cả đã đọc
+            </button>
+        </div>
+
+        <div id="notif-list" class="flex flex-col gap-3">
+            <!-- Render server-side ban đầu, JS sẽ cập nhật realtime -->
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const userId = /*[[${user?.id}]]*/ null;
+
+        async function loadNotifications() {
+            const res = await fetch('/api/notifications');
+            if (!res.ok) return;
+            const notifications = await res.json();
+            renderList(notifications);
+        }
+
+        function renderList(notifications) {
+            const container = document.getElementById('notif-list');
+            if (!notifications.length) {
+                container.innerHTML = '<div class="text-center py-16 text-zinc-400 font-body">Chưa có thông báo nào.</div>';
+                return;
+            }
+            container.innerHTML = notifications.map(n => `
+            <div class="notif-item flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors
+                        ${n.read ? 'bg-white border-zinc-100' : 'bg-orange-50 border-primary/20'}"
+                 data-id="${n.id}" data-link="${n.link || ''}"
+                 onclick="handleClick(this)">
+                <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full ${n.read ? 'bg-transparent' : 'bg-primary'}"></div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-sm text-on-surface font-headline">${escapeHtml(n.title)}</div>
+                    <div class="text-sm text-on-surface-variant mt-0.5 font-body">${escapeHtml(n.message)}</div>
+                    <div class="text-xs text-zinc-400 mt-1">${formatTime(n.createdAt)}</div>
+                </div>
+            </div>
+        `).join('');
+        }
+
+        async function handleClick(el) {
+            const id = el.dataset.id;
+            const link = el.dataset.link;
+            await fetch('/api/notifications/' + id + '/read', { method: 'PUT' });
+            if (link) window.location.href = link;
+            else loadNotifications();
+        }
+
+        document.getElementById('btn-read-all').addEventListener('click', async () => {
+            await fetch('/api/notifications/read-all', { method: 'PUT' });
+            // Reset badge
+            const badge = document.getElementById('notif-badge');
+            if (badge) badge.style.display = 'none';
+            loadNotifications();
+        });
+
+        function formatTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(text || ''));
+            return div.innerHTML;
+        }
+
+        loadNotifications();
+        /*]]>*/
+    </script>
+</section>
+</body>
+</html>

@@ -56,7 +56,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                 .requestMatchers("/", "/facilities/**", "/css/**", "/js/**",
-                                 "/images/**", "/error/**", "/uploads/**").permitAll()
+                        "/images/**", "/error/**", "/uploads/**",
+                        "/ws/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
                 // VNPay callbacks không cần auth
                 .requestMatchers("/payment/vnpay-return", "/payment/vnpay-ipn",
@@ -99,7 +100,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                    .ignoringRequestMatchers("/api/**", "/payment/vnpay-ipn", "/payment/momo-ipn")
+                    .ignoringRequestMatchers("/api/**", "/payment/vnpay-ipn", "/payment/momo-ipn", "/ws/**")
             )
             .sessionManagement(session -> session
                 .maximumSessions(1)
