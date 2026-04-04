@@ -179,6 +179,24 @@
                     </tbody>
                 </table>
             </div>
+
+            <div id="paginationContainer" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 hidden">
+                <span class="text-sm text-slate-500">
+                    Đang hiển thị <span id="pageInfo" class="font-bold text-slate-800"></span>
+                </span>
+
+                <div class="flex items-center gap-1">
+                    <button id="btnPrev" type="button" onclick="changePage(-1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                    </button>
+
+                    <div id="pageNumbers" class="flex gap-1"></div>
+
+                    <button id="btnNext" type="button" onclick="changePage(1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -259,22 +277,132 @@
         }
     });
 
+    const itemsPerPage = 5;
+    let currentPage = 1;
+    const allRows = Array.from(document.querySelectorAll('.field-row'));
+    let filteredRows = [...allRows];
+    let totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const emptyRow = document.getElementById('emptyRow');
+
     function searchFields() {
         const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
-        const rows = Array.from(document.querySelectorAll('.field-row'));
-        const noResultsRow = document.getElementById('noResultsRow');
-        let visibleCount = 0;
-
-        rows.forEach(row => {
+        filteredRows = allRows.filter((row) => {
             const name = row.dataset.name || '';
             const sport = row.dataset.sport || '';
             const surface = row.dataset.surface || '';
-            const matched = name.includes(keyword) || sport.includes(keyword) || surface.includes(keyword);
-            row.style.display = matched ? '' : 'none';
-            if (matched) visibleCount++;
+            return name.includes(keyword) || sport.includes(keyword) || surface.includes(keyword);
         });
 
-        noResultsRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+        currentPage = 1;
+        totalPages = Math.ceil(filteredRows.length / itemsPerPage) || 1;
+        displayRows();
+    }
+
+    function displayRows() {
+        allRows.forEach((row) => row.style.display = 'none');
+
+        if (emptyRow && allRows.length === 0) {
+            emptyRow.style.display = '';
+            if (paginationContainer) {
+                paginationContainer.classList.add('hidden');
+            }
+            if (noResultsRow) {
+                noResultsRow.style.display = 'none';
+            }
+            return;
+        }
+
+        if (emptyRow) {
+            emptyRow.style.display = 'none';
+        }
+
+        if (filteredRows.length === 0) {
+            if (noResultsRow) {
+                noResultsRow.style.display = '';
+            }
+            if (paginationContainer) {
+                paginationContainer.classList.add('hidden');
+            }
+            return;
+        }
+
+        if (noResultsRow) {
+            noResultsRow.style.display = 'none';
+        }
+
+        if (paginationContainer) {
+            paginationContainer.classList.remove('hidden');
+        }
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        filteredRows.forEach((row, index) => {
+            if (index >= start && index < end) {
+                row.style.display = '';
+            }
+        });
+
+        const currentEnd = end > filteredRows.length ? filteredRows.length : end;
+        const pageInfo = document.getElementById('pageInfo');
+        if (pageInfo) {
+            pageInfo.innerHTML = `${start + 1} - ${currentEnd} trong số <span class="text-primary">${filteredRows.length}</span> sân`;
+        }
+
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+
+        if (btnPrev) {
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.className = currentPage === 1
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        if (btnNext) {
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.className = currentPage === totalPages
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        if (!pageNumbersContainer) {
+            return;
+        }
+
+        pageNumbersContainer.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.type = 'button';
+            btn.onclick = () => {
+                currentPage = i;
+                displayRows();
+            };
+
+            if (i === currentPage) {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-white bg-orange-600 font-bold text-sm shadow-md border-none cursor-pointer';
+            } else {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 font-bold text-sm transition-colors cursor-pointer border-none bg-transparent';
+            }
+            pageNumbersContainer.appendChild(btn);
+        }
+
+        if (totalPages <= 1 && paginationContainer) {
+            paginationContainer.classList.add('hidden');
+        }
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        displayRows();
     }
 
     function changeFieldStatus(facId, fieldId, newStatus) {
@@ -296,6 +424,10 @@
         }).catch(() => {
             alert('Lỗi mạng khi cập nhật trạng thái');
         });
+    }
+
+    if (allRows.length > 0) {
+        displayRows();
     }
 </script>
 

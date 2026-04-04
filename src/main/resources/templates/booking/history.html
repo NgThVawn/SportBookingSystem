@@ -142,6 +142,24 @@
                             </div>
                         </div>
                     </article>
+
+                    <div id="paginationContainer" class="px-2 pt-2 flex items-center justify-between hidden">
+                        <span class="text-sm text-slate-500">
+                            Đang hiển thị <span id="pageInfo" class="font-bold text-slate-800"></span>
+                        </span>
+
+                        <div class="flex items-center gap-1">
+                            <button id="btnPrev" type="button" onclick="changePage(-1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                            </button>
+
+                            <div id="pageNumbers" class="flex gap-1"></div>
+
+                            <button id="btnNext" type="button" onclick="changePage(1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <aside class="lg:col-span-4 space-y-6 sticky top-28 mb-10">
@@ -224,6 +242,120 @@
     </div>
 
     <script>
+        const itemsPerPage = 5;
+        let currentPage = 1;
+        let activeStatus = 'ALL';
+
+        function getFilteredCards() {
+            const cards = Array.from(document.querySelectorAll('.booking-card'));
+            if (activeStatus === 'ALL') {
+                return cards;
+            }
+            return cards.filter((card) => card.getAttribute('data-status') === activeStatus);
+        }
+
+        function updatePaginationUI(totalPages) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            const pageNumbersContainer = document.getElementById('pageNumbers');
+
+            if (!paginationContainer || !btnPrev || !btnNext || !pageNumbersContainer) {
+                return;
+            }
+
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.className = currentPage === 1
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.className = currentPage === totalPages
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+
+            pageNumbersContainer.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.type = 'button';
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderBookingCards();
+                };
+
+                if (i === currentPage) {
+                    btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-white bg-primary font-bold text-sm shadow-md border-none cursor-pointer';
+                } else {
+                    btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 font-bold text-sm transition-colors cursor-pointer border-none bg-transparent';
+                }
+                pageNumbersContainer.appendChild(btn);
+            }
+
+            if (totalPages <= 1) {
+                paginationContainer.classList.add('hidden');
+            } else {
+                paginationContainer.classList.remove('hidden');
+            }
+        }
+
+        function renderBookingCards() {
+            const cards = Array.from(document.querySelectorAll('.booking-card'));
+            const filteredCards = getFilteredCards();
+            const noFilterResult = document.getElementById('noFilterResult');
+            const emptyState = document.getElementById('emptyState');
+            const paginationContainer = document.getElementById('paginationContainer');
+            const pageInfo = document.getElementById('pageInfo');
+
+            if (emptyState) {
+                if (paginationContainer) {
+                    paginationContainer.classList.add('hidden');
+                }
+                return;
+            }
+
+            cards.forEach((card) => {
+                card.style.display = 'none';
+            });
+
+            if (filteredCards.length === 0) {
+                if (noFilterResult) {
+                    noFilterResult.classList.remove('hidden');
+                    noFilterResult.classList.add('flex');
+                }
+                if (paginationContainer) {
+                    paginationContainer.classList.add('hidden');
+                }
+                return;
+            }
+
+            if (noFilterResult) {
+                noFilterResult.classList.add('hidden');
+                noFilterResult.classList.remove('flex');
+            }
+
+            const totalPages = Math.ceil(filteredCards.length / itemsPerPage) || 1;
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+            }
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+
+            filteredCards.forEach((card, index) => {
+                if (index >= start && index < end) {
+                    card.style.display = '';
+                }
+            });
+
+            const currentEnd = end > filteredCards.length ? filteredCards.length : end;
+            if (pageInfo) {
+                pageInfo.innerHTML = `${start + 1} - ${currentEnd} trong số <span class="text-primary">${filteredCards.length}</span> đơn`;
+            }
+
+            updatePaginationUI(totalPages);
+        }
+
         // --- LOGIC LỌC ĐƠN HÀNG ---
         function filterBookings(status, btnElement) {
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -234,30 +366,14 @@
             btnElement.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
             btnElement.classList.add('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/30');
 
-            const cards = document.querySelectorAll('.booking-card');
-            let hasVisibleCard = false;
+            activeStatus = status;
+            currentPage = 1;
+            renderBookingCards();
+        }
 
-            cards.forEach(card => {
-                if (status === 'ALL' || card.getAttribute('data-status') === status) {
-                    card.style.display = '';
-                    hasVisibleCard = true;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            const emptyState = document.getElementById('emptyState');
-            const noFilterResult = document.getElementById('noFilterResult');
-
-            if (emptyState) return;
-
-            if (!hasVisibleCard) {
-                noFilterResult.classList.remove('hidden');
-                noFilterResult.classList.add('flex');
-            } else {
-                noFilterResult.classList.add('hidden');
-                noFilterResult.classList.remove('flex');
-            }
+        function changePage(direction) {
+            currentPage += direction;
+            renderBookingCards();
         }
 
         // --- LOGIC BẬT/TẮT MODAL HỦY SÂN ---
@@ -284,6 +400,10 @@
             if (e.target === cancelModal) {
                 closeCancelModal();
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            renderBookingCards();
         });
     </script>
 </th:block>
