@@ -210,24 +210,21 @@
                 <!-- Favorite button (top-right) -->
                 <div class="absolute top-3 right-3">
                     <button th:if="${#authorization.expression('isAuthenticated()')}"
-                            class="fav-btn w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
+                            class="fav-btn w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border-none cursor-pointer"
                             th:data-id="${f.id}"
                             th:data-fav="${favoriteFacilityIds != null and favoriteFacilityIds.contains(f.id)}"
                             type="button">
-                        <span class="material-symbols-outlined text-[20px] transition-colors duration-200"
-                              th:classappend="${favoriteFacilityIds != null and favoriteFacilityIds.contains(f.id)} ? 'text-red-500' : 'text-zinc-400'"
-                              th:style="${favoriteFacilityIds != null and favoriteFacilityIds.contains(f.id)} ? 'font-variation-settings: FILL 1' : 'font-variation-settings: FILL 0'">
+                        <span class="material-symbols-outlined text-[20px] transition-colors duration-200 text-red-500"
+                              th:style="${favoriteFacilityIds != null and favoriteFacilityIds.contains(f.id)} ? 'font-variation-settings: \'FILL\' 1' : 'font-variation-settings: \'FILL\' 0'">
                             favorite
                         </span>
                     </button>
-                    <!-- Login prompt for guests -->
                     <a th:unless="${#authorization.expression('isAuthenticated()')}"
                        th:href="@{/auth/login}"
-                       class="w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined text-[20px] text-zinc-400">favorite</span>
+                       class="w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center hover:scale-110 transition-transform text-decoration-none">
+                        <span class="material-symbols-outlined text-[20px] text-red-500" style="font-variation-settings: 'FILL' 0">favorite</span>
                     </a>
                 </div>
-
                 <!-- Hours badge (bottom, appears on hover) -->
                 <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <span class="flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-label font-bold">
@@ -438,48 +435,52 @@
 
             // Optimistic UI update
             btn.dataset.fav = (!isFav).toString();
-            icon.textContent = 'favorite';
-            icon.className = icon.className.replace(/text-\w+-\d+/, '');
-            if (!isFav) {
-                icon.classList.add('text-red-500');
+            
+            if (!isFav) { // Nếu đang rỗng -> Chuyển thành đặc
                 icon.style.fontVariationSettings = "'FILL' 1";
                 // Heart pop animation
                 btn.classList.add('scale-125');
                 setTimeout(() => btn.classList.remove('scale-125'), 200);
-            } else {
-                icon.classList.add('text-zinc-400');
+            } else {      // Nếu đang đặc -> Chuyển thành rỗng
                 icon.style.fontVariationSettings = "'FILL' 0";
             }
 
             try {
+                // Đảm bảo lấy Token CSRF
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+                const headers = { 'Content-Type': 'application/json' };
+                if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
                 const res = await fetch(`/api/v1/favorites/toggle/${id}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: headers
                 });
+                
+                if (res.status === 401 || res.status === 403) {
+                    alert("Vui lòng đăng nhập để lưu sân yêu thích!");
+                    window.location.href = "/auth/login";
+                    return;
+                }
+                
                 if (!res.ok) throw new Error();
+                
                 const json = await res.json();
+                
                 // Sync with server response
                 const serverFav = json.data?.isFavorite ?? !isFav;
                 btn.dataset.fav = serverFav.toString();
                 if (serverFav) {
-                    icon.classList.remove('text-zinc-400');
-                    icon.classList.add('text-red-500');
                     icon.style.fontVariationSettings = "'FILL' 1";
                 } else {
-                    icon.classList.remove('text-red-500');
-                    icon.classList.add('text-zinc-400');
                     icon.style.fontVariationSettings = "'FILL' 0";
                 }
             } catch {
                 // Revert on error
                 btn.dataset.fav = isFav.toString();
                 if (isFav) {
-                    icon.classList.remove('text-zinc-400');
-                    icon.classList.add('text-red-500');
                     icon.style.fontVariationSettings = "'FILL' 1";
                 } else {
-                    icon.classList.remove('text-red-500');
-                    icon.classList.add('text-zinc-400');
                     icon.style.fontVariationSettings = "'FILL' 0";
                 }
             }
@@ -500,7 +501,6 @@
 
 })();
 </script>
-
 </th:block>
 </body>
 </html>

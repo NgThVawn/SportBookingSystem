@@ -86,7 +86,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         JOIN FETCH f.facility fc
         LEFT JOIN FETCH fc.images
         WHERE fc.owner.email = :ownerEmail
-        ORDER BY b.bookingDate DESC, b.startTime ASC
+        ORDER BY b.id DESC
     """)
     List<Booking> findByOwnerEmail(@Param("ownerEmail") String ownerEmail);
 

@@ -1,10 +1,19 @@
 package J2EE.SportBooingSystem.controller;
 
+import J2EE.SportBooingSystem.entity.Booking;
+import J2EE.SportBooingSystem.entity.Facility;
+import J2EE.SportBooingSystem.entity.Favorite;
 import J2EE.SportBooingSystem.entity.User;
+import J2EE.SportBooingSystem.enums.BookingStatus;
+import J2EE.SportBooingSystem.repository.BookingRepository;
+import J2EE.SportBooingSystem.repository.FavoriteRepository;
 import J2EE.SportBooingSystem.security.SecurityUtils;
 import J2EE.SportBooingSystem.service.UserService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
 @RequestMapping("/profile") 
 @RequiredArgsConstructor
@@ -21,6 +33,8 @@ public class UserController {
 
     private final UserService userService;
     private final SecurityUtils securityUtils;
+    private final FavoriteRepository favoriteRepository;
+    private final BookingRepository bookingRepository;
 
     @GetMapping
     public String profile(
@@ -28,7 +42,6 @@ public class UserController {
             Authentication authentication,
             @RequestParam(value = "updated", required = false) String updated
     ) {
-        // Kiểm tra đăng nhập (Nếu bạn dùng Spring Security Config tốt thì có thể bỏ qua check null này)
         if (authentication == null) {
             return "redirect:/auth/login";
         }
@@ -37,15 +50,53 @@ public class UserController {
         User user = userService.findByEmail(email);
         model.addAttribute("user", user);
 
-        // Lưu ý: Biến 'updated' sẽ được Thymeleaf nhận qua param.updated tự động
-        // Nhưng nếu bạn muốn dùng biến 'success' như cũ:
+        // THÊM LOGIC TÍNH TOÁN: GIỜ CHƠI VÀ SỐ LẦN ĐẶT SÂN
+        long totalBookings = 0;
+        long totalMinutes = 0; // Tính tổng số phút trước để không bị làm tròn sai
+
+        try {
+            // 1. Lấy toàn bộ lịch sử đặt sân của User
+            List<Booking> allBookings = bookingRepository.findByUserOrderByCreatedAtDesc(user);
+
+            // 2. Lọc ra các booking THÀNH CÔNG
+            List<Booking> successfulBookings = allBookings.stream()
+                .filter(b -> b.getStatus() == BookingStatus.COMPLETED)
+                .collect(Collectors.toList());
+
+            // 3. Gán tổng số đơn đã đặt thành công
+            totalBookings = successfulBookings.size();
+
+            // 4. Tính tổng số phút chơi từ các đơn thành công
+            for (Booking b : successfulBookings) {
+                if (b.getStartTime() != null && b.getEndTime() != null) {
+                    // Dùng java.time.Duration để tính khoảng cách bằng PHÚT
+                    long minutes = java.time.Duration.between(b.getStartTime(), b.getEndTime()).toMinutes();
+                    totalMinutes += minutes;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Lỗi khi tính toán thống kê: " + e.getMessage());
+        }
+
+        // 5. Quy đổi từ Phút sang Giờ
+        double hours = totalMinutes / 60.0;
+        
+        // Làm đẹp con số: Nếu là 5.0 -> hiển thị "5", nếu là 7.5 -> hiển thị "7.5"
+        String displayHours = (hours == (long) hours) 
+                              ? String.format("%d", (long) hours) 
+                              : String.format("%.1f", hours).replace(",", ".");
+
+        // Đẩy ra View
+        model.addAttribute("totalBookings", totalBookings);
+        model.addAttribute("totalHours", displayHours); // Gửi chuỗi giờ đã tính toán chuẩn xác
+        // =========================================================
+
         if (updated != null) {
             model.addAttribute("success", true);
         }
 
         return "profile/profile";
     }
-
     @PostMapping("/update")
     public String updateProfile(
             @RequestParam String fullName,
@@ -96,5 +147,31 @@ public class UserController {
         }
 
         return "redirect:/profile/security";
+    }
+    @GetMapping("/favorites")
+    @Transactional(readOnly = true)
+    public String myFavorites(@AuthenticationPrincipal UserDetails ud, Model model) {
+
+        // 1. Lấy thông tin user đang đăng nhập
+        User user = userService.findByEmail(ud.getUsername());
+
+        // 2. Lấy danh sách sân từ bảng Yêu thích VÀ ép lấy luôn ảnh
+        List<Facility> favFacilities = favoriteRepository.findByUser(user).stream()
+                .map(favorite -> {
+                    Facility facility = favorite.getFacility();
+
+                    // "Đánh thức" dữ liệu lười biếng (Lazy Load) lúc Session đang mở
+                    facility.getPrimaryImageUrl(); // Ép load ảnh
+                    facility.getUniqueSportTypes(); // Ép load danh sách môn thể thao (nếu có)
+
+                    return facility;
+                })
+                .collect(Collectors.toList());
+
+        // 3. Đẩy ra View
+        model.addAttribute("facilities", favFacilities);
+
+        // Trỏ đến file HTML: templates/profile/favorites.html
+        return "profile/favorites";
     }
 }

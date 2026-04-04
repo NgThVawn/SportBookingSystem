@@ -111,12 +111,12 @@
                     <div class="lg:col-span-4 space-y-2">
                         <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Trạng thái đơn</label>
                         <select name="status" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
-                            <option value="">-- Tất cả trạng thái --</option>
-                            <option value="PENDING" th:selected="${selectedStatus == 'PENDING'}">⌛ Chờ duyệt đơn</option>
-                            <option value="CANCEL_PENDING" th:selected="${selectedStatus == 'CANCEL_PENDING'}">❓ Khách xin hủy sát giờ</option>
-                            <option value="CONFIRMED" th:selected="${selectedStatus == 'CONFIRMED'}">✅ Đã duyệt (Chờ đá)</option>
-                            <option value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}">🏁 Đã hoàn thành</option>
-                            <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}">❌ Đã hủy</option>
+                            <option value=""> Tất cả trạng thái </option>
+                            <option value="PENDING" th:selected="${selectedStatus == 'PENDING'}"> Chờ duyệt đơn</option>
+                            <option value="CANCEL_PENDING" th:selected="${selectedStatus == 'CANCEL_PENDING'}"> Đang chờ xác nhận hủy</option>
+                            <option value="CONFIRMED" th:selected="${selectedStatus == 'CONFIRMED'}"> Đã duyệt </option>
+                            <option value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}"> Đã hoàn thành</option>
+                            <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}"> Đã hủy</option>
                         </select>
                     </div>
 

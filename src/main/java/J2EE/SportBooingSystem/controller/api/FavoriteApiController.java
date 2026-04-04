@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,6 +26,7 @@ public class FavoriteApiController {
     private final UserService userService;
 
     @PostMapping("/toggle/{facilityId}")
+    @Transactional // CHỈ CẦN THÊM ĐÚNG DÒNG NÀY LÀ ĐỦ
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> toggle(
             @PathVariable Long facilityId,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -37,8 +39,9 @@ public class FavoriteApiController {
             favoriteRepository.deleteByUserAndFacility(user, facility);
         } else {
             favoriteRepository.save(Favorite.builder()
-                .user(user).facility(facility).build());
+                    .user(user).facility(facility).build());
         }
+
         return ResponseEntity.ok(ApiResponse.ok(Map.of("isFavorite", !isFav)));
     }
 }
