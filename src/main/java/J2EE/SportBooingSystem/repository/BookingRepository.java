@@ -80,10 +80,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /** Lấy danh sách booking của owner (qua field → facility) */
     @Query("""
-        SELECT b FROM Booking b
+        SELECT DISTINCT b FROM Booking b
         JOIN FETCH b.user
         JOIN FETCH b.field f
         JOIN FETCH f.facility fc
+        LEFT JOIN FETCH fc.images
         WHERE fc.owner.email = :ownerEmail
         ORDER BY b.bookingDate DESC, b.startTime ASC
     """)

@@ -16,6 +16,12 @@ public interface FieldRepository extends JpaRepository<Field, Long> {
 
     List<Field> findByFacilityAndStatus(Facility facility, FieldStatus status);
 
+    long countByFacility_Owner_Email(String ownerEmail);
+
+    long countByFacility_Owner_EmailAndStatus(String ownerEmail, FieldStatus status);
+
+    long countByFacility_IdAndStatus(Long facilityId, FieldStatus status);
+
     List<Field> findBySportTypeAndStatus(SportType sportType, FieldStatus status);
 
     boolean existsByIdAndFacility_IdAndFacility_Owner_Email(Long id, Long facilityId, String ownerEmail);
