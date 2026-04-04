@@ -67,12 +67,12 @@ public class MoMoServiceImpl implements MoMoService {
         Payment payment = paymentRepo.findByBooking(booking).orElseGet(() ->
                 Payment.builder()
                         .booking(booking)
-                        .amount(booking.getTotalPrice())
                         .status(PaymentStatus.PENDING)
                         .orderInfo(orderInfo)
                         .paymentMethod(PaymentMethod.MOMO)
                         .build()
         );
+        payment.setAmount(booking.getTotalPrice());
         payment.setTxnRef(orderId);   // cập nhật mỗi lần thử lại để IPN tìm được
         payment.setPaymentMethod(PaymentMethod.MOMO);
         payment.setStatus(PaymentStatus.PENDING);

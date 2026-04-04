@@ -18,19 +18,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /** Eager load user + field + facility — dùng cho PaymentController và BookingResponse.from() */
     @Query("""
-        SELECT b FROM Booking b
+        SELECT DISTINCT b FROM Booking b
         JOIN FETCH b.user
         JOIN FETCH b.field f
         JOIN FETCH f.facility
+        LEFT JOIN FETCH b.extraServices
         WHERE b.bookingCode = :code
     """)
     Optional<Booking> findByBookingCodeEager(@Param("code") String code);
 
     @Query("""
-        SELECT b FROM Booking b
+        SELECT DISTINCT b FROM Booking b
         JOIN FETCH b.user
         JOIN FETCH b.field f
         JOIN FETCH f.facility
+        LEFT JOIN FETCH b.extraServices
         WHERE b.user = :user
         ORDER BY b.createdAt DESC
     """)
@@ -84,7 +86,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         JOIN FETCH b.user
         JOIN FETCH b.field f
         JOIN FETCH f.facility fc
-        LEFT JOIN FETCH fc.images
+        LEFT JOIN FETCH b.extraServices
         WHERE fc.owner.email = :ownerEmail
         ORDER BY b.id DESC
     """)

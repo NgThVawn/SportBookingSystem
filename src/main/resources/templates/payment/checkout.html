@@ -54,15 +54,66 @@
                     </div>
                 </div>
 
+                <div class="mb-6 border border-white/10 rounded-xl p-4 bg-white/5">
+                    <p class="text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-3">Chi tiết giờ đã chọn</p>
+                    <div class="space-y-2 text-xs text-slate-200">
+                        <div class="flex items-center justify-between gap-3">
+                            <span>Cơ sở</span>
+                            <span class="font-bold text-white text-right" th:text="${booking.facilityName}">Tên cơ sở</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span>Sân</span>
+                            <span class="font-bold text-white text-right" th:text="${booking.fieldName}">Sân 1</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span>Ngày thi đấu</span>
+                            <span class="font-bold text-white" th:text="${#temporals.format(booking.bookingDate, 'dd/MM/yyyy')}">20/10/2026</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span>Khung giờ</span>
+                            <span class="font-bold text-white" th:text="${booking.startTime + ' - ' + booking.endTime}">17:30 - 19:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${booking.extraItems != null and !#lists.isEmpty(booking.extraItems)}" class="mb-6 border border-white/10 rounded-xl p-4 bg-white/5">
+                    <p class="text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-3">Dịch vụ đã chọn</p>
+                    <div class="space-y-2 text-xs">
+                        <div th:each="item : ${booking.extraItems}" class="flex items-center justify-between text-slate-200">
+                            <div>
+                                <p class="m-0 font-semibold text-white" th:text="${item.serviceName != null ? item.serviceName : 'Dịch vụ'}">Nước suối</p>
+                                <p class="m-0 text-[11px] text-slate-400"
+                                   th:text="${'Số lượng: ' + (item.quantity != null ? item.quantity : 0) + ' | Đơn giá: ' + #numbers.formatDecimal(item.unitPrice != null ? item.unitPrice : 0, 0, 'COMMA', 0, 'POINT') + 'đ/' + (item.unit != null ? item.unit : 'đơn vị')}">Số lượng: 2</p>
+                            </div>
+                            <span class="font-bold text-white" th:text="${#numbers.formatDecimal(item.subtotal != null ? item.subtotal : 0, 0, 'COMMA', 0, 'POINT') + '₫'}">0₫</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${booking.extraItems == null or #lists.isEmpty(booking.extraItems)}" class="mb-6 border border-white/10 rounded-xl p-4 bg-white/5">
+                    <p class="m-0 text-xs text-slate-300">Bạn chưa chọn dịch vụ đi kèm cho đơn đặt sân này.</p>
+                </div>
+
                 <div class="relative flex items-center justify-center mb-6">
                     <div class="absolute left-[-40px] w-6 h-6 bg-white rounded-full"></div>
                     <div class="w-full border-t-2 border-dashed border-white/20"></div>
                     <div class="absolute right-[-40px] w-6 h-6 bg-white rounded-full"></div>
                 </div>
 
-                <div class="flex justify-between items-end relative z-10">
+                <div class="space-y-2 mb-4 text-sm text-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span>Tiền sân</span>
+                        <span class="font-bold text-white" th:text="${#numbers.formatDecimal(booking.fieldPrice != null ? booking.fieldPrice : 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Dịch vụ đi kèm</span>
+                        <span class="font-bold text-cyan-300" th:text="${#numbers.formatDecimal(booking.extraTotal != null ? booking.extraTotal : 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end relative z-10 border-t border-white/15 pt-4">
                     <span class="text-xs font-label font-bold text-slate-400 uppercase tracking-widest mb-1">Tổng thanh toán</span>
-                    <span class="text-4xl font-black font-headline text-white italic tracking-tight" th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</span>
+                    <span class="text-4xl font-black font-headline text-white italic tracking-tight" th:text="${#numbers.formatDecimal(booking.totalPrice != null ? booking.totalPrice : 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</span>
                 </div>
             </div>
 

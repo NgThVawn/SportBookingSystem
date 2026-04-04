@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +50,7 @@ public class OwnerController {
     private final FieldRepository fieldRepo;
     private final BookingService bookingService;
     private final UserService userService;
+    private final ExtraServiceService extraServiceService;
 
     // ─── FACILITY ─────────────────────────
 
@@ -316,6 +318,144 @@ public class OwnerController {
             ra.addFlashAttribute("errorMsg", e.getMessage());
         }
         return "redirect:/owner/facilities/" + facilityId + "/fields";
+    }
+
+    /** ── Quản lý dịch vụ đi kèm (ExtraService) ────────────────── */
+
+    @GetMapping("/facilities/{facilityId}/services")
+    @Transactional(readOnly = true)
+    public String extraServices(@PathVariable Long facilityId,
+                                @AuthenticationPrincipal UserDetails ud,
+                                Model model,
+                                RedirectAttributes ra) {
+        Facility facility = facilityService.findById(facilityId);
+        if (!facility.getOwner().getEmail().equals(ud.getUsername())) {
+            ra.addFlashAttribute("error", "Bạn không có quyền truy cập cơ sở này");
+            return "redirect:/owner/facilities";
+        }
+
+        model.addAttribute("facility", facility);
+        model.addAttribute("services", extraServiceService.findAllByFacility(facilityId, ud.getUsername()));
+        model.addAttribute("newService", new ExtraServiceRequest());
+        model.addAttribute("sportTypes", SportType.values());
+        return "owner/services/manage";
+    }
+
+    @PostMapping("/facilities/{facilityId}/services/create")
+    public String createExtraService(@PathVariable Long facilityId,
+                                     @Valid @ModelAttribute("newService") ExtraServiceRequest req,
+                                     BindingResult br,
+                                     @AuthenticationPrincipal UserDetails ud,
+                                     RedirectAttributes ra,
+                                     Model model) {
+        if (br.hasErrors()) {
+            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("services", extraServiceService.findAllByFacility(facilityId, ud.getUsername()));
+            model.addAttribute("sportTypes", SportType.values());
+            return "owner/services/manage";
+        }
+
+        try {
+            extraServiceService.create(facilityId, req, ud.getUsername());
+            ra.addFlashAttribute("success", "Đã thêm dịch vụ đi kèm");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/facilities/" + facilityId + "/services";
+    }
+
+    @GetMapping("/facilities/{facilityId}/services/{serviceId}/edit")
+    public String editExtraService(@PathVariable Long facilityId,
+                                   @PathVariable Long serviceId,
+                                   @AuthenticationPrincipal UserDetails ud,
+                                   Model model,
+                                   RedirectAttributes ra) {
+        try {
+            Facility facility = facilityService.findById(facilityId);
+            if (!facility.getOwner().getEmail().equals(ud.getUsername())) {
+                throw new ForbiddenException("Bạn không có quyền truy cập cơ sở này");
+            }
+
+            ExtraService service = extraServiceService.findById(serviceId);
+            if (!service.getFacility().getId().equals(facilityId)) {
+                throw new IllegalArgumentException("Dịch vụ không thuộc cơ sở này");
+            }
+
+            ExtraServiceRequest req = new ExtraServiceRequest();
+            req.setName(service.getName());
+            req.setDescription(service.getDescription());
+            req.setPrice(service.getPrice());
+            req.setUnit(service.getUnit());
+            req.setStock(service.getStock());
+            req.setIsActive(service.getIsActive());
+            req.setAppliesToSportType(service.getAppliesToSportType());
+
+            model.addAttribute("facility", facility);
+            model.addAttribute("service", service);
+            model.addAttribute("editService", req);
+            model.addAttribute("sportTypes", SportType.values());
+            return "owner/services/edit";
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Không thể mở trang chỉnh sửa dịch vụ. Vui lòng thử lại.");
+            return "redirect:/owner/facilities/" + facilityId + "/services";
+        }
+    }
+
+    @PostMapping("/facilities/{facilityId}/services/{serviceId}/edit")
+    public String updateExtraService(@PathVariable Long facilityId,
+                                     @PathVariable Long serviceId,
+                                     @Valid @ModelAttribute("editService") ExtraServiceRequest req,
+                                     BindingResult br,
+                                     @AuthenticationPrincipal UserDetails ud,
+                                     RedirectAttributes ra,
+                                     Model model) {
+        if (br.hasErrors()) {
+            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("service", extraServiceService.findById(serviceId));
+            model.addAttribute("sportTypes", SportType.values());
+            return "owner/services/edit";
+        }
+
+        try {
+            extraServiceService.update(serviceId, facilityId, req, ud.getUsername());
+            ra.addFlashAttribute("success", "Đã cập nhật dịch vụ");
+            return "redirect:/owner/facilities/" + facilityId + "/services";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể cập nhật dịch vụ lúc này. Vui lòng kiểm tra dữ liệu và thử lại.");
+            model.addAttribute("facility", facilityService.findById(facilityId));
+            model.addAttribute("service", extraServiceService.findById(serviceId));
+            model.addAttribute("sportTypes", SportType.values());
+            return "owner/services/edit";
+        }
+    }
+
+    @PostMapping("/facilities/{facilityId}/services/{serviceId}/status")
+    public String toggleExtraServiceStatus(@PathVariable Long facilityId,
+                                           @PathVariable Long serviceId,
+                                           @RequestParam boolean active,
+                                           @AuthenticationPrincipal UserDetails ud,
+                                           RedirectAttributes ra) {
+        try {
+            extraServiceService.toggleStatus(serviceId, facilityId, active, ud.getUsername());
+            ra.addFlashAttribute("success", active ? "Đã bật dịch vụ" : "Đã tạm ẩn dịch vụ");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/facilities/" + facilityId + "/services";
+    }
+
+    @PostMapping("/facilities/{facilityId}/services/{serviceId}/delete")
+    public String deleteExtraService(@PathVariable Long facilityId,
+                                     @PathVariable Long serviceId,
+                                     @AuthenticationPrincipal UserDetails ud,
+                                     RedirectAttributes ra) {
+        try {
+            extraServiceService.delete(serviceId, ud.getUsername());
+            ra.addFlashAttribute("success", "Đã xóa dịch vụ đi kèm");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/owner/facilities/" + facilityId + "/services";
     }
 
     /** ── Quản lý giá (PriceRule) ────────────────────────────────── */

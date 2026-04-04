@@ -6,6 +6,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collections;
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class BookingResponse {
@@ -20,11 +22,48 @@ public class BookingResponse {
     private LocalDate bookingDate;
     private LocalTime startTime;
     private LocalTime endTime;
+    private BigDecimal fieldPrice;
+    private BigDecimal extraTotal;
     private BigDecimal totalPrice;
     private BookingStatus status;
     private String note;
+    private List<ExtraItem> extraItems;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ExtraItem {
+        private String serviceName;
+        private Integer quantity;
+        private String unit;
+        private BigDecimal unitPrice;
+        private BigDecimal subtotal;
+    }
 
     public static BookingResponse from(Booking b) {
+        List<ExtraItem> extraItems = b.getExtraServices() == null ? Collections.emptyList() :
+            b.getExtraServices().stream()
+                .map(item -> ExtraItem.builder()
+                            .serviceName(item.getServiceName() != null ? item.getServiceName() : "Dịch vụ")
+                            .quantity(item.getQuantity() != null ? item.getQuantity() : 0)
+                            .unit(item.getUnit() != null ? item.getUnit() : "đơn vị")
+                            .unitPrice(item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO)
+                            .subtotal(item.getSubtotal() != null ? item.getSubtotal() : BigDecimal.ZERO)
+                    .build())
+                .toList();
+
+        BigDecimal extraTotal = extraItems.stream()
+                .map(ExtraItem::getSubtotal)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalPrice = b.getTotalPrice() == null ? BigDecimal.ZERO : b.getTotalPrice();
+        BigDecimal fieldPrice = totalPrice.subtract(extraTotal);
+        if (fieldPrice.compareTo(BigDecimal.ZERO) < 0) {
+            fieldPrice = BigDecimal.ZERO;
+        }
+
         return BookingResponse.builder()
                 .id(b.getId())
                 .bookingCode(b.getBookingCode())
@@ -37,9 +76,12 @@ public class BookingResponse {
                 .bookingDate(b.getBookingDate())
                 .startTime(b.getStartTime())
                 .endTime(b.getEndTime())
-                .totalPrice(b.getTotalPrice())
+                .fieldPrice(fieldPrice)
+                .extraTotal(extraTotal)
+                .totalPrice(totalPrice)
                 .status(b.getStatus())
                 .note(b.getNote())
+                .extraItems(extraItems)
                 .build();
     }
 }

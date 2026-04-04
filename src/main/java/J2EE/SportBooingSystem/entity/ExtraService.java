@@ -1,5 +1,6 @@
 package J2EE.SportBooingSystem.entity;
 
+import J2EE.SportBooingSystem.enums.SportType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -37,6 +38,10 @@ public class ExtraService {
     @Column(nullable = false, length = 30)
     @Builder.Default
     private String unit = "PER_ITEM";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "applies_to_sport_type", length = 30)
+    private SportType appliesToSportType;
 
     private Integer stock;
 

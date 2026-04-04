@@ -115,15 +115,12 @@
 
             <section class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-sm">
                 <h2 class="font-headline text-xl font-bold mb-4 flex items-center gap-3 text-slate-900">
-                    <span class="w-1.5 h-6 bg-primary rounded"></span> Thông tin sân
+                    <span class="w-1.5 h-6 bg-primary rounded"></span> Thông tin cơ sở
                 </h2>
                 <p class="text-slate-600 text-sm leading-relaxed mb-6" th:text="${facility.description} ?: 'Tận hưởng trải nghiệm thi đấu chuyên nghiệp tại hệ thống sân của chúng tôi. Kích thước sân tiêu chuẩn giúp những pha bóng trở nên mượt mà hơn.'"></p>
 
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" th:if="${not #lists.isEmpty(services)}">
-                    <div th:each="svc : ${services}" class="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
-                        <span class="material-symbols-outlined text-blue-500 text-[18px]">wifi</span>
-                        <span class="font-body text-xs font-semibold text-slate-700" th:text="${svc.name}">Wifi miễn phí</span>
-                    </div>
+                <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
+                    <p class="text-xs text-slate-500 m-0">Dịch vụ đi kèm sẽ hiển thị sau khi bạn chọn khung giờ và loại sân bên dưới.</p>
                 </div>
             </section>
 
@@ -162,6 +159,23 @@
                     <button type="button" id="resetSelectionBtn" class="hidden px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors font-body mx-auto cursor-pointer border-none">
                         Hủy chọn
                     </button>
+                </div>
+
+                <div id="servicePanel" class="mt-6 p-4 rounded-xl bg-slate-900 text-white border border-slate-800 hidden">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <p class="text-[11px] font-body uppercase tracking-wider text-slate-300 m-0">Chọn dịch vụ đi kèm</p>
+                        <span class="text-[10px] text-slate-400">Hiển thị theo sân đã chọn</span>
+                    </div>
+
+                    <div id="commonServiceWrap" class="mb-3 hidden">
+                        <p class="text-[10px] uppercase tracking-wider text-cyan-300 mb-2 font-bold">Tất cả loại sân</p>
+                        <div id="commonServiceList" class="space-y-2"></div>
+                    </div>
+
+                    <div id="specificServiceWrap" class="hidden">
+                        <p class="text-[10px] uppercase tracking-wider text-amber-300 mb-2 font-bold">Dịch vụ theo loại sân</p>
+                        <div id="specificServiceList" class="space-y-2"></div>
+                    </div>
                 </div>
             </section>
         </div>
@@ -220,6 +234,14 @@
                     <div class="mb-6">
                         <p class="text-[10px] font-body uppercase text-slate-400 mb-1">Tổng cộng</p>
                         <p class="text-3xl font-headline font-black text-white" id="totalPrice">0₫</p>
+                        <p class="m-0 mt-1 text-[11px] text-slate-400" id="extraSummary">(bao gồm dịch vụ: 0đ)</p>
+                    </div>
+
+                    <div class="mb-6 border border-white/10 rounded-xl p-3 bg-white/5" id="selectedServiceSummaryWrap">
+                        <p class="m-0 mb-2 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Dịch vụ đã chọn</p>
+                        <div id="selectedServiceSummary" class="space-y-2 text-[11px] text-slate-200">
+                            <p class="m-0 text-slate-400">Chưa chọn dịch vụ.</p>
+                        </div>
                     </div>
 
                     <a id="bookBtn" href="#" class="w-full py-3.5 bg-[#d33a11] hover:bg-[#b02f00] rounded-lg font-headline text-sm font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 text-white text-decoration-none">
@@ -342,12 +364,20 @@
         const priceSegEl   = document.getElementById('priceSegments');
         const totalPriceEl = document.getElementById('totalPrice');
         const bookBtn      = document.getElementById('bookBtn');
+        const servicePanel = document.getElementById('servicePanel');
+        const commonServiceWrap = document.getElementById('commonServiceWrap');
+        const specificServiceWrap = document.getElementById('specificServiceWrap');
+        const commonServiceList = document.getElementById('commonServiceList');
+        const specificServiceList = document.getElementById('specificServiceList');
 
         let fieldsData = [];
         let selectedFieldId = null;
         let selectedStartMin = null;
         let selectedEndMin = null;
         let selectionStep = 0;
+        let baseBookingPrice = 0;
+        let currentServices = [];
+        const selectedExtras = new Map();
 
         if(!dateInput.value) { dateInput.value = new Date().toISOString().split('T')[0]; }
 
@@ -474,6 +504,15 @@
 
         async function updateSidebarUI() {
             if(selectedStartMin === null) {
+                servicePanel.classList.add('hidden');
+                commonServiceWrap.classList.add('hidden');
+                specificServiceWrap.classList.add('hidden');
+                commonServiceList.innerHTML = '';
+                specificServiceList.innerHTML = '';
+                baseBookingPrice = 0;
+                currentServices = [];
+                selectedExtras.clear();
+                updateTotalWithExtras();
                 emptyState.classList.remove('hidden'); activeState.classList.add('hidden'); return;
             }
 
@@ -491,6 +530,7 @@
                 const json = await res.json();
 
                 if(json.data) {
+                    baseBookingPrice = Number(json.data.totalPrice || 0);
                     let phtml = '';
                     json.data.segments.forEach(s => {
                         phtml += `<div class="flex justify-between items-center">
@@ -499,15 +539,167 @@
                                   </div>`;
                     });
                     priceSegEl.innerHTML = phtml;
-                    totalPriceEl.innerText = fmt(json.data.totalPrice) + 'đ';
-
-                    bookBtn.href = `/bookings/new?fieldId=${selectedFieldId}&date=${date}&start=${startStr}&end=${endStr}`;
+                    updateTotalWithExtras();
                     bookBtn.classList.remove('opacity-50', 'pointer-events-none');
                 }
+
+                const serviceRes = await fetch(`/api/v1/fields/${selectedFieldId}/services`);
+                const serviceJson = await serviceRes.json();
+                renderServicePanel(serviceJson.data || []);
             } catch(e) {
                 console.error(e);
                 priceSegEl.innerHTML = '<div class="text-red-400">Lỗi tính tiền.</div>';
+                servicePanel.classList.add('hidden');
             }
+        }
+
+        function renderServicePanel(services) {
+            currentServices = Array.isArray(services) ? services : [];
+
+            const activeIds = new Set(currentServices.map(s => String(s.id)));
+            Array.from(selectedExtras.keys()).forEach(id => {
+                if (!activeIds.has(String(id))) {
+                    selectedExtras.delete(id);
+                }
+            });
+
+            commonServiceList.innerHTML = '';
+            specificServiceList.innerHTML = '';
+
+            const common = currentServices.filter(s => s.scope === 'COMMON');
+            const specific = currentServices.filter(s => s.scope === 'SPORT_SPECIFIC');
+
+            common.forEach(s => commonServiceList.appendChild(renderServiceItem(s)));
+            specific.forEach(s => specificServiceList.appendChild(renderServiceItem(s)));
+
+            commonServiceWrap.classList.toggle('hidden', common.length === 0);
+            specificServiceWrap.classList.toggle('hidden', specific.length === 0);
+            servicePanel.classList.toggle('hidden', currentServices.length === 0);
+
+            updateBookLink();
+            updateTotalWithExtras();
+        }
+
+        function renderServiceItem(service) {
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between gap-3 bg-white/10 rounded-lg px-3 py-2';
+
+            const left = document.createElement('div');
+            left.className = 'min-w-0 flex-1';
+
+            const name = document.createElement('p');
+            name.className = 'm-0 text-xs font-bold text-white truncate';
+            name.innerText = service.name;
+
+            const price = document.createElement('p');
+            price.className = 'm-0 text-[11px] font-semibold text-slate-300';
+            price.innerText = `${fmt(service.price)}đ/${service.unit}`;
+
+            left.appendChild(name);
+            left.appendChild(price);
+
+            if (service.appliesToSportType) {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex mt-1 text-[10px] px-2 py-1 rounded-full bg-amber-200/20 text-amber-200 font-bold';
+                badge.innerText = service.appliesToSportType;
+                left.appendChild(badge);
+            }
+
+            item.appendChild(left);
+
+            const controls = document.createElement('div');
+            controls.className = 'flex items-center gap-2 shrink-0 ml-2';
+
+            const decBtn = document.createElement('button');
+            decBtn.type = 'button';
+            decBtn.className = 'w-6 h-6 rounded bg-white/15 hover:bg-white/25 text-white border-none cursor-pointer';
+            decBtn.innerText = '-';
+
+            const qtyLabel = document.createElement('span');
+            qtyLabel.className = 'text-xs font-bold min-w-[18px] text-center';
+            qtyLabel.innerText = String(selectedExtras.get(service.id) || 0);
+
+            const incBtn = document.createElement('button');
+            incBtn.type = 'button';
+            incBtn.className = 'w-6 h-6 rounded bg-white/15 hover:bg-white/25 text-white border-none cursor-pointer';
+            incBtn.innerText = '+';
+
+            decBtn.addEventListener('click', () => {
+                const curr = Number(selectedExtras.get(service.id) || 0);
+                const next = Math.max(0, curr - 1);
+                if (next === 0) selectedExtras.delete(service.id);
+                else selectedExtras.set(service.id, next);
+                qtyLabel.innerText = String(next);
+                updateBookLink();
+                updateTotalWithExtras();
+            });
+
+            incBtn.addEventListener('click', () => {
+                const curr = Number(selectedExtras.get(service.id) || 0);
+                const next = curr + 1;
+                selectedExtras.set(service.id, next);
+                qtyLabel.innerText = String(next);
+                updateBookLink();
+                updateTotalWithExtras();
+            });
+
+            controls.appendChild(decBtn);
+            controls.appendChild(qtyLabel);
+            controls.appendChild(incBtn);
+            item.appendChild(controls);
+
+            return item;
+        }
+
+        function updateBookLink() {
+            if (selectedStartMin === null || selectedEndMin === null || !selectedFieldId) return;
+
+            const date = dateInput.value;
+            const startStr = toHHMM(selectedStartMin);
+            const endStr = toHHMM(selectedEndMin);
+
+            const params = new URLSearchParams();
+            params.set('fieldId', String(selectedFieldId));
+            params.set('date', date);
+            params.set('start', startStr);
+            params.set('end', endStr);
+
+            let idx = 0;
+            selectedExtras.forEach((qty, serviceId) => {
+                if (qty > 0) {
+                    params.set(`extraItems[${idx}].serviceId`, String(serviceId));
+                    params.set(`extraItems[${idx}].quantity`, String(qty));
+                    idx += 1;
+                }
+            });
+
+            bookBtn.href = `/bookings/new?${params.toString()}`;
+        }
+
+        function updateTotalWithExtras() {
+            let extraTotal = 0;
+            const selectedServiceSummary = document.getElementById('selectedServiceSummary');
+            let summaryHtml = '';
+
+            selectedExtras.forEach((qty, serviceId) => {
+                const service = currentServices.find(s => String(s.id) === String(serviceId));
+                if (service) {
+                    const lineTotal = Number(service.price || 0) * Number(qty || 0);
+                    extraTotal += lineTotal;
+                    summaryHtml += `<div class="flex items-center justify-between gap-3">
+                                        <span>${service.name} x${qty}</span>
+                                        <span class="font-bold text-white">${fmt(lineTotal)}đ</span>
+                                    </div>`;
+                }
+            });
+
+            if (selectedServiceSummary) {
+                selectedServiceSummary.innerHTML = summaryHtml || '<p class="m-0 text-slate-400">Chưa chọn dịch vụ.</p>';
+            }
+
+            totalPriceEl.innerText = fmt(baseBookingPrice + extraTotal) + 'đ';
+            const extraSummary = document.getElementById('extraSummary');
+            extraSummary.innerText = `(bao gồm dịch vụ: ${fmt(extraTotal)}đ)`;
         }
 
         function resetSelection() {
@@ -556,7 +748,7 @@
         }
 
         setTimeout(loadAllFieldsData, 100);
-    })();
+    });
 </script>
 </body>
 </html>

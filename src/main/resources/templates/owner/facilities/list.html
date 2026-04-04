@@ -198,6 +198,13 @@
                                     <span class="material-symbols-outlined text-[18px]">grid_view</span>
                                 </a>
 
+                                          <a th:href="@{/owner/facilities/{id}/services(id=${f.id})}"
+                                              class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-decoration-none"
+                                              th:classappend="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'text-slate-300 opacity-50 cursor-not-allowed pointer-events-none' : 'text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 tooltip'"
+                                              title="Dịch vụ đi kèm">
+                                                <span class="material-symbols-outlined text-[18px]">local_cafe</span>
+                                          </a>
+
                                 <a th:href="@{/owner/facilities/{id}/edit(id=${f.id})}"
                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-decoration-none"
                                    th:classappend="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'text-slate-300 opacity-50 cursor-not-allowed pointer-events-none' : 'text-slate-400 hover:text-orange-600 hover:bg-orange-50 tooltip'"

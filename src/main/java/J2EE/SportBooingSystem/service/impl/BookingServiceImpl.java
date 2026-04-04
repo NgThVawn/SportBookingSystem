@@ -1,6 +1,7 @@
 package J2EE.SportBooingSystem.service.impl;
 
 import J2EE.SportBooingSystem.dto.request.BookingRequest;
+import J2EE.SportBooingSystem.dto.request.BookingExtraItemRequest;
 import J2EE.SportBooingSystem.dto.response.AvailabilityResponse;
 import J2EE.SportBooingSystem.dto.response.AvailabilityResponse.OccupiedSlot;
 import J2EE.SportBooingSystem.dto.response.BookingResponse;
@@ -10,6 +11,7 @@ import J2EE.SportBooingSystem.exception.ForbiddenException;
 import J2EE.SportBooingSystem.exception.ResourceNotFoundException;
 import J2EE.SportBooingSystem.repository.*;
 import J2EE.SportBooingSystem.service.BookingService;
+import J2EE.SportBooingSystem.service.ExtraServiceService;
 import J2EE.SportBooingSystem.service.NotificationService;
 import J2EE.SportBooingSystem.enums.NotificationType;
 import J2EE.SportBooingSystem.service.PriceRuleService;
@@ -35,6 +37,7 @@ public class BookingServiceImpl implements BookingService {
     private final FieldRepository fieldRepo;
     private final UserRepository userRepo;
     private final PriceRuleService priceRuleService;
+    private final ExtraServiceService extraServiceService;
     private final NotificationService notificationService;
     @Value("${booking.payment-timeout-minutes:5}")
     private int paymentTimeoutMinutes;
@@ -57,8 +60,13 @@ public class BookingServiceImpl implements BookingService {
         }
 
         User user = userRepo.findByEmail(userEmail).orElseThrow();
-        BigDecimal price = priceRuleService.getTotalPrice(
+        BigDecimal fieldPrice = priceRuleService.getTotalPrice(
                 field.getId(), req.getBookingDate(), req.getStartTime(), req.getEndTime());
+        List<BookingExtraService> selectedExtras = buildBookingExtraItems(req, field);
+        BigDecimal extraPrice = selectedExtras.stream()
+            .map(BookingExtraService::getSubtotal)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalPrice = fieldPrice.add(extraPrice);
 
         Booking booking = Booking.builder()
                 .bookingCode(generateCode())
@@ -67,11 +75,13 @@ public class BookingServiceImpl implements BookingService {
                 .bookingDate(req.getBookingDate())
                 .startTime(req.getStartTime())
                 .endTime(req.getEndTime())
-                .totalPrice(price)
+                .totalPrice(totalPrice)
                 .status(BookingStatus.PENDING)
                 .note(req.getNote())
                 .build();
 
+        selectedExtras.forEach(item -> item.setBooking(booking));
+        booking.getExtraServices().addAll(selectedExtras);
         Booking saved = bookingRepo.save(booking);
 
         // Thông báo cho USER
@@ -102,6 +112,7 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByUser(String userEmail) {
         User user = userRepo.findByEmail(userEmail).orElseThrow();
         return bookingRepo.findByUserOrderByCreatedAtDesc(user)
@@ -109,12 +120,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByOwner(String ownerEmail) {
         return bookingRepo.findByOwnerEmail(ownerEmail)
                 .stream().map(BookingResponse::from).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookingResponse getBookingByCode(String code, String requestorEmail) {
         Booking b = bookingRepo.findByBookingCode(code).orElseThrow();
         boolean isUser  = b.getUser().getEmail().equals(requestorEmail);
@@ -190,6 +203,61 @@ public class BookingServiceImpl implements BookingService {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String rand = String.format("%04d", new Random().nextInt(10000));
         return "BK" + date + rand;
+    }
+
+    private List<BookingExtraService> buildBookingExtraItems(BookingRequest req, Field field) {
+        if (req.getExtraItems() == null || req.getExtraItems().isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Integer> quantityByService = new LinkedHashMap<>();
+        for (BookingExtraItemRequest item : req.getExtraItems()) {
+            if (item == null || item.getServiceId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
+                continue;
+            }
+            quantityByService.merge(item.getServiceId(), item.getQuantity(), Integer::sum);
+        }
+
+        if (quantityByService.isEmpty()) {
+            return List.of();
+        }
+
+        List<ExtraService> services = extraServiceService.findAllByIds(new ArrayList<>(quantityByService.keySet()));
+        Map<Long, ExtraService> serviceMap = services.stream()
+                .collect(Collectors.toMap(ExtraService::getId, svc -> svc));
+
+        List<BookingExtraService> results = new ArrayList<>();
+        for (Map.Entry<Long, Integer> entry : quantityByService.entrySet()) {
+            ExtraService service = serviceMap.get(entry.getKey());
+            if (service == null) {
+                throw new IllegalArgumentException("Dịch vụ đi kèm không tồn tại");
+            }
+            if (!service.getFacility().getId().equals(field.getFacility().getId())) {
+                throw new IllegalArgumentException("Dịch vụ đi kèm không thuộc cơ sở của sân đã chọn");
+            }
+            if (service.getAppliesToSportType() != null && service.getAppliesToSportType() != field.getSportType()) {
+                throw new IllegalArgumentException("Dịch vụ '" + service.getName() + "' không áp dụng cho loại sân đã chọn");
+            }
+            if (!Boolean.TRUE.equals(service.getIsActive())) {
+                throw new IllegalArgumentException("Dịch vụ '" + service.getName() + "' hiện không hoạt động");
+            }
+
+            int quantity = entry.getValue();
+            if (service.getStock() != null && quantity > service.getStock()) {
+                throw new IllegalArgumentException("Dịch vụ '" + service.getName() + "' chỉ còn " + service.getStock() + " sản phẩm");
+            }
+
+            BigDecimal subtotal = service.getPrice().multiply(BigDecimal.valueOf(quantity));
+            results.add(BookingExtraService.builder()
+                    .extraService(service)
+                    .serviceName(service.getName())
+                    .unit(service.getUnit())
+                    .quantity(quantity)
+                    .unitPrice(service.getPrice())
+                    .subtotal(subtotal)
+                    .build());
+        }
+        return results;
     }
 
     @Override

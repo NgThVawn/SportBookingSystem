@@ -13,9 +13,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FacilityRepository extends JpaRepository<Facility, Long> {
+
+     @Query("""
+          SELECT f FROM Facility f
+          LEFT JOIN FETCH f.owner
+          LEFT JOIN FETCH f.images
+          WHERE f.id = :id
+     """)
+     Optional<Facility> findByIdWithOwner(@Param("id") Long id);
 
      @EntityGraph(attributePaths = {"images"})
     List<Facility> findByOwner(User owner);
