@@ -154,13 +154,47 @@
                         </div>
 
                         <div class="space-y-1.5">
-                            <label for="district" class="block text-sm font-bold text-slate-700">Quận/Huyện <span class="text-red-500">*</span></label>
-                            <input type="text" th:field="*{district}" id="district" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all" placeholder="VD: Quận 10" />
+                            <label class="block text-sm font-bold text-slate-700">Tỉnh/Thành phố <span class="text-red-500">*</span></label>
+
+                            <input type="hidden" th:field="*{city}" id="city" />
+
+                            <div id="city-wrapper"
+                                 class="relative w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer select-none">
+                                <span id="city-display" class="text-sm text-slate-400">Chọn Tỉnh/Thành phố</span>
+                                <span class="material-symbols-outlined text-slate-400 text-base transition-transform duration-200" id="city-arrow">expand_more</span>
+                                <ul id="city-dropdown"
+                                    class="absolute left-0 top-full mt-1 w-full bg-white rounded-xl shadow-lg z-50 overflow-y-auto hidden"
+                                    style="border: 1px solid #e2e8f0; max-height: 260px;">
+                                </ul>
+                            </div>
+
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                               th:if="${#fields.hasErrors('city')}">
+                                <span class="material-symbols-outlined text-[14px]">warning</span>
+                                <span th:errors="*{city}"></span>
+                            </p>
                         </div>
 
                         <div class="space-y-1.5">
-                            <label for="city" class="block text-sm font-bold text-slate-700">Tỉnh/Thành phố <span class="text-red-500">*</span></label>
-                            <input type="text" th:field="*{city}" id="city" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all" placeholder="VD: TP. Hồ Chí Minh" />
+                            <label class="block text-sm font-bold text-slate-700">Quận/Huyện <span class="text-red-500">*</span></label>
+
+                            <input type="hidden" th:field="*{district}" id="district" />
+
+                            <div id="district-wrapper"
+                                 class="relative w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer select-none opacity-50 pointer-events-none">
+                                <span id="district-display" class="text-sm text-slate-400">Chọn Tỉnh/TP trước</span>
+                                <span class="material-symbols-outlined text-slate-400 text-base transition-transform duration-200" id="district-arrow">expand_more</span>
+                                <ul id="district-dropdown"
+                                    class="absolute left-0 top-full mt-1 w-full bg-white rounded-xl shadow-lg z-50 overflow-y-auto hidden"
+                                    style="border: 1px solid #e2e8f0; max-height: 260px;">
+                                </ul>
+                            </div>
+
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                               th:if="${#fields.hasErrors('district')}">
+                                <span class="material-symbols-outlined text-[14px]">warning</span>
+                                <span th:errors="*{district}"></span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -239,6 +273,115 @@
             });
         }
     }
+
+(function () {
+    const cityWrapper      = document.getElementById('city-wrapper');
+    const cityDropdown     = document.getElementById('city-dropdown');
+    const cityDisplay      = document.getElementById('city-display');
+    const cityArrow        = document.getElementById('city-arrow');
+    const cityInput        = document.getElementById('city');
+
+    const districtWrapper  = document.getElementById('district-wrapper');
+    const districtDropdown = document.getElementById('district-dropdown');
+    const districtDisplay  = document.getElementById('district-display');
+    const districtArrow    = document.getElementById('district-arrow');
+    const districtInput    = document.getElementById('district');
+
+    function openDD(dd, arrow)   { dd.classList.remove('hidden'); arrow.style.transform = 'rotate(180deg)'; }
+    function closeDD(dd, arrow)  { dd.classList.add('hidden');    arrow.style.transform = 'rotate(0deg)'; }
+    function toggleDD(dd, arrow) { dd.classList.contains('hidden') ? openDD(dd, arrow) : closeDD(dd, arrow); }
+
+    function setCity(name) {
+        cityDisplay.textContent = name;
+        cityDisplay.classList.remove('text-slate-400');
+        cityDisplay.classList.add('text-slate-800', 'font-semibold');
+        cityInput.value = name;
+    }
+
+    function setDistrict(name) {
+        districtDisplay.textContent = name;
+        districtDisplay.classList.remove('text-slate-400');
+        districtDisplay.classList.add('text-slate-800', 'font-semibold');
+        districtInput.value = name;
+    }
+
+    function buildCityList(provinces) {
+        cityDropdown.innerHTML = '';
+        provinces.forEach(p => {
+            const li = document.createElement('li');
+            li.className = 'px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors';
+            li.textContent = p.name;
+            li.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                setCity(p.name);
+                closeDD(cityDropdown, cityArrow);
+
+                // Reset district
+                districtInput.value = '';
+                districtDisplay.textContent = 'Đang tải...';
+                districtDisplay.classList.add('text-slate-400');
+                districtDisplay.classList.remove('text-slate-800', 'font-semibold');
+                districtWrapper.classList.remove('opacity-50', 'pointer-events-none');
+                loadDistricts(p.code);
+            });
+            cityDropdown.appendChild(li);
+        });
+    }
+
+    function loadDistricts(code, preselectDistrict) {
+        districtDropdown.innerHTML = '';
+        fetch('https://provinces.open-api.vn/api/p/' + code + '?depth=2')
+            .then(r => r.json())
+            .then(data => {
+                districtDisplay.textContent = 'Chọn Quận/Huyện';
+                districtDisplay.classList.add('text-slate-400');
+                districtWrapper.classList.remove('opacity-50', 'pointer-events-none');
+
+                data.districts.forEach(d => {
+                    const li = document.createElement('li');
+                    li.className = 'px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors';
+                    li.textContent = d.name;
+                    li.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        setDistrict(d.name);
+                        closeDD(districtDropdown, districtArrow);
+                    });
+                    districtDropdown.appendChild(li);
+                });
+
+                // Edit mode: tự chọn lại quận cũ
+                if (preselectDistrict) {
+                    setDistrict(preselectDistrict);
+                }
+            });
+    }
+
+    // Load tỉnh thành, sau đó xử lý edit mode nếu có giá trị cũ
+    fetch('https://provinces.open-api.vn/api/?depth=1')
+        .then(r => r.json())
+        .then(provinces => {
+            buildCityList(provinces);
+
+            const existingCity     = cityInput.value.trim();
+            const existingDistrict = districtInput.value.trim();
+
+            if (existingCity) {
+                setCity(existingCity);
+                const match = provinces.find(p => p.name === existingCity);
+                if (match) {
+                    loadDistricts(match.code, existingDistrict || null);
+                }
+            }
+        });
+
+    cityWrapper.addEventListener('click',     () => toggleDD(cityDropdown, cityArrow));
+    districtWrapper.addEventListener('click', () => toggleDD(districtDropdown, districtArrow));
+
+    document.addEventListener('click', (e) => {
+        if (!cityWrapper.contains(e.target))     closeDD(cityDropdown, cityArrow);
+        if (!districtWrapper.contains(e.target)) closeDD(districtDropdown, districtArrow);
+    });
+})();
 </script>
 
 </body>

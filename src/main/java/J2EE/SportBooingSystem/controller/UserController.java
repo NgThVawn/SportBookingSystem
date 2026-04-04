@@ -9,6 +9,7 @@ import J2EE.SportBooingSystem.repository.BookingRepository;
 import J2EE.SportBooingSystem.repository.FavoriteRepository;
 import J2EE.SportBooingSystem.security.SecurityUtils;
 import J2EE.SportBooingSystem.service.UserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -173,5 +174,10 @@ public class UserController {
 
         // Trỏ đến file HTML: templates/profile/favorites.html
         return "profile/favorites";
+    }
+    @GetMapping("/notifications")
+    @PreAuthorize("isAuthenticated()")
+    public String notificationsPage() {
+        return "notifications/list";
     }
 }

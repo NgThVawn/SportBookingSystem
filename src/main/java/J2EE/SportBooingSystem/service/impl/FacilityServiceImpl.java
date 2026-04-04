@@ -5,11 +5,15 @@ import J2EE.SportBooingSystem.entity.Facility;
 import J2EE.SportBooingSystem.entity.FacilityImage;
 import J2EE.SportBooingSystem.entity.User;
 import J2EE.SportBooingSystem.enums.FacilityStatus;
+import J2EE.SportBooingSystem.enums.NotificationType;
+import J2EE.SportBooingSystem.enums.RoleName;
 import J2EE.SportBooingSystem.enums.SportType;
 import J2EE.SportBooingSystem.exception.ResourceNotFoundException;
 import J2EE.SportBooingSystem.repository.FacilityRepository;
+import J2EE.SportBooingSystem.repository.UserRepository;
 import J2EE.SportBooingSystem.service.FacilityService;
 import J2EE.SportBooingSystem.service.FileStorageService;
+import J2EE.SportBooingSystem.service.NotificationService;
 import J2EE.SportBooingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +33,8 @@ public class FacilityServiceImpl implements FacilityService {
     private final FacilityRepository facilityRepository;
     private final UserService userService;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Override
     public Facility create(FacilityRequest req, String ownerEmail) {
@@ -51,7 +57,20 @@ public class FacilityServiceImpl implements FacilityService {
             }
         }
 
-        return facilityRepository.save(facility);
+        Facility saved = facilityRepository.save(facility);
+        userRepository.findAll().stream()
+                .filter(u -> u.getRoles().stream()
+                        .anyMatch(r -> r.getName() == RoleName.ADMIN || r.getName() == RoleName.SUPER_ADMIN))
+                .forEach(admin -> notificationService.send(
+                        admin,
+                        NotificationType.FACILITY_PENDING,
+                        "Cơ sở mới chờ duyệt",
+                        "Chủ sân " + owner.getFullName() + " đã đăng ký cơ sở \""
+                                + saved.getName() + "\" tại " + saved.getCity() + ". Cần duyệt.",
+                        "/admin/facilities"
+                ));
+
+        return saved;
     }
 
     @Override
