@@ -175,4 +175,13 @@ public class AdminController {
         }
         return "redirect:/admin/users";
     }
+    @GetMapping("/notifications")
+    @PreAuthorize("isAuthenticated()") // Hoặc hasRole('ADMIN')
+    public String adminNotificationsPage(Model model) {
+        
+        // Gắn cờ báo hiệu đây là giao diện của Admin
+        model.addAttribute("isAdmin", true); 
+        
+        return "notifications/list"; 
+    }
 }

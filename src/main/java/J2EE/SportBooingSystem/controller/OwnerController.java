@@ -935,10 +935,13 @@ public class OwnerController {
         .count();
     }
 
-    @GetMapping("/notifications")
+  @GetMapping("/notifications")
     @PreAuthorize("isAuthenticated()")
-    public String notificationsPage() {
-        return "notifications/list";
+    public String notificationsPage(Model model) {
+
+        model.addAttribute("isOwner", true); 
+        
+        return "notifications/list"; 
     }
 
 }
