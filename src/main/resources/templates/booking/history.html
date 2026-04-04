@@ -130,7 +130,7 @@
                                            th:href="@{/payment/checkout(bookingCode=${b.bookingCode})}"
                                            class="flex-1 sm:flex-none px-6 py-3 text-xs font-bold bg-[#005BAA] text-white rounded-xl hover:bg-[#004785] transition-colors uppercase tracking-widest font-label text-decoration-none shadow-lg shadow-[#005BAA]/30 flex items-center justify-center">Thanh toán ngay</a>
 
-                                        <a th:unless="${b.status.name() == 'PENDING' || b.status.name() == 'CANCEL_PENDING'}"
+                                        <a th:unless="${b.status.name() == 'PENDING' || b.status.name() == 'CANCEL_PENDING' || b.status.name() == 'CONFIRMED'}"
                                            th:href="@{/facilities}"
                                            class="flex-1 sm:flex-none px-6 py-3 text-xs font-bold bg-primary text-white rounded-xl hover:bg-orange-700 transition-colors uppercase tracking-widest font-label text-decoration-none shadow-lg shadow-primary/30 flex items-center justify-center">Đặt lại sân</a>
                                     </div>

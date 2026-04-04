@@ -12,11 +12,11 @@ import java.util.Optional;
 @Repository
 public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
-    List<Favorite> findByUser(User user);
-
     Optional<Favorite> findByUserAndFacility(User user, Facility facility);
 
     boolean existsByUserAndFacility(User user, Facility facility);
+
+    List<Favorite> findByUser(User user);
 
     void deleteByUserAndFacility(User user, Facility facility);
 }

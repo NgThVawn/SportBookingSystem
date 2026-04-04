@@ -1,6 +1,7 @@
 package J2EE.SportBooingSystem.controller;
 
 import J2EE.SportBooingSystem.entity.Facility;
+import J2EE.SportBooingSystem.entity.User;
 import J2EE.SportBooingSystem.enums.SportType;
 import J2EE.SportBooingSystem.repository.FavoriteRepository;
 import J2EE.SportBooingSystem.repository.UserRepository;
@@ -29,7 +30,6 @@ public class FacilityController {
 
     private final FacilityService facilityService;
     private final FieldService fieldService;
-
     private final ExtraServiceService extraServiceService;
     private final FavoriteRepository favoriteRepository;
     private final UserRepository userRepository;
@@ -43,16 +43,17 @@ public class FacilityController {
             @AuthenticationPrincipal UserDetails userDetails,
             Model model) {
 
-        Page<Facility> facilities = facilityService.search(city, sport, name,
-            PageRequest.of(page, 9));
+        Page<Facility> facilities = facilityService.search(city, sport, name, PageRequest.of(page, 9));
 
+        // Lấy danh sách ID các sân đã yêu thích để tô đỏ trái tim ở màn hình danh sách
         Set<Long> favIds = Collections.emptySet();
         if (userDetails != null) {
-            favIds = userRepository.findByEmail(userDetails.getUsername())
-                .map(u -> favoriteRepository.findByUser(u).stream()
-                    .map(f -> f.getFacility().getId())
-                    .collect(Collectors.toSet()))
-                .orElse(Collections.emptySet());
+            User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+            if (user != null) {
+                favIds = favoriteRepository.findByUser(user).stream()
+                        .map(f -> f.getFacility().getId())
+                        .collect(Collectors.toSet());
+            }
         }
 
         model.addAttribute("facilities", facilities);
@@ -61,6 +62,7 @@ public class FacilityController {
         model.addAttribute("selectedSport", sport);
         model.addAttribute("searchName", name);
         model.addAttribute("favoriteFacilityIds", favIds);
+
         return "facilities/list";
     }
 
@@ -75,7 +77,6 @@ public class FacilityController {
         Facility facility = facilityService.findById(id);
         model.addAttribute("facility", facility);
         model.addAttribute("fields", fieldService.findByFacility(id));
-
         model.addAttribute("services", extraServiceService.findByFacility(id));
 
         LocalDate selectedDate = (date != null) ? LocalDate.parse(date) : LocalDate.now();
@@ -83,12 +84,16 @@ public class FacilityController {
         model.addAttribute("selectedFieldId", fieldId);
         model.addAttribute("today", LocalDate.now());
 
+        // Kiểm tra xem User đã thả tim sân này chưa
+        boolean isFavorite = false;
         if (userDetails != null) {
-            userRepository.findByEmail(userDetails.getUsername()).ifPresent(user -> {
-                model.addAttribute("isFavorite",
-                    favoriteRepository.existsByUserAndFacility(user, facility));
-            });
+            User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+            if (user != null) {
+                isFavorite = favoriteRepository.existsByUserAndFacility(user, facility);
+            }
         }
+        model.addAttribute("isFavorite", isFavorite);
+
         return "facilities/detail";
     }
 }
