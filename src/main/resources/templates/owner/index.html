@@ -235,7 +235,7 @@
                                         <input type="hidden" name="reason" value="Xóa đơn từ dashboard owner">
                                         <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
                                             <span class="material-symbols-outlined text-[18px]">close</span>
-                                            Xóa đơn
+                                            Hủy đơn
                                         </button>
                                     </form>
                                 </div>
@@ -348,9 +348,9 @@
             targetForm = form;
 
             if (actionType === 'delete') {
-                modalTitle.textContent = 'Xác nhận xóa đơn';
-                modalMessage.textContent = 'Đơn đặt sân sẽ bị xóa khỏi danh sách xử lý. Bạn có chắc chắn muốn tiếp tục?';
-                submitBtn.textContent = 'Xóa đơn';
+                modalTitle.textContent = 'Xác nhận hủy đơn';
+                modalMessage.textContent = 'Đơn đặt sân sẽ bị hủy. Bạn có chắc chắn muốn tiếp tục?';
+                submitBtn.textContent = 'Hủy đơn';
                 submitBtn.className = 'rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700 transition-colors';
                 modalIconWrap.className = 'mt-1 h-11 w-11 rounded-xl flex items-center justify-center bg-red-100 text-red-700';
                 if (modalIcon) modalIcon.textContent = 'delete';
