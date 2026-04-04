@@ -23,11 +23,11 @@
             <span>Dashboard</span>
         </a>
 
-        <a th:href="@{/owner/calendar}"
+        <a th:href="@{/owner/notifications}"
            class="mx-2 my-1 px-4 py-3 flex items-center gap-3 font-['Inter'] text-sm font-medium hover:translate-x-1 transition-all duration-300 rounded-lg text-decoration-none"
-           th:classappend="${activeTab == 'calendar'} ? 'bg-orange-600 text-white shadow-[0_10px_20px_rgba(176,47,0,0.3)]' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'">
-            <span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
-            <span>Lịch đặt sân</span>
+           th:classappend="${activeTab == 'notifications'} ? 'bg-orange-600 text-white shadow-[0_10px_20px_rgba(176,47,0,0.3)]' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'">
+            <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+            <span>Thông báo</span>
         </a>
 
         <a th:href="@{/owner/bookings}"
