@@ -2,6 +2,7 @@ package J2EE.SportBooingSystem.controller;
 
 import J2EE.SportBooingSystem.dto.request.RegisterRequest;
 import J2EE.SportBooingSystem.service.UserService;
+import jakarta.servlet.http.HttpServletRequest; // Thêm thư viện này
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -21,12 +22,15 @@ public class AuthController {
     private final UserService userService;
 
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(HttpServletRequest request) {
+        request.getSession(true); 
         return "auth/login";
     }
 
     @GetMapping("/register")
-    public String registerPage(Model model) {
+    public String registerPage(Model model, HttpServletRequest request) {
+        request.getSession(true); 
+        
         model.addAttribute("registerRequest", new RegisterRequest());
         return "auth/register";
     }
