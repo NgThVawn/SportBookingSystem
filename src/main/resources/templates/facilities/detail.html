@@ -115,14 +115,28 @@
 
             <section class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-sm">
                 <h2 class="font-headline text-xl font-bold mb-4 flex items-center gap-3 text-slate-900">
-                    <span class="w-1.5 h-6 bg-primary rounded"></span> Thông tin sân
+                    <span class="w-1.5 h-6 bg-primary rounded"></span> Thông tin cơ sở
                 </h2>
                 <p class="text-slate-600 text-sm leading-relaxed mb-6" th:text="${facility.description} ?: 'Tận hưởng trải nghiệm thi đấu chuyên nghiệp tại hệ thống sân của chúng tôi. Kích thước sân tiêu chuẩn giúp những pha bóng trở nên mượt mà hơn.'"></p>
 
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" th:if="${not #lists.isEmpty(services)}">
-                    <div th:each="svc : ${services}" class="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
-                        <span class="material-symbols-outlined text-blue-500 text-[18px]">wifi</span>
-                        <span class="font-body text-xs font-semibold text-slate-700" th:text="${svc.name}">Wifi miễn phí</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" th:if="${not #lists.isEmpty(services)}">
+                    <div th:each="svc : ${services}" th:with="svcName=${#strings.toLowerCase(svc.name)}"
+                         class="bg-[#efeff3] rounded-2xl px-5 py-4 border border-[#e6e6ef] flex items-center gap-3 hover:bg-[#e9e9f1] transition-colors">
+
+                        <span class="material-symbols-outlined text-[24px] text-indigo-600 shrink-0"
+                              th:text="${#strings.contains(svcName,'wifi') ? 'wifi' :
+                                        (#strings.contains(svcName,'xe') or #strings.contains(svcName,'parking')) ? 'local_parking' :
+                                        (#strings.contains(svcName,'nước') or #strings.contains(svcName,'nuoc') or #strings.contains(svcName,'drink')) ? 'water_drop' :
+                                        (#strings.contains(svcName,'căng tin') or #strings.contains(svcName,'can tin') or #strings.contains(svcName,'đồ ăn') or #strings.contains(svcName,'do an') or #strings.contains(svcName,'food')) ? 'restaurant' :
+                                        (#strings.contains(svcName,'phòng thay đồ') or #strings.contains(svcName,'phong thay do') or #strings.contains(svcName,'locker')) ? 'checkroom' :
+                                        (#strings.contains(svcName,'y tế') or #strings.contains(svcName,'y te') or #strings.contains(svcName,'sơ cấp') or #strings.contains(svcName,'so cap') or #strings.contains(svcName,'first aid')) ? 'medical_services' :
+                                        (#strings.contains(svcName,'cầu') or #strings.contains(svcName,'cau') or #strings.contains(svcName,'badminton')) ? 'sports_tennis' :
+                                        (#strings.contains(svcName,'bóng') or #strings.contains(svcName,'bong') or #strings.contains(svcName,'ball')) ? 'sports_soccer' : 'category'}">category</span>
+
+                        <div class="min-w-0">
+                            <p class="m-0 text-lg leading-snug font-extrabold text-slate-900" th:text="${svc.name}">Wifi miễn phí</p>
+                            <p class="m-0 mt-1 text-xs font-bold text-indigo-700" th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + 'VND/' + svc.unit}">25.000VND/trái</p>
+                        </div>
                     </div>
                 </div>
             </section>

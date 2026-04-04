@@ -1,10 +1,13 @@
 package J2EE.SportBooingSystem.dto.request;
 
 import jakarta.validation.constraints.*;
+import jakarta.validation.Valid;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class BookingRequest {
@@ -27,4 +30,6 @@ public class BookingRequest {
 
     @Size(max = 500)
     private String note;
+
+    private List<@Valid BookingExtraItemRequest> extraItems = new ArrayList<>();
 }

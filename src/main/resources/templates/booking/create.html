@@ -61,6 +61,51 @@
                               placeholder="Nhập yêu cầu đặc biệt của bạn (VD: Xin bóng mới, cần áo pitch...)"></textarea>
                 </div>
 
+                <div class="rounded-2xl border border-slate-200 overflow-hidden" th:if="${not #lists.isEmpty(services)}">
+                    <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                        <p class="m-0 text-xs font-bold uppercase tracking-widest text-slate-600">Dịch vụ đi kèm</p>
+                        <span class="text-[11px] text-slate-500">Chọn để cộng vào đơn đặt sân</span>
+                    </div>
+
+                    <div class="divide-y divide-slate-100">
+                        <div th:each="svc, stat : ${services}" class="p-4 flex items-center justify-between gap-3">
+                            <div>
+                                <p class="m-0 font-bold text-slate-800 text-sm" th:text="${svc.name}">Nước suối</p>
+                                <p class="m-0 text-xs text-slate-500" th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + 'đ / ' + svc.unit}"></p>
+                                <p class="m-0 text-[11px] text-slate-400" th:if="${svc.stock != null}" th:text="${'Còn ' + svc.stock + ' ' + svc.unit}"></p>
+                            </div>
+                            <div class="w-28">
+                                <input type="hidden"
+                                       th:name="${'extraItems[' + stat.index + '].serviceId'}"
+                                       th:value="${svc.id}">
+                                <input type="number" min="0"
+                                       th:attr="max=${svc.stock != null ? svc.stock : null}"
+                                       class="extra-qty w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700"
+                                       th:name="${'extraItems[' + stat.index + '].quantity'}"
+                                       value="0"
+                                       th:data-service-id="${svc.id}"
+                                       th:data-service-name="${svc.name}"
+                                       th:data-service-price="${svc.price}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl bg-slate-900 text-white p-5 space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <span>Tiền sân</span>
+                        <span class="font-bold" id="fieldPriceText" th:data-field-price="${fieldPrice}" th:text="${#numbers.formatDecimal(fieldPrice,0,'COMMA',0,'POINT') + 'đ'}">0đ</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span>Dịch vụ đi kèm</span>
+                        <span class="font-bold text-cyan-300" id="extraPriceText">0đ</span>
+                    </div>
+                    <div class="pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span class="text-xs uppercase tracking-widest text-slate-400">Tổng tạm tính</span>
+                        <span class="text-2xl font-black text-orange-400" id="grandTotalText">0đ</span>
+                    </div>
+                </div>
+
                 <div class="space-y-3 pt-4 border-t border-slate-100">
                     <button type="submit" class="w-full flex items-center justify-center gap-2 py-4 bg-primary hover:bg-orange-700 text-white font-headline font-black text-lg uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/30 active:scale-95 border-none cursor-pointer">
                         <span class="material-symbols-outlined text-[24px]">check_circle</span>
@@ -76,6 +121,41 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const qtyInputs = document.querySelectorAll('.extra-qty');
+            const fieldPriceEl = document.getElementById('fieldPriceText');
+            const extraPriceText = document.getElementById('extraPriceText');
+            const grandTotalText = document.getElementById('grandTotalText');
+            const basePrice = Number(fieldPriceEl?.getAttribute('data-field-price') || 0);
+
+            function fmt(v) {
+                return Number(v || 0).toLocaleString('vi-VN') + 'đ';
+            }
+
+            function updateTotals() {
+                let extraTotal = 0;
+                qtyInputs.forEach((input) => {
+                    const qty = Number(input.value || 0);
+                    if (qty <= 0) {
+                        return;
+                    }
+                    const price = Number(input.getAttribute('data-service-price') || 0);
+                    extraTotal += qty * price;
+                });
+
+                extraPriceText.innerText = fmt(extraTotal);
+                grandTotalText.innerText = fmt(basePrice + extraTotal);
+            }
+
+            qtyInputs.forEach(input => {
+                input.addEventListener('input', updateTotals);
+                input.addEventListener('change', updateTotals);
+            });
+            updateTotals();
+        });
+    </script>
 </th:block>
+
 </body>
 </html>

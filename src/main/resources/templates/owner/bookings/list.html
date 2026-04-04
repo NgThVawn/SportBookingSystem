@@ -186,6 +186,10 @@
                         <td class="px-5 py-4">
                             <span th:if="${b.note != null && !b.note.isEmpty()}" class="text-slate-500 text-sm" th:text="${b.note}"></span>
                             <span th:unless="${b.note != null && !b.note.isEmpty()}" class="text-slate-400">—</span>
+                            <div th:if="${b.extraItems != null and !#lists.isEmpty(b.extraItems)}" class="mt-2 text-xs text-slate-500">
+                                <span class="font-semibold">Dịch vụ:</span>
+                                <span th:text="${#strings.listJoin(b.extraItems.![serviceName + ' x' + quantity], ', ')}"></span>
+                            </div>
                         </td>
 
                         <td class="px-5 py-4">

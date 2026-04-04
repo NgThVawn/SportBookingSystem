@@ -4,7 +4,10 @@ import J2EE.SportBooingSystem.dto.request.BookingRequest;
 import J2EE.SportBooingSystem.dto.response.BookingResponse;
 import J2EE.SportBooingSystem.dto.response.PriceCalculationResponse;
 import J2EE.SportBooingSystem.entity.Booking;
+import J2EE.SportBooingSystem.entity.Field;
 import J2EE.SportBooingSystem.service.BookingService;
+import J2EE.SportBooingSystem.service.ExtraServiceService;
+import J2EE.SportBooingSystem.service.FieldService;
 import J2EE.SportBooingSystem.service.PriceRuleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Controller
@@ -27,6 +33,8 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final PriceRuleService priceRuleService;
+    private final FieldService fieldService;
+    private final ExtraServiceService extraServiceService;
 
     /** Trang lịch sử đặt sân của user */
     @GetMapping
@@ -46,10 +54,10 @@ public class BookingController {
                                  @RequestParam(required = false) String start,
                                  @RequestParam(required = false) String end,
                                  Model model) {
-        model.addAttribute("fieldId", fieldId);
-        model.addAttribute("date", date);
-        model.addAttribute("start", start);
-        model.addAttribute("end", end);
+        LocalDate bookingDate = (date != null && !date.isBlank()) ? LocalDate.parse(date) : null;
+        LocalTime startTime = (start != null && !start.isBlank()) ? LocalTime.parse(start) : null;
+        LocalTime endTime = (end != null && !end.isBlank()) ? LocalTime.parse(end) : null;
+        populateBookingPageModel(model, fieldId, bookingDate, startTime, endTime);
         model.addAttribute("bookingRequest", new BookingRequest());
         return "booking/create";
     }
@@ -70,7 +78,7 @@ public class BookingController {
                                 RedirectAttributes ra,
                                 Model model) {
         if (br.hasErrors()) {
-            model.addAttribute("fieldId", req.getFieldId());
+            populateBookingPageModel(model, req.getFieldId(), req.getBookingDate(), req.getStartTime(), req.getEndTime());
             return "booking/create";
         }
         try {
@@ -79,9 +87,30 @@ public class BookingController {
             return "redirect:/payment/checkout?bookingCode=" + b.getBookingCode();
         }  catch (Exception e) {
             model.addAttribute("error", e.getMessage());
-            model.addAttribute("fieldId", req.getFieldId());
+            populateBookingPageModel(model, req.getFieldId(), req.getBookingDate(), req.getStartTime(), req.getEndTime());
             return "booking/create";
         }
+    }
+
+    private void populateBookingPageModel(Model model,
+                                          Long fieldId,
+                                          LocalDate bookingDate,
+                                          LocalTime startTime,
+                                          LocalTime endTime) {
+        Field field = fieldService.findById(fieldId);
+        BigDecimal fieldPrice = BigDecimal.ZERO;
+        if (bookingDate != null && startTime != null && endTime != null) {
+            fieldPrice = priceRuleService.getTotalPrice(fieldId, bookingDate, startTime, endTime);
+        }
+
+        model.addAttribute("fieldId", fieldId);
+        model.addAttribute("field", field);
+        model.addAttribute("facility", field.getFacility());
+        model.addAttribute("date", bookingDate);
+        model.addAttribute("start", startTime);
+        model.addAttribute("end", endTime);
+        model.addAttribute("fieldPrice", fieldPrice);
+        model.addAttribute("services", extraServiceService.findByFacility(field.getFacility().getId()));
     }
 
    /** Hủy booking (User) */

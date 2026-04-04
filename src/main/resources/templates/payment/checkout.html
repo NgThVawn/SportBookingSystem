@@ -54,6 +54,16 @@
                     </div>
                 </div>
 
+                <div th:if="${booking.extraItems != null and !#lists.isEmpty(booking.extraItems)}" class="mb-6 border border-white/10 rounded-xl p-4 bg-white/5">
+                    <p class="text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-3">Dịch vụ đi kèm</p>
+                    <div class="space-y-2 text-xs">
+                        <div th:each="item : ${booking.extraItems}" class="flex items-center justify-between text-slate-200">
+                            <span th:text="${item.serviceName + ' x' + item.quantity + ' (' + item.unit + ')'}">Nước x2</span>
+                            <span class="font-bold text-white" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT') + '₫'}">0₫</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="relative flex items-center justify-center mb-6">
                     <div class="absolute left-[-40px] w-6 h-6 bg-white rounded-full"></div>
                     <div class="w-full border-t-2 border-dashed border-white/20"></div>

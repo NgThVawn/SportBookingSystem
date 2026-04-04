@@ -6,6 +6,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collections;
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class BookingResponse {
@@ -23,6 +25,20 @@ public class BookingResponse {
     private BigDecimal totalPrice;
     private BookingStatus status;
     private String note;
+    private List<ExtraItem> extraItems;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ExtraItem {
+        private String serviceName;
+        private Integer quantity;
+        private String unit;
+        private BigDecimal unitPrice;
+        private BigDecimal subtotal;
+    }
 
     public static BookingResponse from(Booking b) {
         return BookingResponse.builder()
@@ -40,6 +56,16 @@ public class BookingResponse {
                 .totalPrice(b.getTotalPrice())
                 .status(b.getStatus())
                 .note(b.getNote())
+                .extraItems(b.getExtraServices() == null ? Collections.emptyList() :
+                    b.getExtraServices().stream()
+                        .map(item -> ExtraItem.builder()
+                            .serviceName(item.getServiceName())
+                            .quantity(item.getQuantity())
+                            .unit(item.getUnit())
+                            .unitPrice(item.getUnitPrice())
+                            .subtotal(item.getSubtotal())
+                            .build())
+                        .toList())
                 .build();
     }
 }
