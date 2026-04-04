@@ -9,6 +9,7 @@ import J2EE.SportBooingSystem.service.ExtraServiceService;
 import J2EE.SportBooingSystem.service.FacilityService;
 import J2EE.SportBooingSystem.service.FieldService;
 
+import J2EE.SportBooingSystem.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,34 +34,40 @@ public class FacilityController {
     private final ExtraServiceService extraServiceService;
     private final FavoriteRepository favoriteRepository;
     private final UserRepository userRepository;
+    private final ReviewService reviewService;
 
     @GetMapping
     public String list(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) SportType sport,
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) Boolean favoritesOnly,
             @RequestParam(defaultValue = "0") int page,
             @AuthenticationPrincipal UserDetails userDetails,
             Model model) {
 
-        Page<Facility> facilities = facilityService.search(city, sport, name, PageRequest.of(page, 9));
-
-        // Lấy danh sách ID các sân đã yêu thích để tô đỏ trái tim ở màn hình danh sách
         Set<Long> favIds = Collections.emptySet();
+        Long userId = null; // Tạo sẵn biến userId
+
         if (userDetails != null) {
             User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
             if (user != null) {
+                userId = user.getId(); // Lấy ID của ông đang đăng nhập
                 favIds = favoriteRepository.findByUser(user).stream()
                         .map(f -> f.getFacility().getId())
                         .collect(Collectors.toSet());
             }
         }
 
+        // Gọi hàm search mới độ lại
+        Page<Facility> facilities = facilityService.search(city, sport, name, favoritesOnly, userId, PageRequest.of(page, 9));
+
         model.addAttribute("facilities", facilities);
         model.addAttribute("sportTypes", SportType.values());
         model.addAttribute("selectedCity", city);
         model.addAttribute("selectedSport", sport);
         model.addAttribute("searchName", name);
+        model.addAttribute("favoritesOnly", favoritesOnly);
         model.addAttribute("favoriteFacilityIds", favIds);
 
         return "facilities/list";
@@ -83,6 +90,11 @@ public class FacilityController {
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("selectedFieldId", fieldId);
         model.addAttribute("today", LocalDate.now());
+        // Truyền danh sách đánh giá xuống View
+        model.addAttribute("reviews", reviewService.getReviewsByFacility(id));
+
+        // Khởi tạo một ReviewRequest rỗng để bind với Form đánh giá
+        model.addAttribute("reviewForm", new J2EE.SportBooingSystem.dto.request.ReviewRequest());
 
         // Kiểm tra xem User đã thả tim sân này chưa
         boolean isFavorite = false;
@@ -96,4 +108,5 @@ public class FacilityController {
 
         return "facilities/detail";
     }
+
 }

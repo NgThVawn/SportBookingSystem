@@ -40,9 +40,10 @@ public interface FacilityRepository extends JpaRepository<Facility, Long> {
           AND (:sport IS NULL OR field.sportType = :sport)
           AND (:name IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', :name, '%'))
                OR LOWER(f.address) LIKE LOWER(CONCAT('%', :name, '%')))
+          AND (:isFavFilter = false OR EXISTS (SELECT 1 FROM Favorite fav WHERE fav.facility = f AND fav.user.id = :userId))
         ORDER BY f.avgRating DESC
         """,
-        countQuery = """
+            countQuery = """
         SELECT COUNT(DISTINCT f) FROM Facility f
         LEFT JOIN f.fields field
         WHERE f.status = 'OPEN'
@@ -51,11 +52,14 @@ public interface FacilityRepository extends JpaRepository<Facility, Long> {
           AND (:sport IS NULL OR field.sportType = :sport)
           AND (:name IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', :name, '%'))
                OR LOWER(f.address) LIKE LOWER(CONCAT('%', :name, '%')))
+          AND (:isFavFilter = false OR EXISTS (SELECT 1 FROM Favorite fav WHERE fav.facility = f AND fav.user.id = :userId))
         """)
     Page<Facility> searchFacilities(
             @Param("city")  String city,
             @Param("sport") SportType sport,
             @Param("name")  String name,
+            @Param("isFavFilter") boolean isFavFilter,
+            @Param("userId") Long userId,
             Pageable pageable
     );
 

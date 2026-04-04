@@ -113,4 +113,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     """)
     List<Booking> findByOwnerEmailAndDate(@Param("ownerEmail") String ownerEmail,
                                           @Param("date") LocalDate date);
+
+    // Kiểm tra xem user đã có đơn đặt sân hoàn thành tại một Facility cụ thể chưa
+    boolean existsByUserIdAndField_Facility_IdAndStatus(Long userId, Long facilityId, J2EE.SportBooingSystem.enums.BookingStatus status);
 }

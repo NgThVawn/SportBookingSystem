@@ -53,6 +53,10 @@ public class Booking {
     @Builder.Default
     private BookingStatus status = BookingStatus.PENDING;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isReviewed = false;
+
     @Column(length = 500)
     private String note;
 
