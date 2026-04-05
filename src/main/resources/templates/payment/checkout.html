@@ -133,11 +133,11 @@
                         Thanh toán VNPay
                     </button>
                 </form>
-                <form th:action="@{/payment/momo}" method="post" class="mt-2">
+                <form th:action="@{/payment/momo}" method="post" class="m-0">
                     <input type="hidden" name="bookingCode" th:value="${booking.bookingCode}">
-                    <button type="submit" class="w-full flex items-center justify-center gap-3 py-4 bg-[#005BAA] hover:bg-[#004785] text-white font-headline font-black text-lg uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#005BAA]/30 active:scale-95 border-none cursor-pointer">
-                        <img src="https://cdn.brandfetch.io/idn4xaCzTm/w/180/h/180/theme/dark/logo.png?c=1dxbfHSJFAPEGdCLU4o5B" alt="Momo Logo" class="h-6 brightness-0 invert">
-                        Thanh toán bằng MoMo
+                    <button type="submit" class="w-full flex items-center justify-center gap-3 py-4 bg-[#A50064] hover:bg-[#82004F] text-white font-headline font-black text-lg uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#A50064]/30 active:scale-95 border-none cursor-pointer">                       
+                        <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Transparent.png" alt="MoMo Logo" class="h-6 brightness-0 invert object-contain">                       
+                        Thanh toán MoMo
                     </button>
                 </form>
                 <a href="/bookings" class="w-full flex items-center justify-center py-4 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold font-label text-xs uppercase tracking-widest rounded-xl transition-colors text-decoration-none border border-slate-200">

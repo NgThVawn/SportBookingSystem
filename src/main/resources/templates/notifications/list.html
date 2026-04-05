@@ -6,20 +6,23 @@
         <title>Thông báo của bạn</title>
     </head>
     <body>
-    <section>
-        <div class="max-w-2xl mx-auto px-4 py-8">
-            <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-black font-headline text-on-surface">Thông báo (Khách)</h1>
+    <section class="min-h-screen flex flex-col bg-surface">
+        <div class="max-w-2xl mx-auto px-4 py-8 w-full flex-1 flex flex-col">
+            
+            <div class="flex items-center justify-between mb-6 shrink-0">
+                <h1 class="text-2xl font-black font-headline text-on-surface">Thông báo</h1>
                 <button onclick="markAllAsRead()" class="text-sm font-semibold text-secondary hover:underline bg-transparent border-none cursor-pointer">
                     Đánh dấu tất cả đã đọc
                 </button>
             </div>
-            <div id="notif-list" class="notif-list-container flex flex-col gap-3 min-h-[60vh]">
-                <div class="flex flex-col items-center justify-center h-40 text-slate-400 mt-10">
-                    <span class="material-symbols-outlined text-[40px] animate-spin mb-2">sync</span>
-                    <span class="text-sm font-semibold font-body uppercase tracking-widest">Đang tải...</span>
+            
+            <div id="notif-list" class="notif-list-container flex flex-col gap-3 flex-1">
+                <div class="flex flex-col items-center justify-center flex-1 text-slate-400">
+                    <span class="material-symbols-outlined text-[48px] animate-spin mb-3">sync</span>
+                    <span class="text-xs font-bold font-body uppercase tracking-[0.2em] opacity-60">Đang đồng bộ dữ liệu...</span>
                 </div>
             </div>
+
         </div>
         <th:block th:replace="~{::sharedScript}"></th:block>
     </section>
