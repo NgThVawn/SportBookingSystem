@@ -137,11 +137,11 @@
                         XÁC NHẬN ĐẶT SÂN
                     </button>
 
-                   <a th:href="${facility != null and facility.id != null} ? @{/facilities/{id}(id=${facility.id})} : @{/facilities}" 
-                        class="w-full flex items-center justify-center gap-2 py-3.5 bg-white hover:bg-slate-50 text-slate-500 font-bold rounded-xl transition-colors text-decoration-none text-sm border border-slate-200">
-                            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-                            Quay lại chọn giờ khác
-                        </a>
+                    <a th:href="${facility != null and facility.id != null} ? @{/facilities/{id}(id=${facility.id})} : @{/facilities}"
+                       class="w-full flex items-center justify-center gap-2 py-3.5 bg-white hover:bg-slate-50 text-slate-500 font-bold rounded-xl transition-colors text-decoration-none text-sm border border-slate-200">
+                        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                        Quay lại chọn giờ khác
+                    </a>
                 </div>
             </form>
 
