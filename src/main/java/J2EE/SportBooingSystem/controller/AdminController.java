@@ -38,7 +38,8 @@ public class AdminController {
     public String dashboard(Model model, @AuthenticationPrincipal UserDetails ud) {
         User currentUser = userService.findByEmail(ud.getUsername());
         List<User> users = userService.findAll();
-        List<Facility> facilities = facilityService.findAll();
+
+        // Lấy danh sách sân mới nhất cho Admin (Đúng)
         List<Facility> recentFacilities = facilityService.findAllForAdmin(
                 PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
         ).getContent();
@@ -49,19 +50,21 @@ public class AdminController {
                 .collect(Collectors.toList());
 
         long bannedUsers = users.stream().filter(user -> Boolean.TRUE.equals(user.getIsBanned())).count();
-        long pendingFacilities = facilities.stream()
-                .filter(facility -> facility.getStatus() == FacilityStatus.PENDING_APPROVAL)
-                .count();
-        long activeFacilities = facilities.stream()
-                .filter(facility -> facility.getStatus() == FacilityStatus.OPEN)
-                .count();
+
+        // 🚀 FIX LỖI: Nhờ Database đếm trực tiếp số lượng theo từng trạng thái (Siêu chuẩn & Siêu nhanh)
+        long totalFacilities = facilityRepository.count(); // Đếm tổng số sân trong DB
+        long activeFacilities = facilityRepository.countByStatus(FacilityStatus.OPEN); // Đếm sân đang hoạt động
+        long pendingFacilities = facilityRepository.countByStatus(FacilityStatus.PENDING_APPROVAL); // Đếm sân chờ duyệt
 
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("totalUsers", users.size());
         model.addAttribute("bannedUsers", bannedUsers);
-        model.addAttribute("totalFacilities", facilityService.count());
+
+        // Cập nhật lại số liệu đưa ra View
+        model.addAttribute("totalFacilities", totalFacilities);
         model.addAttribute("activeFacilities", activeFacilities);
         model.addAttribute("pendingFacilities", pendingFacilities);
+
         model.addAttribute("recentFacilities", recentFacilities);
         model.addAttribute("recentUsers", recentUsers);
 
@@ -71,13 +74,13 @@ public class AdminController {
     @GetMapping("/facilities")
     public String manageFacilities(@RequestParam(defaultValue = "0") int page, Model model) {
         var facilities = facilityService.findAllForAdmin(
-            PageRequest.of(page, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
+                PageRequest.of(page, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
         );
         model.addAttribute("facilities", facilities);
 
-        model.addAttribute("FacilityStatus", FacilityStatus.values()); 
-        
-        return "admin/facilities"; 
+        model.addAttribute("FacilityStatus", FacilityStatus.values());
+
+        return "admin/facilities";
     }
 
     @PostMapping("/facilities/{id}/status")
@@ -113,17 +116,17 @@ public class AdminController {
         }
         return "redirect:/admin/facilities";
     }
-    
+
     @GetMapping("/users")
     public String manageUsers(Model model) {
         model.addAttribute("users", userService.findAll());
-        return "admin/users"; 
+        return "admin/users";
     }
 
     @PostMapping("/users/{id}/ban")
-    public String banUser(@PathVariable Long id, 
-                          @RequestParam String reason, 
-                          @AuthenticationPrincipal UserDetails ud, // Lấy người đang thao tác
+    public String banUser(@PathVariable Long id,
+                          @RequestParam String reason,
+                          @AuthenticationPrincipal UserDetails ud,
                           RedirectAttributes ra) {
         try {
 
@@ -136,8 +139,8 @@ public class AdminController {
     }
 
     @PostMapping("/users/{id}/unban")
-    public String unbanUser(@PathVariable Long id, 
-                            @AuthenticationPrincipal UserDetails ud, // Lấy người đang thao tác
+    public String unbanUser(@PathVariable Long id,
+                            @AuthenticationPrincipal UserDetails ud,
                             RedirectAttributes ra) {
         try {
             userService.unbanUser(id, ud.getUsername());
@@ -150,10 +153,9 @@ public class AdminController {
 
     @PostMapping("/users/{id}/promote")
     public String promoteToAdmin(@PathVariable Long id,
-                                 @AuthenticationPrincipal UserDetails ud, // <-- 1. Thêm cái này để lấy thông tin người đang đăng nhập
+                                 @AuthenticationPrincipal UserDetails ud,
                                  RedirectAttributes ra) {
         try {
-            // 2. Truyền thêm ud.getUsername() (là email) vào hàm này
             userService.promoteToAdmin(id, ud.getUsername());
             ra.addFlashAttribute("successMsg", "Đã cấp quyền ADMIN cho người dùng!");
         } catch (Exception e) {
@@ -167,21 +169,19 @@ public class AdminController {
                                   @AuthenticationPrincipal UserDetails ud,
                                   RedirectAttributes ra) {
         try {
-            
+
             userService.demoteFromAdmin(id, ud.getUsername());
             ra.addFlashAttribute("successMsg", "Đã thu hồi quyền ADMIN của người dùng!");
         } catch (Exception e) {
-            ra.addFlashAttribute("errorMsg", e.getMessage()); 
+            ra.addFlashAttribute("errorMsg", e.getMessage());
         }
         return "redirect:/admin/users";
     }
+
     @GetMapping("/notifications")
-    @PreAuthorize("isAuthenticated()") // Hoặc hasRole('ADMIN')
+    @PreAuthorize("isAuthenticated()")
     public String adminNotificationsPage(Model model) {
-        
-        // Gắn cờ báo hiệu đây là giao diện của Admin
-        model.addAttribute("isAdmin", true); 
-        
-        return "notifications/list"; 
+        model.addAttribute("isAdmin", true);
+        return "notifications/list";
     }
 }
