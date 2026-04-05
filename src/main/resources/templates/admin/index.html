@@ -50,10 +50,6 @@
             <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Bảng điều khiển quản trị</h2>
         </div>
         <div class="flex items-center gap-6">
-            <div class="relative group">
-                <span class="material-symbols-outlined text-slate-500 cursor-pointer group-hover:text-primary transition-colors">notifications</span>
-                <span class="absolute -top-1 -right-1 w-2 h-2 bg-orange-600 rounded-full animate-pulse"></span>
-            </div>
             <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
                 <div class="text-right">
                     <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentUser?.fullName != null ? currentUser.fullName : #authentication.name}">Quản trị viên</p>
