@@ -21,6 +21,7 @@ public class ExtraServiceOptionResponse {
     private BigDecimal price;
     private String unit;
     private String scope;
+    private Integer stock;
     private String appliesToSportType;
 
     public static ExtraServiceOptionResponse from(ExtraService service) {
@@ -30,6 +31,7 @@ public class ExtraServiceOptionResponse {
                 .name(service.getName())
                 .price(service.getPrice())
                 .unit(service.getUnit())
+                .stock(service.getStock())
                 .scope(isCommon ? "COMMON" : "SPORT_SPECIFIC")
                 .appliesToSportType(isCommon ? null : service.getAppliesToSportType().getDisplayName())
                 .build();

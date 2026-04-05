@@ -88,7 +88,7 @@
                     <div class="space-y-1.5">
                         <label class="font-label text-sm font-semibold text-on-surface ml-1">Mật khẩu</label>
                         <div class="relative">
-                            <input type="password" th:field="*{password}" required id="reg-password"
+                            <input type="password" th:field="*{password}" required id="reg-password" minlength="8"
                                    class="w-full bg-surface-container-high border-none rounded-lg pl-4 pr-12 py-3.5 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none border-b-2 border-transparent focus:border-primary"
                                    th:errorclass="!border-red-500 !focus:border-red-500 !focus:ring-red-500/20 !bg-red-50"
                                    placeholder="••••••••"/>
@@ -96,6 +96,10 @@
                                 <span class="material-symbols-outlined text-[20px]">visibility_off</span>
                             </button>
                         </div>
+                        <p id="password-client-error" class="hidden text-red-500 text-xs mt-1.5 font-medium flex items-start gap-1">
+                            <span class="material-symbols-outlined text-[14px] mt-0.5">info</span>
+                            <span>Mật khẩu phải có ít nhất 8 ký tự</span>
+                        </p>
                         <p class="text-red-500 text-xs mt-1.5 font-medium flex items-start gap-1" th:if="${#fields.hasErrors('password')}">
                             <span class="material-symbols-outlined text-[14px] mt-0.5">info</span> <span th:errors="*{password}"></span>
                         </p>
@@ -112,6 +116,10 @@
                                 <span class="material-symbols-outlined text-[20px]">visibility_off</span>
                             </button>
                         </div>
+                        <p id="confirm-password-client-error" class="hidden text-red-500 text-xs mt-1.5 font-medium flex items-start gap-1">
+                            <span class="material-symbols-outlined text-[14px] mt-0.5">info</span>
+                            <span>Mật khẩu xác nhận không khớp</span>
+                        </p>
                         <p class="text-red-500 text-xs mt-1.5 font-medium flex items-start gap-1" th:if="${#fields.hasErrors('confirmPassword')}">
                             <span class="material-symbols-outlined text-[14px] mt-0.5">info</span> <span th:errors="*{confirmPassword}"></span>
                         </p>
@@ -192,10 +200,15 @@
                 const emailClientError = document.getElementById('email-client-error');
                 const phoneInput = document.getElementById('reg-phone');
                 const phoneClientError = document.getElementById('phone-client-error');
+                
+                // [MỚI] Biến cho Mật khẩu
+                const passwordInput = document.getElementById('reg-password');
+                const passwordClientError = document.getElementById('password-client-error');
+                const confirmPasswordInput = document.getElementById('reg-confirm-password');
+                const confirmPasswordClientError = document.getElementById('confirm-password-client-error');
 
                 function validateEmailRealtime() {
                     if (!emailInput || !emailClientError) return;
-
                     const value = emailInput.value.trim();
                     const isValidEmail = value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -203,17 +216,15 @@
                         emailClientError.classList.remove('hidden');
                         emailInput.classList.add('border-red-500', 'focus:border-red-500');
                         emailInput.setCustomValidity('Email không đúng định dạng');
-                        return;
+                    } else {
+                        emailClientError.classList.add('hidden');
+                        emailInput.classList.remove('border-red-500', 'focus:border-red-500');
+                        emailInput.setCustomValidity('');
                     }
-
-                    emailClientError.classList.add('hidden');
-                    emailInput.classList.remove('border-red-500', 'focus:border-red-500');
-                    emailInput.setCustomValidity('');
                 }
 
                 function validatePhoneRealtime() {
                     if (!phoneInput || !phoneClientError) return;
-
                     const value = phoneInput.value;
                     const isDigitsOnly = /^\d*$/.test(value);
 
@@ -221,46 +232,95 @@
                         phoneClientError.classList.remove('hidden');
                         phoneInput.classList.add('border-red-500', 'focus:border-red-500');
                         phoneInput.setCustomValidity('Số điện thoại chỉ bao gồm số');
-                        return;
+                    } else {
+                        phoneClientError.classList.add('hidden');
+                        phoneInput.classList.remove('border-red-500', 'focus:border-red-500');
+                        phoneInput.setCustomValidity('');
                     }
-
-                    phoneClientError.classList.add('hidden');
-                    phoneInput.classList.remove('border-red-500', 'focus:border-red-500');
-                    phoneInput.setCustomValidity('');
                 }
 
+                // [MỚI] Hàm kiểm tra độ dài mật khẩu (ít nhất 8 ký tự)
+                function validatePasswordRealtime() {
+                    if (!passwordInput || !passwordClientError) return;
+                    const value = passwordInput.value;
+                    const isValid = value === '' || value.length >= 8;
+
+                    if (!isValid) {
+                        passwordClientError.classList.remove('hidden');
+                        passwordInput.classList.add('border-red-500', 'focus:border-red-500');
+                        passwordInput.setCustomValidity('Mật khẩu phải có ít nhất 8 ký tự');
+                    } else {
+                        passwordClientError.classList.add('hidden');
+                        passwordInput.classList.remove('border-red-500', 'focus:border-red-500');
+                        passwordInput.setCustomValidity('');
+                    }
+                    
+                    // Nếu đổi mật khẩu chính thì phải ktra lại ô xác nhận cho đồng bộ
+                    if(confirmPasswordInput.value !== '') {
+                        validateConfirmPasswordRealtime();
+                    }
+                }
+
+                // [MỚI] Hàm kiểm tra 2 mật khẩu có khớp nhau không
+                function validateConfirmPasswordRealtime() {
+                    if (!confirmPasswordInput || !confirmPasswordClientError) return;
+                    const value = confirmPasswordInput.value;
+                    const mainPassword = passwordInput.value;
+                    const isValid = value === '' || value === mainPassword;
+
+                    if (!isValid) {
+                        confirmPasswordClientError.classList.remove('hidden');
+                        confirmPasswordInput.classList.add('border-red-500', 'focus:border-red-500');
+                        confirmPasswordInput.setCustomValidity('Mật khẩu xác nhận không khớp');
+                    } else {
+                        confirmPasswordClientError.classList.add('hidden');
+                        confirmPasswordInput.classList.remove('border-red-500', 'focus:border-red-500');
+                        confirmPasswordInput.setCustomValidity('');
+                    }
+                }
+
+                // Gắn sự kiện lắng nghe (Event Listeners)
                 if (emailInput) {
                     emailInput.addEventListener('input', validateEmailRealtime);
                     emailInput.addEventListener('blur', validateEmailRealtime);
                 }
-
                 if (phoneInput) {
                     phoneInput.addEventListener('input', validatePhoneRealtime);
                     phoneInput.addEventListener('blur', validatePhoneRealtime);
                 }
+                if (passwordInput) {
+                    passwordInput.addEventListener('input', validatePasswordRealtime);
+                    passwordInput.addEventListener('blur', validatePasswordRealtime);
+                }
+                if (confirmPasswordInput) {
+                    confirmPasswordInput.addEventListener('input', validateConfirmPasswordRealtime);
+                    confirmPasswordInput.addEventListener('blur', validateConfirmPasswordRealtime);
+                }
 
+                // Logic cho con mắt (ẩn/hiện pass)
                 toggleButtons.forEach(button => {
                     button.addEventListener('click', function() {
-                        // Lấy ID của ô input từ thuộc tính data-target
                         const targetId = this.getAttribute('data-target');
                         const inputField = document.getElementById(targetId);
                         const icon = this.querySelector('.material-symbols-outlined');
 
-                        // Kiểm tra và đảo ngược trạng thái
                         if (inputField.type === 'password') {
                             inputField.type = 'text';
-                            icon.textContent = 'visibility'; // Đổi icon thành mắt mở
-                            icon.classList.add('text-primary'); // Nổi bật màu cam khi đang hiện
+                            icon.textContent = 'visibility'; 
+                            icon.classList.add('text-primary'); 
                         } else {
                             inputField.type = 'password';
-                            icon.textContent = 'visibility_off'; // Đổi icon thành mắt nhắm
+                            icon.textContent = 'visibility_off'; 
                             icon.classList.remove('text-primary');
                         }
                     });
                 });
 
+                // Chạy kiểm tra 1 lần lúc load trang (phòng trường hợp trình duyệt tự điền)
                 validateEmailRealtime();
                 validatePhoneRealtime();
+                validatePasswordRealtime();
+                validateConfirmPasswordRealtime();
             });
         </script>
     </section>

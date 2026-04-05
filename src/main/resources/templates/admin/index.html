@@ -1,14 +1,19 @@
 <!DOCTYPE html>
-<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Arena Kinetic - Dashboard Quản Trị</title>
-    <link th:href="@{/css/app.css}" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link th:href="@{/css/app.css}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
         tailwind.config = {
@@ -35,159 +40,214 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
+
 <body class="bg-surface font-body text-on-surface antialiased">
 
-<div th:replace="~{admin/fragments/admin_sidebar :: sidebar('dashboard')}"></div>
+    <div th:replace="~{admin/fragments/admin_sidebar :: sidebar('dashboard')}"></div>
 
-<main class="ml-64 min-h-screen relative">
+    <main class="ml-64 min-h-screen relative">
 
-    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10">
-        <div class="flex items-center gap-4">
-            <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Bảng điều khiển quản trị</h2>
-        </div>
-        <div class="flex items-center gap-6">
-            <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
-                <div class="text-right">
-                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentUser?.fullName != null ? currentUser.fullName : #authentication.name}">Quản trị viên</p>
-                    <p class="text-[10px] text-slate-500 font-label tracking-wide uppercase">System Admin</p>
-                </div>
-
-                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-700 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
-                    <img th:if="${currentUser?.avatarUrl != null}" th:src="${currentUser.avatarUrl}" class="w-full h-full object-cover">
-                    <span th:unless="${currentUser?.avatarUrl != null}" th:text="${currentUser?.fullName != null ? #strings.substring(currentUser.fullName, 0, 1).toUpperCase() : 'A'}"></span>
-                </div>
+        <header
+            class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10">
+            <div class="flex items-center gap-4">
+                <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Bảng điều khiển quản trị</h2>
             </div>
-        </div>
-    </header>
-
-    <div class="p-8 space-y-8">
-
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+            <div class="flex items-center gap-6">
+                <a th:href="@{admin/notifications}" class="relative group flex items-center justify-center no-underline">
+                    <span
+                        class="material-symbols-outlined text-slate-500 cursor-pointer group-hover:text-primary transition-colors">notifications</span>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-orange-600 rounded-full animate-pulse"></span>
+                </a>
+                <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-on-surface leading-none"
+                            th:text="${currentUser?.fullName != null ? currentUser.fullName : #authentication.name}">
+                            Quản trị viên</p>
+                        <p class="text-[10px] text-slate-500 font-label tracking-wide uppercase">System Admin</p>
                     </div>
-                    <span class="flex items-center gap-1 text-orange-700 text-xs font-label bg-orange-50 px-2 py-1 rounded-full">
-                        <span class="material-symbols-outlined text-xs">trending_up</span> Live
-                    </span>
-                </div>
-                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Người dùng tổng cộng</p>
-                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${totalUsers != null ? totalUsers : '0'}">0</h3>
-            </div>
 
-            <div class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group border-b-4 border-orange-500/10">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stadium</span>
+                    <div
+                        class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-700 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
+                        <img th:if="${currentUser?.avatarUrl != null}" th:src="${currentUser.avatarUrl}"
+                            class="w-full h-full object-cover">
+                        <span th:unless="${currentUser?.avatarUrl != null}"
+                            th:text="${currentUser?.fullName != null ? #strings.substring(currentUser.fullName, 0, 1).toUpperCase() : 'A'}"></span>
                     </div>
-                    <span class="flex items-center gap-1 text-orange-700 text-xs font-label bg-orange-50 px-2 py-1 rounded-full">
-                        <span class="material-symbols-outlined text-xs">trending_up</span> <span th:text="${activeFacilities != null ? activeFacilities + ' đang hoạt động' : '0 đang hoạt động'}">0 đang hoạt động</span>
-                    </span>
                 </div>
-                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Cơ sở tổng cộng</p>
-                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${totalFacilities != null ? totalFacilities : '0'}">0</h3>
             </div>
+        </header>
 
-            <div class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pending_actions</span>
-                    </div>
-                    <span class="flex items-center gap-1 text-orange-700 text-xs font-label bg-orange-50 px-2 py-1 rounded-full">Cần xử lý</span>
-                </div>
-                <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Cơ sở chờ duyệt</p>
-                <h3 class="font-headline text-2xl font-black text-on-surface" th:text="${pendingFacilities != null ? pendingFacilities : '0'}">0</h3>
-            </div>
+        <div class="p-8 space-y-8">
 
-            <div class="bg-slate-950 p-6 rounded-xl transition-all duration-300 shadow-lg shadow-slate-950/20 group relative overflow-hidden">
-                <div class="relative z-10">
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                    class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group">
                     <div class="flex justify-between items-start mb-4">
-                        <div class="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center text-white">
-                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">block</span>
+                        <div
+                            class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700">
+                            <span class="material-symbols-outlined"
+                                style="font-variation-settings: 'FILL' 1;">group</span>
                         </div>
+                        <span
+                            class="flex items-center gap-1 text-orange-700 text-xs font-label bg-orange-50 px-2 py-1 rounded-full">
+                            <span class="material-symbols-outlined text-xs">trending_up</span> Live
+                        </span>
                     </div>
-                    <p class="text-slate-300 text-xs font-label uppercase tracking-wider mb-1">Tài khoản bị khóa</p>
-                    <h3 class="font-headline text-2xl font-black text-white" th:text="${bannedUsers != null ? bannedUsers : '0'}">0</h3>
+                    <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Người dùng tổng cộng</p>
+                    <h3 class="font-headline text-2xl font-black text-on-surface"
+                        th:text="${totalUsers != null ? totalUsers : '0'}">0</h3>
                 </div>
-                <div class="absolute -right-4 -bottom-4 opacity-10">
-                    <span class="material-symbols-outlined text-white text-8xl">admin_panel_settings</span>
-                </div>
-            </div>
-        </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <section class="lg:col-span-2 space-y-4">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-headline font-bold text-lg flex items-center gap-2">
-                        <span class="material-symbols-outlined text-orange-700">overview</span> Cơ sở mới nhất
-                    </h3>
-                    <a th:href="@{/admin/facilities}" class="text-sm font-semibold text-orange-700 hover:text-orange-800">Xem tất cả</a>
-                </div>
-                <div th:if="${recentFacilities == null or recentFacilities.isEmpty()}" class="bg-surface-container-lowest rounded-2xl p-8 text-center text-slate-500 shadow-sm">
-                    Chưa có cơ sở nào cần quản trị.
-                </div>
-                <div th:each="facility : ${recentFacilities}" class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm border border-slate-100 flex items-start justify-between gap-4">
-                    <div>
-                        <div class="flex items-center gap-3 mb-2">
-                            <h4 class="font-bold text-on-surface" th:text="${facility.name}">Tên cơ sở</h4>
-                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                                  th:classappend="${facility.status.name() == 'OPEN'} ? ' bg-orange-50 text-orange-700' : (${facility.status.name() == 'PENDING_APPROVAL'} ? ' bg-orange-50 text-orange-700' : ' bg-slate-100 text-slate-600')"
-                                  th:text="${facility.status.displayName}">Trạng thái</span>
+                <div
+                    class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group border-b-4 border-orange-500/10">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700">
+                            <span class="material-symbols-outlined"
+                                style="font-variation-settings: 'FILL' 1;">stadium</span>
                         </div>
-                        <p class="text-sm text-slate-500" th:text="${facility.city + (facility.district != null ? ' • ' + facility.district : '')}">Địa điểm</p>
+                        <span
+                            class="flex items-center gap-1 text-orange-700 text-xs font-label bg-orange-50 px-2 py-1 rounded-full">
+                            <span class="material-symbols-outlined text-xs">trending_up</span> <span
+                                th:text="${activeFacilities != null ? activeFacilities + ' đang hoạt động' : '0 đang hoạt động'}">0
+                                đang hoạt động</span>
+                        </span>
                     </div>
-                </div>
-            </section>
-
-            <section class="space-y-4">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-headline font-bold text-lg flex items-center gap-2">
-                        <span class="material-symbols-outlined text-orange-700">manage_accounts</span> Người dùng gần đây
-                    </h3>
-                    <a th:href="@{/admin/users}" class="text-sm font-semibold text-orange-700 hover:text-orange-800">Quản lý</a>
+                    <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Cơ sở tổng cộng</p>
+                    <h3 class="font-headline text-2xl font-black text-on-surface"
+                        th:text="${totalFacilities != null ? totalFacilities : '0'}">0</h3>
                 </div>
 
-                <div class="space-y-3">
-
-                    <div th:if="${recentUsers == null or recentUsers.isEmpty()}" class="bg-surface-container-lowest p-6 rounded-xl text-center text-slate-500 shadow-sm">
-                        Chưa có người dùng nào trong hệ thống.
+                <div
+                    class="bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-on-surface/5 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700">
+                            <span class="material-symbols-outlined"
+                                style="font-variation-settings: 'FILL' 1;">pending_actions</span>
+                        </div>
+                        <span
+                            class="flex items-center gap-1 text-orange-700 text-xs font-label bg-orange-50 px-2 py-1 rounded-full">Cần
+                            xử lý</span>
                     </div>
+                    <p class="text-slate-500 text-xs font-label uppercase tracking-wider mb-1">Cơ sở chờ duyệt</p>
+                    <h3 class="font-headline text-2xl font-black text-on-surface"
+                        th:text="${pendingFacilities != null ? pendingFacilities : '0'}">0</h3>
+                </div>
 
-                    <div th:each="user : ${recentUsers}" class="bg-surface-container-lowest p-4 rounded-xl shadow-sm border-l-4 border-orange-500 group transition-all hover:scale-[1.02]">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <p class="font-bold text-sm" th:text="${user.fullName}">Tên người dùng</p>
-                                <p class="text-[10px] text-slate-500 font-label" th:text="${user.email}">email@domain.com</p>
+                <div
+                    class="bg-slate-950 p-6 rounded-xl transition-all duration-300 shadow-lg shadow-slate-950/20 group relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center text-white">
+                                <span class="material-symbols-outlined"
+                                    style="font-variation-settings: 'FILL' 1;">block</span>
                             </div>
-                            <div class="px-2 py-1 bg-orange-50 text-orange-700 text-[10px] font-black rounded uppercase" th:text="${user.isBanned ? 'Banned' : 'OK'}">OK</div>
                         </div>
-
-                        <div class="flex items-center justify-between text-xs text-slate-500">
-                            <span th:text="${user.membershipLevel != null ? user.membershipLevel.name : 'MEMBER'}">MEMBER</span>
-                            <span th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'dd/MM/yyyy') : ''}">01/01/2026</span>
-                        </div>
+                        <p class="text-slate-300 text-xs font-label uppercase tracking-wider mb-1">Tài khoản bị khóa</p>
+                        <h3 class="font-headline text-2xl font-black text-white"
+                            th:text="${bannedUsers != null ? bannedUsers : '0'}">0</h3>
                     </div>
-
+                    <div class="absolute -right-4 -bottom-4 opacity-10">
+                        <span class="material-symbols-outlined text-white text-8xl">admin_panel_settings</span>
+                    </div>
                 </div>
             </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <section class="lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-headline font-bold text-lg flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-700">overview</span> Cơ sở mới nhất
+                        </h3>
+                        <a th:href="@{/admin/facilities}"
+                            class="text-sm font-semibold text-orange-700 hover:text-orange-800">Xem tất cả</a>
+                    </div>
+                    <div th:if="${recentFacilities == null or recentFacilities.isEmpty()}"
+                        class="bg-surface-container-lowest rounded-2xl p-8 text-center text-slate-500 shadow-sm">
+                        Chưa có cơ sở nào cần quản trị.
+                    </div>
+                    <div th:each="facility : ${recentFacilities}"
+                        class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm border border-slate-100 flex items-start justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <h4 class="font-bold text-on-surface" th:text="${facility.name}">Tên cơ sở</h4>
+                                <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                                    th:classappend="${facility.status.name() == 'OPEN'} ? ' bg-orange-50 text-orange-700' : (${facility.status.name() == 'PENDING_APPROVAL'} ? ' bg-orange-50 text-orange-700' : ' bg-slate-100 text-slate-600')"
+                                    th:text="${facility.status.displayName}">Trạng thái</span>
+                            </div>
+                            <p class="text-sm text-slate-500"
+                                th:text="${facility.city + (facility.district != null ? ' • ' + facility.district : '')}">
+                                Địa điểm</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-headline font-bold text-lg flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-700">manage_accounts</span> Người dùng
+                            gần đây
+                        </h3>
+                        <a th:href="@{/admin/users}"
+                            class="text-sm font-semibold text-orange-700 hover:text-orange-800">Quản lý</a>
+                    </div>
+
+                    <div class="space-y-3">
+
+                        <div th:if="${recentUsers == null or recentUsers.isEmpty()}"
+                            class="bg-surface-container-lowest p-6 rounded-xl text-center text-slate-500 shadow-sm">
+                            Chưa có người dùng nào trong hệ thống.
+                        </div>
+
+                        <div th:each="user : ${recentUsers}"
+                            class="bg-surface-container-lowest p-4 rounded-xl shadow-sm border-l-4 border-orange-500 group transition-all hover:scale-[1.02]">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <p class="font-bold text-sm" th:text="${user.fullName}">Tên người dùng</p>
+                                    <p class="text-[10px] text-slate-500 font-label" th:text="${user.email}">
+                                        email@domain.com</p>
+                                </div>
+                                <div class="px-2 py-1 bg-orange-50 text-orange-700 text-[10px] font-black rounded uppercase"
+                                    th:text="${user.isBanned ? 'Banned' : 'OK'}">OK</div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-xs text-slate-500">
+                                <span
+                                    th:text="${user.membershipLevel != null ? user.membershipLevel.name : 'MEMBER'}">MEMBER</span>
+                                <span
+                                    th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'dd/MM/yyyy') : ''}">01/01/2026</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            </div>
+
         </div>
+    </main>
 
+    <div
+        class="fixed bottom-8 right-8 z-50 flex items-center gap-3 bg-white px-4 py-3 rounded-full shadow-2xl border border-slate-100">
+        <div class="relative">
+            <span class="block w-3 h-3 bg-orange-600 rounded-full"></span>
+            <span class="absolute inset-0 w-3 h-3 bg-orange-600 rounded-full animate-ping"></span>
+        </div>
+        <p class="text-xs font-bold text-slate-800">Hệ thống đang đồng bộ dữ liệu admin</p>
     </div>
-</main>
-
-<div class="fixed bottom-8 right-8 z-50 flex items-center gap-3 bg-white px-4 py-3 rounded-full shadow-2xl border border-slate-100">
-    <div class="relative">
-        <span class="block w-3 h-3 bg-orange-600 rounded-full"></span>
-        <span class="absolute inset-0 w-3 h-3 bg-orange-600 rounded-full animate-ping"></span>
-    </div>
-    <p class="text-xs font-bold text-slate-800">Hệ thống đang đồng bộ dữ liệu admin</p>
-</div>
 
 </body>
+
 </html>

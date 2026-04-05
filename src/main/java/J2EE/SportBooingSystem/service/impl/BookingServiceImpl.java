@@ -195,8 +195,8 @@ public class BookingServiceImpl implements BookingService {
         if (!req.getStartTime().isBefore(req.getEndTime()))
             throw new IllegalArgumentException("Giờ bắt đầu phải nhỏ hơn giờ kết thúc");
         long minutes = Duration.between(req.getStartTime(), req.getEndTime()).toMinutes();
-        if (minutes < 30)
-            throw new IllegalArgumentException("Thời gian đặt sân tối thiểu là 30 phút");
+        if (minutes < 60)
+            throw new IllegalArgumentException("Thời gian đặt sân tối thiểu là 60 phút");
     }
 
     private String generateCode() {
