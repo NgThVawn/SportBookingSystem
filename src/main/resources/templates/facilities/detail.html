@@ -98,7 +98,7 @@
                 </span>
                 <span class="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-label text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg">
                     <span class="material-symbols-outlined text-[14px] text-yellow-400" style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span th:text="${facility.avgRating + ' (' + facility.reviewCount + '+ đánh giá)'}">5.0 (0 đánh giá)</span>
+                    <span th:text="${facility.avgRating != null ? #numbers.formatDecimal(facility.avgRating, 1, 'NONE', 1, 'POINT') : '0.0'}">5.0</span>
                 </span>
             </div>
             <h1 class="font-headline text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-tight mb-2" th:text="${facility.name}">TÊN SÂN ĐẤU</h1>

@@ -195,6 +195,7 @@ public class FacilityServiceImpl implements FacilityService {
             if (f.getOwner() != null) {
                 f.getOwner().getFullName(); 
             }
+            f.getImages().size();
         });
         
         return facilities;

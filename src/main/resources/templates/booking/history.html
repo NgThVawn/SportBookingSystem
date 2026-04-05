@@ -154,55 +154,6 @@
                                             Đặt lại sân
                                         </a>
 
-                                        <div th:if="${b.status.name() == 'COMPLETED' and !b.isReviewed}"
-                                             th:id="'reviewModal-' + ${b.id}"
-                                             class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity text-left">
-
-                                            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-slate-100">
-                                                <form th:action="@{/reviews}" method="post">
-                                                    <div class="p-6 md:p-8">
-                                                        <div class="flex justify-between items-center mb-5">
-                                                            <h3 class="text-2xl font-black font-headline text-slate-900 uppercase italic m-0">Đánh giá sân</h3>
-                                                            <button type="button" th:onclick="'document.getElementById(\'reviewModal-' + ${b.id} + '\').classList.add(\'hidden\')'" class="text-slate-400 hover:text-slate-800 transition-colors bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer border-none m-0 p-0">
-                                                                <span class="material-symbols-outlined text-sm">close</span>
-                                                            </button>
-                                                        </div>
-
-                                                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-                                                            <p class="text-slate-700 text-sm m-0 font-medium leading-relaxed">Bạn đang đánh giá trải nghiệm tại: <br><strong class="text-amber-700 text-base" th:text="${b.facilityName}">Tên Sân</strong></p>
-                                                        </div>
-
-                                                        <input type="hidden" name="bookingId" th:value="${b.id}">
-
-                                                        <div class="mb-4">
-                                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 font-label">Chất lượng (1-5 sao)</label>
-                                                            <select name="rating" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all bg-slate-50 font-bold text-slate-700 cursor-pointer">
-                                                                <option value="5">⭐⭐⭐⭐⭐ Tuyệt vời</option>
-                                                                <option value="4">⭐⭐⭐⭐ Tốt</option>
-                                                                <option value="3">⭐⭐⭐ Khá</option>
-                                                                <option value="2">⭐⭐ Tệ</option>
-                                                                <option value="1">⭐ Quá tệ</option>
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="mb-2">
-                                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 font-label">Bình luận của bạn</label>
-                                                            <textarea name="comment" rows="3" required
-                                                                      class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all bg-slate-50 placeholder:text-slate-400 font-medium"
-                                                                      placeholder="Hãy chia sẻ trải nghiệm của bạn về mặt sân, ánh sáng, thái độ phục vụ..."></textarea>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-slate-50 px-6 py-5 flex gap-3 justify-end border-t border-slate-100">
-                                                        <button type="button" th:onclick="'document.getElementById(\'reviewModal-' + ${b.id} + '\').classList.add(\'hidden\')'" class="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-200 transition-colors border-none cursor-pointer">Hủy</button>
-                                                        <button type="submit" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-amber-500 text-white hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/30 flex items-center gap-2 border-none cursor-pointer">
-                                                            Gửi đánh giá
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-
                                     </div>
                                 </div>
                             </div>
@@ -277,7 +228,7 @@
                 <div class="p-6 md:p-8">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="text-2xl font-black font-headline text-slate-900 uppercase italic">Xác nhận hủy sân</h3>
-                        <button type="button" onclick="closeCancelModal()" class="text-slate-400 hover:text-slate-800 transition-colors bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center">
+                        <button type="button" onclick="closeCancelModal()" class="text-slate-400 hover:text-slate-800 transition-colors bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center border-none cursor-pointer">
                             <span class="material-symbols-outlined text-sm">close</span>
                         </button>
                     </div>
@@ -298,14 +249,65 @@
                 </div>
 
                 <div class="bg-slate-50 px-6 py-5 flex gap-3 justify-end border-t border-slate-100">
-                    <button type="button" onclick="closeCancelModal()" class="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-200 transition-colors">Quay lại</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 flex items-center gap-2">
+                    <button type="button" onclick="closeCancelModal()" class="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-200 transition-colors border-none cursor-pointer">Quay lại</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 flex items-center gap-2 border-none cursor-pointer">
                         Xác nhận Hủy
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <th:block th:each="b : ${bookings}">
+        <div th:if="${b.status.name() == 'COMPLETED' and !b.isReviewed}"
+             th:id="'reviewModal-' + ${b.id}"
+             class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity text-left">
+
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-slate-100">
+                <form th:action="@{/reviews}" method="post">
+                    <div class="p-6 md:p-8">
+                        <div class="flex justify-between items-center mb-5">
+                            <h3 class="text-2xl font-black font-headline text-slate-900 uppercase italic m-0">Đánh giá sân</h3>
+                            <button type="button" th:onclick="'document.getElementById(\'reviewModal-' + ${b.id} + '\').classList.add(\'hidden\')'" class="text-slate-400 hover:text-slate-800 transition-colors bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer border-none m-0 p-0">
+                                <span class="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+                            <p class="text-slate-700 text-sm m-0 font-medium leading-relaxed">Bạn đang đánh giá trải nghiệm tại: <br><strong class="text-amber-700 text-base" th:text="${b.facilityName}">Tên Sân</strong></p>
+                        </div>
+
+                        <input type="hidden" name="bookingId" th:value="${b.id}">
+
+                        <div class="mb-4">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 font-label">Chất lượng (1-5 sao)</label>
+                            <select name="rating" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all bg-slate-50 font-bold text-slate-700 cursor-pointer">
+                                <option value="5">⭐⭐⭐⭐⭐ Tuyệt vời</option>
+                                <option value="4">⭐⭐⭐⭐ Tốt</option>
+                                <option value="3">⭐⭐⭐ Khá</option>
+                                <option value="2">⭐⭐ Tệ</option>
+                                <option value="1">⭐ Quá tệ</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 font-label">Bình luận của bạn</label>
+                            <textarea name="comment" rows="3" required
+                                      class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all bg-slate-50 placeholder:text-slate-400 font-medium"
+                                      placeholder="Hãy chia sẻ trải nghiệm của bạn về mặt sân, ánh sáng, thái độ phục vụ..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 px-6 py-5 flex gap-3 justify-end border-t border-slate-100">
+                        <button type="button" th:onclick="'document.getElementById(\'reviewModal-' + ${b.id} + '\').classList.add(\'hidden\')'" class="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-200 transition-colors border-none cursor-pointer">Hủy</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-amber-500 text-white hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/30 flex items-center gap-2 border-none cursor-pointer">
+                            Gửi đánh giá
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </th:block>
 
     <script>
         const itemsPerPage = 5;
