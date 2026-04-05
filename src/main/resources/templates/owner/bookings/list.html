@@ -47,9 +47,20 @@
             <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Quản lý Đơn đặt sân</h2>
             <p class="text-[11px] text-slate-500 font-label uppercase tracking-wider">Theo dõi, duyệt và xử lý đơn</p>
         </div>
-        <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-orange-50 text-orange-700 text-sm font-semibold">
-            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
-            <span th:text="${bookings != null ? bookings.size() + ' đơn' : '0 đơn'}">0 đơn</span>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3 px-4 py-2 rounded-full bg-orange-50 text-orange-700 text-sm font-semibold">
+                <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+                <span th:text="${bookings != null ? bookings.size() + ' đơn' : '0 đơn'}">0 đơn</span>
+            </div>
+            <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentOwner != null && currentOwner.email != null ? currentOwner.email : #authentication.name}">email@example.com</p>
+                </div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
+                    <img th:if="${currentOwner != null && currentOwner.avatarUrl != null}" th:src="${currentOwner.avatarUrl}" class="w-full h-full object-cover" alt="Avatar">
+                    <span th:unless="${currentOwner != null && currentOwner.avatarUrl != null}" th:text="${currentOwner != null && currentOwner.email != null ? #strings.substring(currentOwner.email, 0, 1).toUpperCase() : 'O'}"></span>
+                </div>
+            </div>
         </div>
     </header>
 
