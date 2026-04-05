@@ -107,6 +107,8 @@ public class OwnerController {
         req.setEmail(f.getEmail());
         req.setOpenTime(f.getOpenTime().toString());
         req.setCloseTime(f.getCloseTime().toString());
+        req.setLatitude(f.getLatitude());
+        req.setLongitude(f.getLongitude());
 
         model.addAttribute("facility", f);
         model.addAttribute("facilityRequest", req);

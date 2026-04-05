@@ -26,6 +26,8 @@
         textarea::-webkit-scrollbar { width: 8px; }
         textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="bg-surface font-body text-slate-800 antialiased">
 
@@ -196,6 +198,32 @@
                                 <span th:errors="*{district}"></span>
                             </p>
                         </div>
+
+                        <!-- Hidden inputs gửi tọa độ về server -->
+                        <input type="hidden" th:field="*{latitude}" />
+                        <input type="hidden" th:field="*{longitude}" />
+
+                        <!-- Map picker (full width) -->
+                        <div class="md:col-span-2 space-y-3 pt-2">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="text-sm font-bold text-slate-700">Vị trí trên bản đồ</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Điền địa chỉ và tỉnh/huyện trước, nhấn "Tìm vị trí". Kéo ghim hoặc click bản đồ để chỉnh chính xác.</p>
+                                </div>
+                                <button type="button" id="geocodeBtn"
+                                        class="shrink-0 flex items-center gap-1.5 text-sm px-4 py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-700 active:scale-95 transition-all font-bold shadow-sm border-none cursor-pointer">
+                                    <span class="material-symbols-outlined text-[18px]">my_location</span>
+                                    Tìm vị trí
+                                </button>
+                            </div>
+                            <div id="facilityMap" class="rounded-xl overflow-hidden border border-slate-200 hidden" style="height: 380px;"></div>
+                            <div id="coordsDisplay" class="hidden items-center gap-2 text-xs bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                                <span class="material-symbols-outlined text-[16px] text-orange-500">pin_drop</span>
+                                <span class="text-slate-600">Tọa độ đã chọn:</span>
+                                <span class="font-mono font-bold text-slate-800" id="latDisplay"></span>,
+                                <span class="font-mono font-bold text-slate-800" id="lngDisplay"></span>
+                            </div>
+                        </div>
                 </div>
 
                 <div class="space-y-4 pt-4">
@@ -360,5 +388,89 @@
         });
     })();
 </script>
+<script>
+    // ===== MAP PICKER =====
+    (function () {
+        let map = null, marker = null;
+
+        function updateCoords(lat, lng) {
+            document.getElementById('latitude').value  = lat.toFixed(8);
+            document.getElementById('longitude').value = lng.toFixed(8);
+            document.getElementById('latDisplay').textContent = lat.toFixed(6);
+            document.getElementById('lngDisplay').textContent = lng.toFixed(6);
+            const box = document.getElementById('coordsDisplay');
+            box.classList.remove('hidden');
+            box.classList.add('flex');
+        }
+
+        function initMap(lat, lng) {
+            const mapDiv = document.getElementById('facilityMap');
+            mapDiv.classList.remove('hidden');
+
+            if (!map) {
+                map = L.map('facilityMap').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker.bindPopup('<b>Kéo ghim</b> để chỉnh vị trí chính xác').openPopup();
+
+                marker.on('dragend', function (e) {
+                    const p = e.target.getLatLng();
+                    updateCoords(p.lat, p.lng);
+                });
+
+                map.on('click', function (e) {
+                    marker.setLatLng(e.latlng);
+                    updateCoords(e.latlng.lat, e.latlng.lng);
+                });
+            } else {
+                map.setView([lat, lng], 16);
+                marker.setLatLng([lat, lng]);
+            }
+
+            updateCoords(lat, lng);
+            setTimeout(function () { map.invalidateSize(); }, 150);
+        }
+
+        document.getElementById('geocodeBtn').addEventListener('click', async function () {
+            const btn      = this;
+            const address  = (document.getElementById('address').value || '').trim();
+            const cityVal  = (document.getElementById('city').value || '').trim();
+            const distVal  = (document.getElementById('district').value || '').trim();
+
+            if (!address && !cityVal) {
+                alert('Vui lòng nhập địa chỉ và chọn tỉnh/thành phố trước.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="animation:spin 1s linear infinite">refresh</span> Đang tìm...';
+
+            const query = [address, distVal, cityVal, 'Vietnam'].filter(Boolean).join(', ');
+            try {
+                const res  = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=vi&q=' + encodeURIComponent(query));
+                const data = await res.json();
+
+                let lat = 21.0285, lng = 105.8542; // fallback: Hà Nội
+                if (data.length > 0) {
+                    lat = parseFloat(data[0].lat);
+                    lng = parseFloat(data[0].lon);
+                } else {
+                    alert('Không tìm thấy địa chỉ chính xác. Bản đồ hiển thị vị trí mặc định — hãy kéo ghim đến đúng vị trí.');
+                }
+
+                initMap(lat, lng);
+            } catch (err) {
+                alert('Không thể kết nối dịch vụ bản đồ. Vui lòng thử lại.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">my_location</span> Tìm vị trí';
+            }
+        });
+    })();
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 </body>
 </html>
