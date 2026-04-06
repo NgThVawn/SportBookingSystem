@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Thêm mới Cơ sở | Arena Kinetic Owner</title>
+    <link th:href="@{/css/app.css}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { primary: "#b02f00", surface: "#f8f9fa" },
+                    fontFamily: { headline: ["Epilogue"], body: ["Inter"], label: ["Lexend"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body class="bg-surface font-body text-slate-800 antialiased">
+
+    <div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
+
+    <main class="ml-64 min-h-screen relative flex flex-col">
+
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm font-medium">
+                <span class="text-slate-400">Arena Manager</span>
+                <span class="text-slate-300">/</span>
+                <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Cơ sở</a>
+                <span class="text-slate-300">/</span>
+                <span class="text-slate-800 font-bold">Thêm mới</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentOwner != null && currentOwner.email != null ? currentOwner.email : #authentication.name}">email@example.com</p>
+                </div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
+                    <img th:if="${currentOwner != null && currentOwner.avatarUrl != null}" th:src="${currentOwner.avatarUrl}" class="w-full h-full object-cover" alt="Avatar">
+                    <span th:unless="${currentOwner != null && currentOwner.avatarUrl != null}" th:text="${currentOwner != null && currentOwner.email != null ? #strings.substring(currentOwner.email, 0, 1).toUpperCase() : 'O'}"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+        <div class="p-8 flex-1 w-full max-w-5xl mx-auto">
+
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="font-headline font-black text-3xl text-slate-900 tracking-tight">Tạo Cơ sở mới</h2>
+                    <p class="text-slate-500 text-sm mt-1">Điền thông tin chi tiết để đưa sân đấu của bạn lên hệ thống.
+                    </p>
+                </div>
+                <a th:href="@{/owner/facilities}"
+                    class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-sm rounded-xl flex items-center gap-2 hover:bg-slate-50 transition-colors text-decoration-none shadow-sm active:scale-95">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Trở về danh sách
+                </a>
+            </div>
+
+            <div th:if="${successMsg}"
+                class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span class="font-bold text-sm" th:text="${successMsg}"></span>
+            </div>
+            <div th:if="${errorMsg}"
+                class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
+                <span class="material-symbols-outlined">error</span>
+                <span class="font-bold text-sm" th:text="${errorMsg}"></span>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+
+                <form id="createFacilityForm" th:action="@{/owner/facilities/create}" method="post" th:object="${facilityRequest}" enctype="multipart/form-data" class="space-y-8">
+
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}" />
+
+                    <div class="space-y-4">
+                        <h3
+                            class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <span class="material-symbols-outlined text-orange-600">image</span> Hình ảnh cơ sở
+                        </h3>
+                        <div class="space-y-2">
+                            <label for="images" class="block text-sm font-bold text-slate-700">Tải lên hình ảnh sân
+                                đấu</label>
+
+                            <div
+                                class="relative border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 hover:border-orange-500/50 transition-colors group cursor-pointer">
+                                <input type="file" name="images" id="images" multiple="multiple" accept="image/*"
+                                    onchange="previewImages(this)"
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                <div
+                                    class="flex flex-col items-center justify-center text-slate-500 group-hover:text-orange-600 transition-colors">
+                                    <span class="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
+                                    <p class="font-bold text-base">Kéo thả ảnh vào đây hoặc click để chọn file</p>
+                                    <p class="text-xs mt-1 text-slate-400 font-normal">Hỗ trợ JPG, PNG, WEBP (Khuyến
+                                        nghị ảnh tỷ lệ 16:9)</p>
+                                </div>
+                            </div>
+
+                            <div id="imagePreviewContainer"
+                                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4 empty:hidden">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4">
+                        <h3
+                            class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <span class="material-symbols-outlined text-orange-600">info</span> Thông tin cơ bản
+                        </h3>
+
+                        <div class="space-y-6 max-w-2xl">
+                            <div class="space-y-1.5">
+                                <label for="name" class="block text-sm font-bold text-slate-700">Tên cơ sở đấu trường
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" th:field="*{name}" id="name" required
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                    th:errorclass="'!border-red-500 !bg-red-50 focus:!ring-red-500/20'"
+                                    placeholder="VD: Sân Bóng Arena Kinetic" />
+
+                                <p id="name-error"
+                                    class="hidden text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span>Tên cơ sở
+                                        không được để trống</span>
+                                </p>
+
+                                <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                    th:if="${#fields.hasErrors('name')}"><span
+                                        class="material-symbols-outlined text-[14px]">warning</span> <span
+                                        th:errors="*{name}"></span></p>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label for="description" class="block text-sm font-bold text-slate-700">Mô tả giới thiệu
+                                    sân</label>
+                                <textarea th:field="*{description}" id="description" rows="4"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all resize-none font-body text-sm leading-relaxed"
+                                    th:errorclass="'!border-red-500 !bg-red-50 focus:!ring-red-500/20'"
+                                    placeholder="Mô tả về chất lượng mặt sân, bãi đậu xe, dịch vụ nước uống..."></textarea>
+
+                                <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                    th:if="${#fields.hasErrors('description')}"><span
+                                        class="material-symbols-outlined text-[14px]">warning</span> <span
+                                        th:errors="*{description}"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4">
+                        <h3
+                            class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <span class="material-symbols-outlined text-orange-600">location_on</span> Vị trí & Liên hệ
+                        </h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+
+                            <div class="space-y-1.5">
+                                <label for="phone" class="block text-sm font-bold text-slate-700">Hotline đặt sân <span
+                                        class="text-red-500">*</span></label>
+                                <input type="tel" th:field="*{phone}" id="phone" required pattern="[0-9]{9,15}"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                    th:errorclass="'!border-red-500 !bg-red-50 focus:!ring-red-500/20'"
+                                    placeholder="0901 234 567" />
+
+                                <p id="phone-error"
+                                    class="hidden text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span>Số điện
+                                        thoại không hợp lệ (9-15 số)</span>
+                                </p>
+                                <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                    th:if="${#fields.hasErrors('phone')}">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span
+                                        th:errors="*{phone}"></span>
+                                </p>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label for="email" class="block text-sm font-bold text-slate-700">Email liên hệ</label>
+                                <input type="email" th:field="*{email}" id="email"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                    th:errorclass="'!border-red-500 !bg-red-50 focus:!ring-red-500/20'"
+                                    placeholder="contact@arena.vn" />
+
+                                <p id="email-error"
+                                    class="hidden text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span>Email không
+                                        đúng định dạng</span>
+                                </p>
+                                <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                    th:if="${#fields.hasErrors('email')}">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span
+                                        th:errors="*{email}"></span>
+                                </p>
+                            </div>
+
+                            <div class="md:col-span-2 space-y-1.5">
+                                <label for="address" class="block text-sm font-bold text-slate-700">Địa chỉ cụ thể <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" th:field="*{address}" id="address" required
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                    th:errorclass="'!border-red-500 !bg-red-50 focus:!ring-red-500/20'"
+                                    placeholder="Số nhà, Tên đường, Phường/Xã..." />
+
+                                <p id="address-error"
+                                    class="hidden text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span>Địa chỉ
+                                        không được để trống</span>
+                                </p>
+                                <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                    th:if="${#fields.hasErrors('address')}">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span
+                                        th:errors="*{address}"></span>
+                                </p>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-sm font-bold text-slate-700">Tỉnh/Thành phố <span
+                                        class="text-red-500">*</span></label>
+                                <input type="hidden" th:field="*{city}" id="city" required />
+                                <div id="city-wrapper"
+                                    class="relative w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer select-none transition-all">
+                                    <span id="city-display" class="text-sm text-slate-400">Chọn Tỉnh/Thành phố</span>
+                                    <span
+                                        class="material-symbols-outlined text-slate-400 text-base transition-transform duration-200"
+                                        id="city-arrow">expand_more</span>
+                                    <ul id="city-dropdown"
+                                        class="absolute left-0 top-full mt-1 w-full bg-white rounded-xl shadow-lg z-50 overflow-y-auto hidden"
+                                        style="border: 1px solid #e2e8f0; max-height: 260px;">
+                                    </ul>
+                                </div>
+
+                                <p id="city-error"
+                                    class="hidden text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span>Vui lòng
+                                        chọn Tỉnh/Thành phố</span>
+                                </p>
+
+                                <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                    th:if="${#fields.hasErrors('city')}">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span
+                                        th:errors="*{city}"></span>
+                                </p>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-sm font-bold text-slate-700">Quận/Huyện <span
+                                        class="text-red-500">*</span></label>
+                                <input type="hidden" th:field="*{district}" id="district" required />
+                                <div id="district-wrapper"
+                                    class="relative w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer select-none opacity-50 pointer-events-none transition-all">
+                                    <span id="district-display" class="text-sm text-slate-400">Chọn Tỉnh/TP trước</span>
+                                    <span
+                                        class="material-symbols-outlined text-slate-400 text-base transition-transform duration-200"
+                                        id="district-arrow">expand_more</span>
+                                    <ul id="district-dropdown"
+                                        class="absolute left-0 top-full mt-1 w-full bg-white rounded-xl shadow-lg z-50 overflow-y-auto hidden"
+                                        style="border: 1px solid #e2e8f0; max-height: 260px;">
+                                    </ul>
+                                </div>
+                                <p id="district-error"
+                                    class="hidden text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span> <span>Vui lòng
+                                        chọn Quận/Huyện</span>
+                                </p>
+
+                            <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                               th:if="${#fields.hasErrors('district')}">
+                                <span class="material-symbols-outlined text-[14px]">warning</span>
+                                <span th:errors="*{district}"></span>
+                            </p>
+                        </div>
+
+                        <!-- Hidden inputs gửi tọa độ về server -->
+                        <input type="hidden" th:field="*{latitude}" />
+                        <input type="hidden" th:field="*{longitude}" />
+
+                        <!-- Map picker (full width) -->
+                        <div class="md:col-span-2 space-y-3 pt-2">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="text-sm font-bold text-slate-700">Vị trí trên bản đồ</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Điền địa chỉ và tỉnh/huyện trước, nhấn "Tìm vị trí". Kéo ghim hoặc click bản đồ để chỉnh chính xác.</p>
+                                </div>
+                                <button type="button" id="geocodeBtn"
+                                        class="shrink-0 flex items-center gap-1.5 text-sm px-4 py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-700 active:scale-95 transition-all font-bold shadow-sm border-none cursor-pointer">
+                                    <span class="material-symbols-outlined text-[18px]">my_location</span>
+                                    Tìm vị trí
+                                </button>
+                            </div>
+                            <div id="facilityMap" class="rounded-xl overflow-hidden border border-slate-200 hidden" style="height: 380px;"></div>
+                            <div id="coordsDisplay" class="hidden items-center gap-2 text-xs bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                                <span class="material-symbols-outlined text-[16px] text-orange-500">pin_drop</span>
+                                <span class="text-slate-600">Tọa độ đã chọn:</span>
+                                <span class="font-mono font-bold text-slate-800" id="latDisplay"></span>,
+                                <span class="font-mono font-bold text-slate-800" id="lngDisplay"></span>
+                            </div>
+                        </div>
+                </div>
+
+                        <div class="space-y-4 pt-4">
+                            <h3
+                                class="font-headline font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                                <span class="material-symbols-outlined text-orange-600">schedule</span> Thời gian hoạt
+                                động
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                                <div class="space-y-1.5">
+                                    <label for="openTime" class="block text-sm font-bold text-slate-700">Giờ mở cửa sân
+                                        <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <span
+                                            class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">light_mode</span>
+                                        <input type="time" th:field="*{openTime}" id="openTime" required
+                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                            th:errorclass="'!border-red-500 !bg-red-50 focus:!ring-red-500/20'" />
+                                    </div>
+                                    <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                        th:if="${#fields.hasErrors('openTime')}"><span
+                                            class="material-symbols-outlined text-[14px]">warning</span> <span
+                                            th:errors="*{openTime}"></span></p>
+                                </div>
+
+                                <div class="space-y-1.5">
+                                    <label for="closeTime" class="block text-sm font-bold text-slate-700">Giờ đóng cửa
+                                        sân <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <span
+                                            class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">dark_mode</span>
+                                        <input type="time" th:field="*{closeTime}" id="closeTime" required
+                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                                            th:errorclass="'!border-red-500 !bg-red-50 focus:!ring-red-500/20'" />
+                                    </div>
+                                    <p class="text-red-500 text-xs mt-1 font-medium flex items-center gap-1"
+                                        th:if="${#fields.hasErrors('closeTime')}"><span
+                                            class="material-symbols-outlined text-[14px]">warning</span> <span
+                                            th:errors="*{closeTime}"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-10 flex justify-end gap-3 border-t border-slate-100 mt-12">
+                            <a th:href="@{/owner/facilities}"
+                                class="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors text-decoration-none shadow-sm">
+                                Hủy bỏ
+                            </a>
+                            <button type="submit"
+                                class="px-8 py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 shadow-lg shadow-orange-600/20 active:scale-95 transition-all flex items-center gap-2 border-none cursor-pointer">
+                                <span class="material-symbols-outlined text-[20px] font-bold">add_circle</span> Thêm cơ
+                                sở
+                            </button>
+                        </div>
+
+                </form>
+            </div>
+
+        </div>
+    </main>
+    <script th:inline="javascript">
+        // ==========================================
+        // 1. HÀM HIỂN THỊ ẢNH PREVIEW
+        // ==========================================
+        function previewImages(input) {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            previewContainer.innerHTML = '';
+
+            if (input.files && input.files.length > 0) {
+                Array.from(input.files).forEach(file => {
+                    if (!file.type.startsWith('image/')) return;
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const div = document.createElement('div');
+                        div.className = 'relative rounded-xl overflow-hidden border border-slate-200 shadow-sm h-28 group animate-fade-in';
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'w-full h-full object-cover';
+                        const overlay = document.createElement('div');
+                        overlay.className = 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/80 to-transparent p-2';
+                        overlay.innerHTML = `<p class="text-[10px] text-white truncate font-medium">${file.name}</p>`;
+                        div.appendChild(img);
+                        div.appendChild(overlay);
+                        previewContainer.appendChild(div);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // ==========================================
+            // 2. LOGIC CHỌN TỈNH/THÀNH PHỐ VÀ QUẬN/HUYỆN
+            // ==========================================
+            const cityWrapper = document.getElementById('city-wrapper');
+            const cityDropdown = document.getElementById('city-dropdown');
+            const cityDisplay = document.getElementById('city-display');
+            const cityArrow = document.getElementById('city-arrow');
+            const cityInput = document.getElementById('city');
+
+            const districtWrapper = document.getElementById('district-wrapper');
+            const districtDropdown = document.getElementById('district-dropdown');
+            const districtDisplay = document.getElementById('district-display');
+            const districtArrow = document.getElementById('district-arrow');
+            const districtInput = document.getElementById('district');
+
+            let isCityTouched = false;
+            let isDistrictTouched = false;
+
+            function openDD(dd, arrow) { dd.classList.remove('hidden'); arrow.style.transform = 'rotate(180deg)'; }
+            function closeDD(dd, arrow) { dd.classList.add('hidden'); arrow.style.transform = 'rotate(0deg)'; }
+            function toggleDD(dd, arrow) { dd.classList.contains('hidden') ? openDD(dd, arrow) : closeDD(dd, arrow); }
+
+            function buildCityList(provinces) {
+                cityDropdown.innerHTML = '';
+                provinces.forEach(p => {
+                    const li = document.createElement('li');
+                    li.className = 'px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors';
+                    li.textContent = p.name;
+                    li.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        cityDisplay.textContent = p.name;
+                        cityDisplay.classList.remove('text-slate-400');
+                        cityDisplay.classList.add('text-slate-800', 'font-semibold');
+                        cityInput.value = p.name;
+                        closeDD(cityDropdown, cityArrow);
+                        districtInput.value = '';
+                        districtDisplay.textContent = 'Đang tải...';
+                        districtWrapper.classList.remove('opacity-50', 'pointer-events-none');
+                        loadDistricts(p.code);
+
+                        // Xóa lỗi Tỉnh
+                        cityWrapper.classList.remove('border-red-500', 'bg-red-50');
+                        document.getElementById('city-error').classList.add('hidden');
+                        cityInput.setCustomValidity('');
+                    });
+                    cityDropdown.appendChild(li);
+                });
+            }
+
+            function loadDistricts(code) {
+                districtDropdown.innerHTML = '';
+                fetch('https://provinces.open-api.vn/api/p/' + code + '?depth=2')
+                    .then(r => r.json())
+                    .then(data => {
+                        districtDisplay.textContent = 'Chọn Quận/Huyện';
+                        districtDisplay.classList.add('text-slate-400');
+                        data.districts.forEach(d => {
+                            const li = document.createElement('li');
+                            li.className = 'px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors';
+                            li.textContent = d.name;
+                            li.addEventListener('mousedown', (e) => {
+                                e.preventDefault();
+                                districtDisplay.textContent = d.name;
+                                districtDisplay.classList.remove('text-slate-400');
+                                districtDisplay.classList.add('text-slate-800', 'font-semibold');
+                                districtInput.value = d.name;
+                                closeDD(districtDropdown, districtArrow);
+
+                                // Xóa lỗi Huyện
+                                districtWrapper.classList.remove('border-red-500', 'bg-red-50');
+                                document.getElementById('district-error').classList.add('hidden');
+                                districtInput.setCustomValidity('');
+                            });
+                            districtDropdown.appendChild(li);
+                        });
+                    });
+            }
+
+            fetch('https://provinces.open-api.vn/api/?depth=1').then(r => r.json()).then(buildCityList);
+
+            cityWrapper.addEventListener('click', () => {
+                isCityTouched = true;
+                toggleDD(cityDropdown, cityArrow);
+            });
+            districtWrapper.addEventListener('click', () => {
+                isDistrictTouched = true;
+                toggleDD(districtDropdown, districtArrow);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!cityWrapper.contains(e.target)) {
+                    closeDD(cityDropdown, cityArrow);
+                    if (isCityTouched && !cityInput.value) {
+                        cityWrapper.classList.add('border-red-500', 'bg-red-50');
+                        document.getElementById('city-error').classList.remove('hidden');
+                        cityInput.setCustomValidity('Vui lòng chọn Tỉnh/Thành phố');
+                    }
+                }
+                if (!districtWrapper.contains(e.target)) {
+                    closeDD(districtDropdown, districtArrow);
+                    if (isDistrictTouched && !districtInput.value) {
+                        districtWrapper.classList.add('border-red-500', 'bg-red-50');
+                        document.getElementById('district-error').classList.remove('hidden');
+                        districtInput.setCustomValidity('Vui lòng chọn Quận/Huyện');
+                    }
+                }
+            });
+
+            // ==========================================
+            // 3. LOGIC REAL-TIME VALIDATION 
+            // ==========================================
+            const fieldsToValidate = [
+                {
+                    input: document.getElementById('name'),
+                    errorSpan: document.getElementById('name-error'),
+                    validator: (val) => val.trim().length > 0,
+                    customMsg: 'Tên cơ sở không được để trống'
+                },
+                {
+                    input: document.getElementById('phone'),
+                    errorSpan: document.getElementById('phone-error'),
+                    validator: (val) => val.trim().length > 0 && /^\d{9,15}$/.test(val.trim()),
+                    customMsg: 'Số điện thoại không hợp lệ (từ 9-15 chữ số)'
+                },
+                {
+                    input: document.getElementById('email'),
+                    errorSpan: document.getElementById('email-error'),
+                    validator: (val) => val.trim().length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim()),
+                    customMsg: 'Email không đúng định dạng'
+                },
+                {
+                    input: document.getElementById('address'),
+                    errorSpan: document.getElementById('address-error'),
+                    validator: (val) => val.trim().length > 0,
+                    customMsg: 'Địa chỉ cụ thể không được để trống'
+                }
+            ];
+
+            function validateField(field) {
+                if (!field.input || !field.errorSpan) return;
+                const isValid = field.validator(field.input.value);
+
+                if (!isValid) {
+                    field.errorSpan.classList.remove('hidden');
+                    field.input.classList.add('border-red-500', 'bg-red-50');
+                    field.input.classList.remove('border-slate-200', 'bg-slate-50');
+                    field.input.setCustomValidity(field.customMsg);
+                } else {
+                    field.errorSpan.classList.add('hidden');
+                    field.input.classList.remove('border-red-500', 'bg-red-50');
+                    field.input.classList.add('border-slate-200', 'bg-slate-50');
+                    field.input.setCustomValidity('');
+                }
+            }
+
+            fieldsToValidate.forEach(field => {
+                if (field.input) {
+                    field.input.addEventListener('input', () => validateField(field));
+                    field.input.addEventListener('blur', () => validateField(field));
+                }
+            });
+
+            // Bắt lỗi tổng hợp khi nhấn Submit
+            // LƯU Ý QUAN TRỌNG: Sử dụng getElementById thay vì querySelector
+            const form = document.getElementById('createFacilityForm');
+
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    let hasError = false;
+
+                    fieldsToValidate.forEach(field => {
+                        validateField(field);
+                        if (!field.validator(field.input.value)) hasError = true;
+                    });
+
+                    // Kiểm tra và hiện lỗi cho Tỉnh
+                    if (!cityInput.value) {
+                        cityWrapper.classList.add('border-red-500', 'bg-red-50');
+                        document.getElementById('city-error').classList.remove('hidden');
+                        hasError = true;
+                    }
+
+                    // Kiểm tra và hiện lỗi cho Huyện
+                    if (!districtInput.value) {
+                        districtWrapper.classList.add('border-red-500', 'bg-red-50');
+                        document.getElementById('district-error').classList.remove('hidden');
+                        hasError = true;
+                    }
+
+                    const openTime = document.getElementById('openTime');
+                    const closeTime = document.getElementById('closeTime');
+
+                    if (!openTime.value || !closeTime.value) {
+                        if (!openTime.value) openTime.classList.add('border-red-500', 'bg-red-50');
+                        if (!closeTime.value) closeTime.classList.add('border-red-500', 'bg-red-50');
+                        hasError = true;
+                    } else if (openTime.value >= closeTime.value) {
+                        alert('LỖI: Giờ mở cửa phải sớm hơn giờ đóng cửa!');
+                        openTime.classList.add('border-red-500', 'bg-red-50');
+                        closeTime.classList.add('border-red-500', 'bg-red-50');
+                        hasError = true;
+                    }
+
+                    if (hasError) {
+                        e.preventDefault(); // Chặn việc tải lại trang
+                        window.scrollTo({ top: 0, behavior: 'smooth' }); // Cuộn lên để xem lỗi
+                    }
+                });
+            }
+        });
+    </script>
+<script>
+    // ===== MAP PICKER =====
+    (function () {
+        let map = null, marker = null;
+
+        function updateCoords(lat, lng) {
+            document.getElementById('latitude').value  = lat.toFixed(8);
+            document.getElementById('longitude').value = lng.toFixed(8);
+            document.getElementById('latDisplay').textContent = lat.toFixed(6);
+            document.getElementById('lngDisplay').textContent = lng.toFixed(6);
+            const box = document.getElementById('coordsDisplay');
+            box.classList.remove('hidden');
+            box.classList.add('flex');
+        }
+
+        function initMap(lat, lng) {
+            const mapDiv = document.getElementById('facilityMap');
+            mapDiv.classList.remove('hidden');
+
+            if (!map) {
+                map = L.map('facilityMap').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker.bindPopup('<b>Kéo ghim</b> để chỉnh vị trí chính xác').openPopup();
+
+                marker.on('dragend', function (e) {
+                    const p = e.target.getLatLng();
+                    updateCoords(p.lat, p.lng);
+                });
+
+                map.on('click', function (e) {
+                    marker.setLatLng(e.latlng);
+                    updateCoords(e.latlng.lat, e.latlng.lng);
+                });
+            } else {
+                map.setView([lat, lng], 16);
+                marker.setLatLng([lat, lng]);
+            }
+
+            updateCoords(lat, lng);
+            setTimeout(function () { map.invalidateSize(); }, 150);
+        }
+
+        document.getElementById('geocodeBtn').addEventListener('click', async function () {
+            const btn      = this;
+            const address  = (document.getElementById('address').value || '').trim();
+            const cityVal  = (document.getElementById('city').value || '').trim();
+            const distVal  = (document.getElementById('district').value || '').trim();
+
+            if (!address && !cityVal) {
+                alert('Vui lòng nhập địa chỉ và chọn tỉnh/thành phố trước.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="animation:spin 1s linear infinite">refresh</span> Đang tìm...';
+
+            const query = [address, distVal, cityVal, 'Vietnam'].filter(Boolean).join(', ');
+            try {
+                const res  = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=vi&q=' + encodeURIComponent(query));
+                const data = await res.json();
+
+                let lat = 21.0285, lng = 105.8542; // fallback: Hà Nội
+                if (data.length > 0) {
+                    lat = parseFloat(data[0].lat);
+                    lng = parseFloat(data[0].lon);
+                } else {
+                    alert('Không tìm thấy địa chỉ chính xác. Bản đồ hiển thị vị trí mặc định — hãy kéo ghim đến đúng vị trí.');
+                }
+
+                initMap(lat, lng);
+            } catch (err) {
+                alert('Không thể kết nối dịch vụ bản đồ. Vui lòng thử lại.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">my_location</span> Tìm vị trí';
+            }
+        });
+    })();
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+
+</html>

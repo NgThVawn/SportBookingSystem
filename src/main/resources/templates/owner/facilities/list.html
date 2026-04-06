@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Quản lý Cơ sở | Arena Kinetic Owner</title>
+
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link th:href="@{/css/app.css}" rel="stylesheet"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#191c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#b02f00",
+                        "surface": "#f8f9fa",
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
+
+<main class="ml-64 min-h-screen relative flex flex-col">
+
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm font-medium">
+                <span class="text-slate-400">Arena Manager</span>
+                <span class="text-slate-300">/</span>
+                <span class="text-slate-800 font-bold">Danh sách Cơ sở</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentOwner != null && currentOwner.email != null ? currentOwner.email : #authentication.name}">email@example.com</p>
+                </div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
+                    <img th:if="${currentOwner != null && currentOwner.avatarUrl != null}" th:src="${currentOwner.avatarUrl}" class="w-full h-full object-cover" alt="Avatar">
+                    <span th:unless="${currentOwner != null && currentOwner.avatarUrl != null}" th:text="${currentOwner != null && currentOwner.email != null ? #strings.substring(currentOwner.email, 0, 1).toUpperCase() : 'O'}"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="p-8 flex-1">
+
+        <div th:if="${successMsg}" id="alertSuccess" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm transition-opacity duration-500 opacity-100">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="font-bold text-sm" id="alertSuccessText" th:text="${successMsg}"></span>
+        </div>
+        <div th:unless="${successMsg}" id="alertSuccess" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm transition-opacity duration-500 opacity-0" style="display: none;">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="font-bold text-sm" id="alertSuccessText"></span>
+        </div>
+
+        <div th:if="${errorMsg}" id="alertError" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm transition-opacity duration-500 opacity-100">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-bold text-sm" id="alertErrorText" th:text="${errorMsg}"></span>
+        </div>
+        <div th:unless="${errorMsg}" id="alertError" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm transition-opacity duration-500 opacity-0" style="display: none;">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-bold text-sm" id="alertErrorText"></span>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="font-headline font-black text-3xl text-slate-900 tracking-tight">Quản lý Cơ sở</h2>
+                <p class="text-slate-500 text-sm mt-1">Xem, tìm kiếm và chỉnh sửa các sân thể thao của bạn.</p>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="relative w-full md:w-72">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                    <input type="text" id="searchInput" oninput="searchFacilities()" placeholder="Tìm tên sân, địa chỉ..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none shadow-sm">
+                </div>
+
+                <a th:href="@{/owner/facilities/create}" class="shrink-0 px-5 py-2.5 bg-orange-600 text-white font-bold text-sm rounded-xl flex items-center gap-2 hover:bg-orange-700 hover:shadow-lg hover:shadow-orange-600/20 transition-all active:scale-95 text-decoration-none">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    <span class="hidden sm:inline">Thêm cơ sở</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 font-bold font-label">
+                        <th class="px-6 py-4">Cơ sở</th>
+                        <th class="px-6 py-4">Địa chỉ</th>
+                        <th class="px-6 py-4">Liên hệ & Giờ</th>
+                        <th class="px-6 py-4 text-center">Trạng thái</th>
+                        <th class="px-6 py-4 text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm font-medium text-slate-700 divide-y divide-slate-50">
+
+                    <tr th:if="${facilities == null or facilities.isEmpty()}">
+                        <td colspan="5" class="px-6 py-16 text-center text-slate-400">
+                            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-4xl text-slate-300">stadium</span>
+                            </div>
+                            <p class="text-base font-bold text-slate-600">Bạn chưa có cơ sở nào!</p>
+                            <p class="text-sm mt-1">Hãy bấm nút "Thêm cơ sở" ở góc trên để bắt đầu.</p>
+                        </td>
+                    </tr>
+
+                    <tr id="noResultsRow" style="display: none;">
+                        <td colspan="5" class="px-6 py-16 text-center text-slate-400">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-3xl text-slate-300">search_off</span>
+                            </div>
+                            <p class="text-base font-bold text-slate-600">Không tìm thấy cơ sở nào!</p>
+                            <p class="text-sm mt-1">Vui lòng thử lại với từ khóa khác.</p>
+                        </td>
+                    </tr>
+
+                    <tr th:each="f : ${facilities}" class="facility-row hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                                    <img th:if="${f.getPrimaryImageUrl() != null}" th:src="${f.getPrimaryImageUrl()}" alt="Hình ảnh" class="w-full h-full object-cover">
+                                    <div th:unless="${f.getPrimaryImageUrl() != null}" class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <span class="material-symbols-outlined text-[20px]">image_not_supported</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-900 text-base facility-name" th:text="${f.name}"></p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <p class="text-slate-800 font-bold text-sm max-w-[200px] truncate facility-address" th:text="${f.address}"></p>
+                            <p class="text-slate-500 text-xs flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[12px]">location_on</span> <span class="facility-city" th:text="${f.city}"></span></p>
+                        </td>
+
+                        <td class="px-6 py-4 text-slate-600">
+                            <p class="text-sm flex items-center gap-1 mb-1"><span class="material-symbols-outlined text-[16px] text-slate-400">call</span> <span th:text="${f.phone}"></span></p>
+                            <p class="text-xs text-slate-500 flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-slate-400">schedule</span> <span th:text="${f.openTime + ' - ' + f.closeTime}"></span></p>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <select class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed cursor-pointer transition-all"
+                                    th:data-original-value="${f.status.name()}"
+                                    th:onchange="'changeStatus(' + ${f.id} + ', this)'"
+                                    th:disabled="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'}">
+
+                                <option th:if="${f.status.name() == 'PENDING_APPROVAL'}" value="PENDING_APPROVAL" selected disabled>Đang chờ duyệt</option>
+                                <option th:if="${f.status.name() == 'BLOCKED'}" value="BLOCKED" selected disabled>Đã bị khóa</option>
+
+                                <th:block th:if="${f.status.name() != 'PENDING_APPROVAL' and f.status.name() != 'BLOCKED'}">
+                                    <option value="OPEN" th:selected="${f.status.name() == 'OPEN'}">Đang hoạt động</option>
+                                    <option value="CLOSED" th:selected="${f.status.name() == 'CLOSED'}">Tạm đóng cửa</option>
+                                    <option value="MAINTENANCE" th:selected="${f.status.name() == 'MAINTENANCE'}">Đang bảo trì</option>
+                                </th:block>
+                            </select>
+
+                            <div class="mt-2">
+                                <span th:if="${f.status.name() == 'PENDING_APPROVAL'}" class="flex items-center gap-1 text-[10px] font-bold text-orange-500">
+                                    <span class="material-symbols-outlined text-[14px]">pending_actions</span> Đợi Admin duyệt
+                                </span>
+                                <span th:if="${f.status.name() == 'BLOCKED'}" class="flex items-center gap-1 text-[10px] font-bold text-red-600">
+                                    <span class="material-symbols-outlined text-[14px]">block</span> Đã bị khóa
+                                </span>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+
+                                <a th:href="@{/owner/facilities/{id}/fields(id=${f.id})}"
+                                   class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-decoration-none"
+                                   th:classappend="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'text-slate-300 opacity-50 cursor-not-allowed pointer-events-none' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 tooltip'"
+                                   title="Quản lý sân con">
+                                    <span class="material-symbols-outlined text-[18px]">grid_view</span>
+                                </a>
+
+                                          <a th:href="@{/owner/facilities/{id}/services(id=${f.id})}"
+                                              class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-decoration-none"
+                                              th:classappend="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'text-slate-300 opacity-50 cursor-not-allowed pointer-events-none' : 'text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 tooltip'"
+                                              title="Dịch vụ đi kèm">
+                                                <span class="material-symbols-outlined text-[18px]">local_cafe</span>
+                                          </a>
+
+                                <a th:href="@{/owner/facilities/{id}/edit(id=${f.id})}"
+                                   class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-decoration-none"
+                                   th:classappend="${f.status.name() == 'PENDING_APPROVAL' || f.status.name() == 'BLOCKED'} ? 'text-slate-300 opacity-50 cursor-not-allowed pointer-events-none' : 'text-slate-400 hover:text-orange-600 hover:bg-orange-50 tooltip'"
+                                   title="Chỉnh sửa">
+                                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                                </a>
+
+                                <form th:action="@{/owner/facilities/{id}/delete(id=${f.id})}" method="post" class="m-0" th:data-name="${f.name}" onsubmit="openDeleteModal(event, this)">
+                                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border-none bg-transparent cursor-pointer tooltip" title="Xóa cơ sở">
+                                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="paginationContainer" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 hidden">
+                <span class="text-sm text-slate-500">
+                    Đang hiển thị <span id="pageInfo" class="font-bold text-slate-800"></span>
+                </span>
+
+                <div class="flex items-center gap-1">
+                    <button id="btnPrev" type="button" onclick="changePage(-1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                    </button>
+
+                    <div id="pageNumbers" class="flex gap-1"></div>
+
+                    <button id="btnNext" type="button" onclick="changePage(1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div id="deleteModal" class="fixed inset-0 z-[100] hidden items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-sm p-6 transform transition-all duration-200 scale-95 opacity-0" id="deleteModalContent">
+        <div class="flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-4xl">warning</span>
+            </div>
+            <h3 class="text-xl font-headline font-black text-slate-900 mb-2">Xác nhận xóa cơ sở</h3>
+            <p class="text-slate-500 text-sm mb-6 leading-relaxed">
+                Bạn có chắc chắn muốn xóa cơ sở <span id="deleteFacilityName" class="font-bold text-slate-900 text-base"></span> không? Toàn bộ sân nhỏ, hình ảnh và dữ liệu liên quan sẽ bị <span class="text-red-600 font-bold">xóa vĩnh viễn</span>.
+            </p>
+            <div class="flex w-full gap-3">
+                <button type="button" onclick="closeDeleteModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors border-none cursor-pointer">
+                    Hủy bỏ
+                </button>
+                <button type="button" onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/20 transition-all border-none cursor-pointer">
+                    Xóa vĩnh viễn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+
+    // --- 0. TỰ ĐỘNG ẨN & HIỆN THÔNG BÁO (TOAST) ---
+    function showToastMsg(isSuccess, msg) {
+        const alertSuccess = document.getElementById('alertSuccess');
+        const alertError = document.getElementById('alertError');
+        const targetAlert = isSuccess ? alertSuccess : alertError;
+        const targetText = isSuccess ? document.getElementById('alertSuccessText') : document.getElementById('alertErrorText');
+
+        if(targetAlert && targetText) {
+            targetText.innerText = msg;
+            targetAlert.style.display = 'flex';
+
+            // Xóa class ẩn, thêm class hiện
+            setTimeout(() => {
+                targetAlert.classList.remove('opacity-0');
+                targetAlert.classList.add('opacity-100');
+            }, 10);
+
+            // Tự động ẩn sau 3s
+            setTimeout(() => {
+                targetAlert.classList.remove('opacity-100');
+                targetAlert.classList.add('opacity-0');
+                setTimeout(() => { targetAlert.style.display = 'none'; }, 500);
+            }, 3000);
+        }
+    }
+
+    // Tự động chạy ẩn Toast nếu Load trang có sẵn Msg từ Backend
+    document.addEventListener('DOMContentLoaded', function() {
+        const sMsg = document.getElementById('alertSuccessText')?.innerText;
+        const eMsg = document.getElementById('alertErrorText')?.innerText;
+        if(sMsg && sMsg.trim() !== '') showToastMsg(true, sMsg);
+        if(eMsg && eMsg.trim() !== '') showToastMsg(false, eMsg);
+    });
+
+    // --- 1. LOGIC ĐỔI TRẠNG THÁI SÂN (DROPDOWN) ---
+    function changeStatus(facilityId, selectElement) {
+        const newStatus = selectElement.value;
+        const originalStatus = selectElement.getAttribute('data-original-value');
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+        const formData = new URLSearchParams();
+        formData.append('status', newStatus);
+
+        fetch('/owner/facilities/' + facilityId + '/status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                [csrfHeader]: csrfToken
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                selectElement.setAttribute('data-original-value', newStatus);
+                // Bật thông báo Toast xanh góc trên
+                showToastMsg(true, "Cập nhật trạng thái thành công!");
+            } else {
+                showToastMsg(false, "Lỗi: " + (data.message || "Lỗi không xác định"));
+                selectElement.value = originalStatus;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToastMsg(false, "Thao tác thất bại. Vui lòng thử lại sau.");
+            selectElement.value = originalStatus;
+        });
+    }
+
+    // --- 2. LOGIC MODAL XÓA SÂN ---
+    let formToSubmit = null;
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteModalContent = document.getElementById('deleteModalContent');
+
+    function openDeleteModal(event, formElement) {
+        event.preventDefault();
+        formToSubmit = formElement;
+        const facilityName = formElement.getAttribute('data-name');
+        document.getElementById('deleteFacilityName').textContent = '"' + facilityName + '"';
+
+        deleteModal.classList.remove('hidden');
+        deleteModal.classList.add('flex');
+        setTimeout(() => {
+            deleteModalContent.classList.remove('scale-95', 'opacity-0');
+            deleteModalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeDeleteModal() {
+        deleteModalContent.classList.remove('scale-100', 'opacity-100');
+        deleteModalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            deleteModal.classList.remove('flex');
+            deleteModal.classList.add('hidden');
+            formToSubmit = null;
+        }, 200);
+    }
+
+    function confirmDelete() {
+        if (formToSubmit) formToSubmit.submit();
+    }
+
+    // --- 3. LOGIC TÌM KIẾM & PHÂN TRANG ---
+    const itemsPerPage = 5;
+    let currentPage = 1;
+    let allRows = Array.from(document.querySelectorAll('.facility-row'));
+    let filteredRows = [...allRows];
+    let totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+    const noResultsRow = document.getElementById('noResultsRow');
+
+    function searchFacilities() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+        filteredRows = allRows.filter(row => {
+            const textContent = row.textContent.toLowerCase();
+            return textContent.includes(keyword);
+        });
+        currentPage = 1;
+        totalPages = Math.ceil(filteredRows.length / itemsPerPage) || 1;
+        displayRows();
+    }
+
+    function displayRows() {
+        allRows.forEach(row => row.style.display = 'none');
+        if (filteredRows.length === 0) {
+            noResultsRow.style.display = '';
+            paginationContainer.classList.add('hidden');
+            return;
+        }
+
+        noResultsRow.style.display = 'none';
+        paginationContainer.classList.remove('hidden');
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        filteredRows.forEach((row, index) => {
+            if (index >= start && index < end) {
+                row.style.display = '';
+            }
+        });
+
+        const currentEnd = end > filteredRows.length ? filteredRows.length : end;
+        document.getElementById('pageInfo').innerHTML = `${start + 1} - ${currentEnd} trong số <span class="text-primary">${filteredRows.length}</span> cơ sở`;
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+
+        btnPrev.disabled = currentPage === 1;
+        btnPrev.className = currentPage === 1
+            ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+            : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+
+        btnNext.disabled = currentPage === totalPages;
+        btnNext.className = currentPage === totalPages
+            ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+            : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        pageNumbersContainer.innerHTML = '';
+
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.type = 'button';
+            btn.onclick = () => {
+                currentPage = i;
+                displayRows();
+            };
+
+            if (i === currentPage) {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-white bg-orange-600 font-bold text-sm shadow-md border-none cursor-pointer';
+            } else {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 font-bold text-sm transition-colors cursor-pointer border-none bg-transparent';
+            }
+            pageNumbersContainer.appendChild(btn);
+        }
+
+        if (totalPages <= 1) {
+            paginationContainer.classList.add('hidden');
+        } else {
+            paginationContainer.classList.remove('hidden');
+        }
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        displayRows();
+    }
+
+    if (allRows.length > 0) {
+        displayRows();
+    }
+</script>
+
+</body>
+</html>

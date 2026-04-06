@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Xác nhận Đặt sân — Arena Kinetic</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <div class="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 bg-slate-50/50 font-body text-slate-800">
+
+        <div class="max-w-xl w-full bg-white p-8 sm:p-10 rounded-[2rem] shadow-[0_10px_40px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden">
+
+            <div class="absolute -top-16 -right-16 w-40 h-40 bg-orange-100 rounded-full blur-[50px] pointer-events-none"></div>
+
+            <div class="text-center mb-8 relative z-10">
+                <div class="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-orange-100">
+                    <span class="material-symbols-outlined text-primary text-[32px]">event_available</span>
+                </div>
+                <h2 class="text-3xl font-black font-headline text-slate-900 uppercase italic tracking-tight mb-2">Xác nhận đặt sân</h2>
+                <p class="text-sm text-slate-500">Vui lòng kiểm tra lại thông tin thời gian trước khi hoàn tất chốt đơn.</p>
+            </div>
+
+            <div th:if="${error}" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 relative z-10 animate-fade-in">
+                <span class="material-symbols-outlined text-red-600 mt-0.5">error</span>
+                <p class="text-sm font-bold text-red-800 m-0 leading-relaxed" th:text="${error}"></p>
+            </div>
+
+            <form th:action="@{/bookings}" method="post" th:object="${bookingRequest}" class="space-y-6 relative z-10 m-0">
+
+                <input type="hidden" name="fieldId"     th:value="${fieldId}">
+                <input type="hidden" name="bookingDate" th:value="${date}">
+                <input type="hidden" name="startTime"   th:value="${start}">
+                <input type="hidden" name="endTime"     th:value="${end}">
+
+                <div class="bg-slate-950 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-slate-900/20">
+                    <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/30 blur-[40px] rounded-full pointer-events-none"></div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
+                        <div>
+                            <span class="block text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-1.5">Ngày thi đấu</span>
+                            <div class="flex items-center gap-2 font-bold text-lg text-white">
+                                <span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+                                <span th:text="${date}">2026-04-02</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-label font-bold text-slate-400 uppercase tracking-widest mb-1.5">Khung giờ</span>
+                            <div class="flex items-center gap-2 font-bold text-lg text-orange-400">
+                                <span class="material-symbols-outlined text-[20px]">schedule</span>
+                                <span th:text="${start + ' – ' + end}">17:30 - 19:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                    <div class="px-4 py-3 bg-slate-100 border-b border-slate-200">
+                        <p class="m-0 text-xs font-bold uppercase tracking-widest text-slate-600">Chi tiết chọn giờ</p>
+                    </div>
+                    <div class="p-4 space-y-2 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-slate-500">Cơ sở</span>
+                            <span class="font-bold text-slate-800 text-right" th:text="${facility != null ? facility.name : '--'}">--</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-slate-500">Sân</span>
+                            <span class="font-bold text-slate-800 text-right" th:text="${field != null ? field.name : '--'}">--</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-slate-500">Ngày thi đấu</span>
+                            <span class="font-bold text-slate-800" th:text="${date}">--</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-slate-500">Khung giờ</span>
+                            <span class="font-bold text-slate-800" th:text="${start + ' - ' + end}">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="note" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 font-label">Ghi chú (Tùy chọn)</label>
+                    <textarea id="note" th:field="*{note}" rows="3"
+                              class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all resize-none"
+                              placeholder="Nhập yêu cầu đặc biệt của bạn (VD: Xin bóng mới, cần áo pitch...)"></textarea>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 overflow-hidden" th:if="${selectedExtraItems != null and !#lists.isEmpty(selectedExtraItems)}">
+                    <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                        <p class="m-0 text-xs font-bold uppercase tracking-widest text-slate-600">Dịch vụ đã chọn</p>
+                        <span class="text-[11px] text-slate-500">Đã chọn từ giao diện đặt sân</span>
+                    </div>
+
+                    <div class="divide-y divide-slate-100">
+                        <th:block th:each="item, stat : ${selectedExtraItems}">
+                            <input type="hidden" th:name="${'extraItems[' + stat.index + '].serviceId'}" th:value="${item.serviceId}">
+                            <input type="hidden" th:name="${'extraItems[' + stat.index + '].quantity'}" th:value="${item.quantity}">
+
+                            <div class="p-4 flex items-center justify-between gap-3 selected-extra-row"
+                                 th:data-service-id="${item.serviceId}"
+                                 th:data-quantity="${item.quantity}">
+                                <div>
+                                    <p class="m-0 font-bold text-slate-800 text-sm service-name" th:text="${item.serviceName}">Nước suối</p>
+                                    <p class="m-0 text-xs text-slate-500" th:text="${'Số lượng: ' + item.quantity}"></p>
+                                    <p class="m-0 text-xs text-slate-500 unit-price-text"
+                                       th:text="${'Đơn giá: ' + #numbers.formatDecimal(item.unitPrice,0,'COMMA',0,'POINT') + 'đ/' + item.unit}">Đơn giá: 0đ</p>
+                                </div>
+                                <p class="m-0 text-xs font-black text-primary subtotal-text"
+                                   th:text="${#numbers.formatDecimal(item.subtotal,0,'COMMA',0,'POINT') + 'đ'}">0đ</p>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl bg-slate-900 text-white p-5 space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <span>Tiền sân</span>
+                        <span class="font-bold" id="fieldPriceText" th:data-field-price="${fieldPrice}" th:text="${#numbers.formatDecimal(fieldPrice,0,'COMMA',0,'POINT') + 'đ'}">0đ</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span>Dịch vụ đi kèm</span>
+                        <span class="font-bold text-cyan-300" id="extraPriceText">0đ</span>
+                    </div>
+                    <div class="pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span class="text-xs uppercase tracking-widest text-slate-400">Tổng tạm tính</span>
+                        <span class="text-2xl font-black text-orange-400" id="grandTotalText">0đ</span>
+                    </div>
+                </div>
+
+                <div id="servicePriceMap" class="hidden">
+                    <div th:each="s : ${services}" th:data-id="${s.id}" th:data-price="${s.price}" th:data-name="${s.name}" th:data-unit="${s.unit}"></div>
+                </div>
+
+                <div class="space-y-3 pt-4 border-t border-slate-100">
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-4 bg-primary hover:bg-orange-700 text-white font-headline font-black text-lg uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/30 active:scale-95 border-none cursor-pointer">
+                        <span class="material-symbols-outlined text-[24px]">check_circle</span>
+                        XÁC NHẬN ĐẶT SÂN
+                    </button>
+
+                    <a th:href="${facility != null and facility.id != null} ? @{/facilities/{id}(id=${facility.id})} : @{/facilities}"
+                       class="w-full flex items-center justify-center gap-2 py-3.5 bg-white hover:bg-slate-50 text-slate-500 font-bold rounded-xl transition-colors text-decoration-none text-sm border border-slate-200">
+                        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                        Quay lại chọn giờ khác
+                    </a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fieldPriceEl = document.getElementById('fieldPriceText');
+            const extraPriceEl = document.getElementById('extraPriceText');
+            const grandTotalText = document.getElementById('grandTotalText');
+            const servicePriceMapEls = Array.from(document.querySelectorAll('#servicePriceMap [data-id]'));
+            const extraServiceIds = Array.from(document.querySelectorAll('input[name$=".serviceId"]'));
+            const extraQuantities = Array.from(document.querySelectorAll('input[name$=".quantity"]'));
+            const selectedRows = Array.from(document.querySelectorAll('.selected-extra-row'));
+
+            const parseNumber = (txt) => Number((txt || '0').replace(/[^\d]/g, ''));
+            const servicePriceMap = new Map();
+
+            servicePriceMapEls.forEach(el => {
+                const id = el.getAttribute('data-id');
+                const price = Number(el.getAttribute('data-price') || 0);
+                const name = el.getAttribute('data-name') || '';
+                const unit = el.getAttribute('data-unit') || 'đơn vị';
+                servicePriceMap.set(String(id), { price, name, unit });
+            });
+
+            selectedRows.forEach(row => {
+                const serviceId = String(row.getAttribute('data-service-id') || '');
+                const quantity = Number(row.getAttribute('data-quantity') || 0);
+                const service = servicePriceMap.get(serviceId);
+                if (!service) return;
+
+                const nameEl = row.querySelector('.service-name');
+                const unitPriceEl = row.querySelector('.unit-price-text');
+                const subtotalEl = row.querySelector('.subtotal-text');
+
+                if (nameEl) nameEl.innerText = service.name || `Dịch vụ #${serviceId}`;
+                if (unitPriceEl) unitPriceEl.innerText = `Đơn giá: ${service.price.toLocaleString('vi-VN')}đ/${service.unit}`;
+                if (subtotalEl) subtotalEl.innerText = (service.price * quantity).toLocaleString('vi-VN') + 'đ';
+            });
+
+            const basePrice = parseNumber(fieldPriceEl?.innerText);
+            let extraPrice = 0;
+
+            extraServiceIds.forEach((idInput, idx) => {
+                const qtyInput = extraQuantities[idx];
+                if (!qtyInput) return;
+
+                const serviceId = String(idInput.value || '');
+                const quantity = Number(qtyInput.value || 0);
+                const unitPrice = Number((servicePriceMap.get(serviceId) || {}).price || 0);
+                extraPrice += unitPrice * quantity;
+            });
+
+            extraPriceEl.innerText = extraPrice.toLocaleString('vi-VN') + 'đ';
+
+            grandTotalText.innerText = (basePrice + extraPrice).toLocaleString('vi-VN') + 'đ';
+        });
+    </script>
+</th:block>
+
+</body>
+</html>

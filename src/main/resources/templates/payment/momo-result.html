@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Kết quả thanh toán — Arena Kinetic</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <div class="min-h-[90vh] flex items-center justify-center py-12 px-4 sm:px-6 bg-slate-50/50 font-body text-slate-800">
+
+        <div class="max-w-xl w-full bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-[0_10px_40px_rgb(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
+
+            <div th:if="${success}" class="text-center">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-50 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+
+                <div class="w-28 h-28 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_0_10px_rgba(16,185,129,0.1)] animate-[bounce_1s_ease-in-out_1]">
+                    <span class="material-symbols-outlined text-[64px] text-emerald-500" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                </div>
+
+                <h2 class="text-3xl font-black font-headline text-emerald-600 uppercase italic tracking-tight mb-2">Thanh toán thành công!</h2>
+                <p class="text-slate-500 font-medium">Tuyệt vời! Lịch đặt sân của bạn đã được xác nhận qua MoMo.</p>
+            </div>
+
+            <div th:unless="${success}" class="text-center">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-50 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+
+                <div class="w-28 h-28 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_0_10px_rgba(239,68,68,0.1)]">
+                    <span class="material-symbols-outlined text-[64px] text-red-500" style="font-variation-settings: 'FILL' 1;">cancel</span>
+                </div>
+
+                <h2 class="text-3xl font-black font-headline text-red-600 uppercase italic tracking-tight mb-2">Giao dịch thất bại!</h2>
+                <p class="text-slate-500 font-medium mb-1">Rất tiếc, thanh toán MoMo của bạn chưa thành công.</p>
+
+                <div class="inline-flex items-center justify-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-xl text-sm font-bold mt-2" th:switch="${resultCode}">
+                    <span class="material-symbols-outlined text-[18px]">info</span>
+                    <span th:case="1001">Số dư ví MoMo không đủ.</span>
+                    <span th:case="1002">Giao dịch bị từ chối bởi nhà phát hành.</span>
+                    <span th:case="1003">Giao dịch đã bị hủy sau khi cấp phát.</span>
+                    <span th:case="1004">Số tiền vượt quá hạn mức giao dịch.</span>
+                    <span th:case="1006">Bạn đã hủy giao dịch trên MoMo.</span>
+                    <span th:case="1007">Tài khoản MoMo chưa đăng ký dịch vụ.</span>
+                    <span th:case="*" th:text="${message != null and !#strings.isEmpty(message) ? message : 'Đã xảy ra lỗi trong quá trình thanh toán.'}"></span>
+                </div>
+            </div>
+
+            <div class="mt-10 bg-slate-50 rounded-3xl border border-slate-100 p-6 md:p-8 relative">
+                <div class="absolute -top-3 left-8 w-6 h-6 bg-white rounded-full border-b border-slate-100"></div>
+                <div class="absolute -top-3 right-8 w-6 h-6 bg-white rounded-full border-b border-slate-100"></div>
+
+                <h3 class="text-sm font-bold font-headline text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">receipt_long</span> Chi tiết giao dịch
+                </h3>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                        <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Mã hóa đơn</span>
+                        <span class="font-bold text-slate-900" th:text="${bookingCode}"></span>
+                    </div>
+
+                    <th:block th:if="${booking != null}">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Cơ sở</span>
+                            <span class="font-bold text-slate-900 text-right max-w-[200px] truncate" th:text="${booking.facilityName}"></span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Sân thi đấu</span>
+                            <span class="font-bold text-slate-900" th:text="${booking.fieldName}"></span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Thời gian đá</span>
+                            <div class="text-right">
+                                <span class="block font-bold text-slate-900" th:text="${booking.startTime + ' – ' + booking.endTime}"></span>
+                                <span class="text-[11px] text-slate-500 font-medium" th:text="${#temporals.format(booking.bookingDate,'dd/MM/yyyy')}"></span>
+                            </div>
+                        </div>
+                    </th:block>
+
+                    <th:block th:if="${transId != null and !#strings.isEmpty(transId)}">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Mã MoMo</span>
+                            <span class="font-medium text-slate-700 font-mono" th:text="${transId}"></span>
+                        </div>
+                    </th:block>
+
+                    <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                        <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Phương thức</span>
+                        <span class="font-bold text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 text-xs"
+                              th:text="${payType != null and !#strings.isEmpty(payType) ? payType : 'MoMo Wallet'}"></span>
+                    </div>
+
+                    <th:block th:if="${resultCode != null}">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-200/60 border-dashed">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Mã kết quả</span>
+                            <span class="font-medium text-slate-700" th:text="${resultCode}"></span>
+                        </div>
+                    </th:block>
+
+                    <th:block th:if="${amount != null}">
+                        <div class="flex justify-between items-end pt-2">
+                            <span class="text-xs font-label uppercase tracking-widest text-slate-500 font-bold">Số tiền thanh toán</span>
+                            <span class="text-2xl font-black font-headline italic"
+                                  th:classappend="${success ? 'text-emerald-600' : 'text-slate-900'}"
+                                  th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                            </span>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+
+            <div class="mt-8 space-y-3">
+
+                <div th:if="${success}" class="flex flex-col sm:flex-row gap-3">
+                    <a href="/bookings" class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-primary text-white font-bold rounded-xl transition-colors text-decoration-none shadow-lg shadow-slate-900/20">
+                        <span class="material-symbols-outlined text-[20px]">history</span> Lịch sử đặt sân
+                    </a>
+                    <a href="/facilities" class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-colors text-decoration-none border border-slate-200">
+                        <span class="material-symbols-outlined text-[20px]">add_circle</span> Đặt thêm sân
+                    </a>
+                </div>
+
+                <div th:unless="${success}" class="flex flex-col sm:flex-row gap-3">
+                    <a th:if="${booking != null and booking.status.name() == 'PENDING'}"
+                       th:href="@{/payment/checkout(bookingCode=${bookingCode})}"
+                       class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-[#005BAA] hover:bg-[#004785] text-white font-bold rounded-xl transition-colors text-decoration-none shadow-lg shadow-[#005BAA]/30">
+                        <span class="material-symbols-outlined text-[20px]">refresh</span> Thử thanh toán lại
+                    </a>
+                    <a href="/bookings" class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-colors text-decoration-none border border-slate-200">
+                        Trở về lịch sử
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</th:block>
+</body>
+</html>

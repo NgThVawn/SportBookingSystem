@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+
+    <nav th:fragment="navbar"
+        class="fixed top-0 w-full z-50 bg-zinc-100/90 dark:bg-zinc-950/95 backdrop-blur-xl shadow-sm transition-all duration-300 border-b border-outline-variant/30">
+        <div class="flex justify-between items-center px-6 h-20 w-full max-w-screen-2xl mx-auto">
+
+            <div class="flex items-center gap-8">
+                <a th:href="@{/}"
+                    class="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter font-headline italic text-decoration-none">ARENAKINETIC</a>
+
+            <div class="hidden md:flex gap-6 items-center" sec:authorize="isAuthenticated()">
+                <a th:href="@{/facilities}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Danh sách cơ sở</a>
+                <a th:href="@{/tournaments}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Tìm đối thủ</a>
+                <a th:href="@{/clubs}" class="text-zinc-600 dark:text-zinc-400 font-medium hover:text-primary transition-colors duration-200 font-headline tracking-tight text-decoration-none">Đội-Nhóm</a>
+            </div>
+        </div>
+
+            <div class="flex items-center gap-4">
+
+                <th:block sec:authorize="!isAuthenticated()">
+
+                    <style id="nav-dynamic-style"></style>
+                    <script>
+                        (function () {
+                            const path = window.location.pathname;
+                            const styleTag = document.getElementById('nav-dynamic-style');
+                            // Bơm CSS thẳng vào trình duyệt trước khi nó kịp hiển thị nút
+                            if (path.includes('/auth/login')) {
+                                styleTag.innerHTML = '#nav-btn-login { display: none !important; }';
+                            } else if (path.includes('/auth/register')) {
+                                styleTag.innerHTML = '#nav-btn-register { display: none !important; }';
+                            }
+                        })();
+                    </script>
+
+                    <a th:href="@{/auth/login}" id="nav-btn-login"
+                        class="hidden sm:block bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-6 py-2.5 rounded-xl font-bold transition-colors text-decoration-none font-headline border border-zinc-200 shadow-sm">
+                        Đăng nhập
+                    </a>
+
+                    <a th:href="@{/auth/register}" id="nav-btn-register"
+                        class="kinetic-gradient text-white px-6 py-2.5 rounded-xl font-bold font-headline tracking-tight hover:shadow-lg hover:shadow-primary/30 transition-all text-decoration-none active:scale-95 border-none">
+                        Đăng ký ngay
+                    </a>
+                </th:block>
+
+                <th:block sec:authorize="isAuthenticated()">
+                    <div class="relative group flex items-center justify-center">
+
+                        <a th:href="@{/profile/notifications}"
+                            class="relative text-decoration-none flex items-center justify-center" title="Thông báo">
+                            <span
+                                class="material-symbols-outlined text-zinc-600 group-hover:text-primary transition-colors text-[28px]">notifications</span>
+
+                            <span id="notif-badge"
+                                th:text="${unreadNotifCount != null && unreadNotifCount > 0 ? (unreadNotifCount > 99 ? '99+' : unreadNotifCount) : '0'}"
+                                style="position:absolute;top:-4px;right:-6px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:9999px;min-width:18px;height:18px;align-items:center;justify-content:center;padding:0 4px;font-family:'Lexend',sans-serif;"
+                                th:styleappend="${unreadNotifCount != null && unreadNotifCount > 0 ? 'display:flex;' : 'display:none;'}">
+                            </span>
+                        </a>
+
+                        <div
+                            class="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden flex flex-col">
+
+                            <div
+                                class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <span class="font-headline font-bold text-sm text-slate-800">Mới nhất</span>
+                                <a th:href="@{/profile/notifications}"
+                                    class="text-xs font-semibold text-primary hover:underline text-decoration-none">Xem
+                                    tất cả</a>
+                            </div>
+
+                            <div id="hover-notif-list" class="flex flex-col max-h-[350px] overflow-y-auto">
+                                <div
+                                    class="p-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined animate-spin text-[16px]">sync</span> Đang
+                                    tải...
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="relative group cursor-pointer ml-2">
+
+                        <a th:href="@{/profile}" class="flex items-center gap-2 text-decoration-none cursor-pointer">
+
+                            <div
+                                class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-highest overflow-hidden border-2 border-outline-variant group-hover:border-primary transition-colors shadow-sm">
+
+                                <img th:if="${user?.avatarUrl != null}" th:src="${user.avatarUrl}" alt="Avatar"
+                                    class="w-full h-full object-cover">
+
+                                <span th:unless="${user?.avatarUrl != null}"
+                                    class="font-headline font-black text-primary text-lg"
+                                    th:text="${user?.fullName != null ? #strings.substring(user.fullName, 0, 1).toUpperCase() : 'U'}">
+                                    U
+                                </span>
+                            </div>
+
+                            <span
+                                class="hidden sm:block font-bold text-sm text-zinc-800 font-headline truncate max-w-[120px]"
+                                th:text="${user?.fullName != null ? user.fullName : #authentication.name}">
+                                User
+                            </span>
+
+                            <span
+                                class="material-symbols-outlined text-zinc-400 text-[20px] group-hover:rotate-180 transition-transform duration-300">
+                                expand_more
+                            </span>
+                        </a>
+
+                        <div
+                            class="absolute right-0 top-full mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-outline-variant/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-3 group-hover:translate-y-0 overflow-hidden z-50">
+                            <div class="py-2">
+                                <a th:href="@{/profile}"
+                                    class="px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-primary transition-colors text-decoration-none flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[20px]">person</span> Thông tin cá nhân
+                                </a>
+                                <a th:href="@{/bookings}"
+                                    class="px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-primary transition-colors text-decoration-none flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[20px]">history</span> Lịch sử đặt sân
+                                </a>
+                                <hr class="my-1 border-zinc-100">
+                                <form th:action="@{/auth/logout}" method="post" class="m-0">
+                                    <button type="submit"
+                                        class="w-full text-left px-5 py-3 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors border-none bg-transparent cursor-pointer flex items-center gap-3 font-headline">
+                                        <span class="material-symbols-outlined text-[20px]">logout</span> Đăng xuất
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
+
+                <button
+                    class="md:hidden material-symbols-outlined text-zinc-800 bg-transparent border-none text-[28px]">menu</button>
+            </div>
+
+        </div>
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', async function () {
+                const container = document.getElementById('hover-notif-list');
+                if (!container) return;
+
+                try {
+                    // Gọi API lấy danh sách thông báo mà bạn đã viết sẵn
+                    const res = await fetch('/api/notifications');
+                    if (!res.ok) return;
+                    const notifications = await res.json();
+
+                    if (!notifications || notifications.length === 0) {
+                        container.innerHTML = '<div class="p-5 text-center text-xs text-slate-400 font-body">Chưa có thông báo nào.</div>';
+                        return;
+                    }
+
+                    // Cắt lấy 5 thông báo đầu tiên
+                    const top5 = notifications.slice(0, 5);
+
+                    // Render ra HTML. Lưu ý class 'truncate' ở thẻ <p> giúp cắt chữ dư thành dấu "..."
+                    container.innerHTML = top5.map(n => `
+                <a href="${n.link && n.link !== 'null' ? n.link : '/profile/notifications'}"
+                   class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 text-decoration-none ${n.read ? 'opacity-70 bg-white' : 'bg-orange-50/30'}">
+                    
+                    <div class="w-2 h-2 rounded-full flex-shrink-0 ${n.read ? 'bg-transparent' : 'bg-primary'}"></div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-slate-800 truncate m-0 font-headline leading-tight">${escapeHtml(n.title)}</p>
+                        <p class="text-xs text-slate-500 truncate m-0 mt-0.5 font-body">${escapeHtml(n.message)}</p>
+                    </div>
+                </a>
+            `).join('');
+
+                } catch (e) {
+                    console.error('Lỗi tải dropdown thông báo:', e);
+                    container.innerHTML = '<div class="p-4 text-center text-xs text-red-400">Lỗi tải dữ liệu.</div>';
+                }
+            });
+
+            // Helper function để chống XSS
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.appendChild(document.createTextNode(text || ''));
+                return div.innerHTML;
+            }
+        </script>
+    </nav>
+
+</body>
+
+</html>

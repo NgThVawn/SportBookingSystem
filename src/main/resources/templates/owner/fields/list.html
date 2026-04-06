@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Quản lý Sân con | Arena Kinetic Owner</title>
+
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link th:href="@{/css/app.css}" rel="stylesheet"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&amp;family=Inter:wght@100..900&amp;family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#191c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#b02f00",
+                        "surface": "#f8f9fa"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
+
+<main class="ml-64 min-h-screen relative flex flex-col">
+
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm font-medium">
+                <span class="text-slate-400">Arena Manager</span>
+                <span class="text-slate-300">/</span>
+                <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Cơ sở</a>
+                <span class="text-slate-300">/</span>
+                <span class="text-slate-800 font-bold">Sân con</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <a th:href="@{/owner/facilities}" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-orange-600 text-white text-sm font-bold hover:bg-orange-700 transition-colors text-decoration-none">Quay lại</a>
+            <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentOwner != null && currentOwner.email != null ? currentOwner.email : #authentication.name}">email@example.com</p>
+                </div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
+                    <img th:if="${currentOwner != null && currentOwner.avatarUrl != null}" th:src="${currentOwner.avatarUrl}" class="w-full h-full object-cover" alt="Avatar">
+                    <span th:unless="${currentOwner != null && currentOwner.avatarUrl != null}" th:text="${currentOwner != null && currentOwner.email != null ? #strings.substring(currentOwner.email, 0, 1).toUpperCase() : 'O'}"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="p-8 flex-1">
+
+        <div th:if="${successMsg}" id="alertSuccess" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm transition-opacity duration-500 opacity-100">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="font-bold text-sm" th:text="${successMsg}"></span>
+        </div>
+        <div th:if="${errorMsg}" id="alertError" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm transition-opacity duration-500 opacity-100">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-bold text-sm" th:text="${errorMsg}"></span>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="font-headline font-black text-3xl text-slate-900 tracking-tight" th:text="'Sân con của: ' + ${facility.name}">Sân con</h2>
+                <p class="text-slate-500 text-sm mt-1">Quản lý sân thi đấu thuộc cơ sở này.</p>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="relative w-full md:w-72">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                    <input type="text" id="searchInput" oninput="searchFields()" placeholder="Tìm tên sân, loại sân..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none shadow-sm">
+                </div>
+
+                <a th:href="@{/owner/facilities/{facId}/fields/create(facId=${facility.id})}" class="shrink-0 px-5 py-2.5 bg-orange-600 text-white font-bold text-sm rounded-xl flex items-center gap-2 hover:bg-orange-700 hover:shadow-lg hover:shadow-orange-600/20 transition-all active:scale-95 text-decoration-none">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    <span class="hidden sm:inline">Thêm sân</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 font-bold font-label">
+                        <th class="px-6 py-4">Tên sân</th>
+                        <th class="px-6 py-4">Môn thể thao</th>
+                        <th class="px-6 py-4">Mặt sân</th>
+                        <th class="px-6 py-4">Giá / giờ</th>
+                        <th class="px-6 py-4">Trạng thái</th>
+                        <th class="px-6 py-4 text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="tableBody" class="text-sm font-medium text-slate-700 divide-y divide-slate-50">
+                    <tr th:each="f : ${fields}" class="field-row hover:bg-slate-50/80 transition-colors"
+                        th:data-name="${#strings.toLowerCase(f.name)}"
+                        th:data-sport="${#strings.toLowerCase(f.sportType.displayName)}"
+                        th:data-surface="${f.surfaceType != null ? #strings.toLowerCase(f.surfaceType) : ''}">
+
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-900 text-base" th:text="${f.name}">Tên sân</p>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold" th:text="${f.sportType.displayName}">Môn</span>
+                        </td>
+
+                        <td class="px-6 py-4" th:text="${f.surfaceType != null ? f.surfaceType : 'N/A'}">N/A</td>
+
+                        <td class="px-6 py-4 font-bold text-orange-600" th:text="${#numbers.formatDecimal(f.pricePerHour, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
+
+                        <td class="px-6 py-4 status-cell">
+                            <span th:if="${f.status.name() == 'OPEN'}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hoạt động
+                            </span>
+                            <span th:if="${f.status.name() == 'CLOSED'}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-100">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Đóng
+                            </span>
+                            <span th:if="${f.status.name() == 'MAINTENANCE'}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Bảo trì
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a th:href="@{/owner/facilities/{facId}/fields/{fieldId}/edit(facId=${facility.id}, fieldId=${f.id})}" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors text-decoration-none" title="Chỉnh sửa sân">
+                                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                                </a>
+
+                                <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white"
+                                        th:onchange="'changeFieldStatus(' + ${facility.id} + ',' + ${f.id} + ', this.value)'">
+                                    <option value="OPEN" th:selected="${f.status.name() == 'OPEN'}">Open</option>
+                                    <option value="CLOSED" th:selected="${f.status.name() == 'CLOSED'}">Closed</option>
+                                    <option value="MAINTENANCE" th:selected="${f.status.name() == 'MAINTENANCE'}">Maintenance</option>
+                                </select>
+
+                                <form th:action="@{/owner/facilities/{facId}/fields/{fieldId}/delete(facId=${facility.id}, fieldId=${f.id})}" method="post" class="m-0 delete-field-form">
+                                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="button" class="open-delete-field-modal w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border-none bg-transparent cursor-pointer" title="Xóa sân">
+                                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                                    </button>
+                                </form>
+
+                                <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/price-rules(fid=${facility.id}, fldid=${f.id})}" class="px-2.5 py-1.5 rounded-lg bg-yellow-100 text-yellow-700 text-xs font-bold hover:bg-yellow-200 transition-colors text-decoration-none">Giá</a>
+
+                                <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times(fid=${facility.id}, fldid=${f.id})}" class="px-2.5 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-bold hover:bg-indigo-200 transition-colors text-decoration-none">Chặn giờ</a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(fields)}" id="emptyRow">
+                        <td colspan="6" class="px-6 py-16 text-center text-slate-400">
+                            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-4xl text-slate-300">grid_view</span>
+                            </div>
+                            <p class="text-base font-bold text-slate-600">Chưa có sân nào trong cơ sở này</p>
+                        </td>
+                    </tr>
+
+                    <tr id="noResultsRow" style="display:none;">
+                        <td colspan="6" class="px-6 py-16 text-center text-slate-400">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-3xl text-slate-300">search_off</span>
+                            </div>
+                            <p class="text-base font-bold text-slate-600">Không tìm thấy sân phù hợp</p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="paginationContainer" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 hidden">
+                <span class="text-sm text-slate-500">
+                    Đang hiển thị <span id="pageInfo" class="font-bold text-slate-800"></span>
+                </span>
+
+                <div class="flex items-center gap-1">
+                    <button id="btnPrev" type="button" onclick="changePage(-1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                    </button>
+
+                    <div id="pageNumbers" class="flex gap-1"></div>
+
+                    <button id="btnNext" type="button" onclick="changePage(1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="deleteFieldModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+        <div class="mb-4 flex items-start gap-3">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">delete</span>
+            </div>
+            <div>
+                <h3 class="font-headline text-xl font-bold text-on-surface">Xác nhận xóa sân</h3>
+                <p class="mt-1 text-sm text-slate-500">Sân sẽ bị xóa khỏi cơ sở và không thể khôi phục sau khi xác nhận.</p>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+            Hãy kiểm tra lại trước khi xóa để tránh mất dữ liệu không mong muốn.
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+            <button type="button" id="cancelDeleteFieldModal" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Hủy</button>
+            <button type="button" id="confirmDeleteFieldModal" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700">Xác nhận xóa</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const successAlert = document.getElementById('alertSuccess');
+        const errorAlert = document.getElementById('alertError');
+
+        function autoHide(alertEl) {
+            if (!alertEl) return;
+            setTimeout(() => {
+                alertEl.classList.remove('opacity-100');
+                alertEl.classList.add('opacity-0');
+                setTimeout(() => alertEl.style.display = 'none', 500);
+            }, 3000);
+        }
+
+        autoHide(successAlert);
+        autoHide(errorAlert);
+    });
+
+    let activeDeleteFieldForm = null;
+    const deleteFieldModal = document.getElementById('deleteFieldModal');
+    const cancelDeleteFieldModal = document.getElementById('cancelDeleteFieldModal');
+    const confirmDeleteFieldModal = document.getElementById('confirmDeleteFieldModal');
+
+    function openDeleteFieldModal(form) {
+        activeDeleteFieldForm = form;
+        deleteFieldModal.classList.remove('hidden');
+        deleteFieldModal.classList.add('flex');
+    }
+
+    function closeDeleteFieldModal() {
+        activeDeleteFieldForm = null;
+        deleteFieldModal.classList.add('hidden');
+        deleteFieldModal.classList.remove('flex');
+    }
+
+    document.querySelectorAll('.open-delete-field-modal').forEach(button => {
+        button.addEventListener('click', () => openDeleteFieldModal(button.closest('form')));
+    });
+
+    cancelDeleteFieldModal.addEventListener('click', closeDeleteFieldModal);
+
+    deleteFieldModal.addEventListener('click', (event) => {
+        if (event.target === deleteFieldModal) {
+            closeDeleteFieldModal();
+        }
+    });
+
+    confirmDeleteFieldModal.addEventListener('click', () => {
+        if (activeDeleteFieldForm) {
+            activeDeleteFieldForm.submit();
+        }
+    });
+
+    const itemsPerPage = 5;
+    let currentPage = 1;
+    const allRows = Array.from(document.querySelectorAll('.field-row'));
+    let filteredRows = [...allRows];
+    let totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const emptyRow = document.getElementById('emptyRow');
+
+    function searchFields() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+        filteredRows = allRows.filter((row) => {
+            const name = row.dataset.name || '';
+            const sport = row.dataset.sport || '';
+            const surface = row.dataset.surface || '';
+            return name.includes(keyword) || sport.includes(keyword) || surface.includes(keyword);
+        });
+
+        currentPage = 1;
+        totalPages = Math.ceil(filteredRows.length / itemsPerPage) || 1;
+        displayRows();
+    }
+
+    function displayRows() {
+        allRows.forEach((row) => row.style.display = 'none');
+
+        if (emptyRow && allRows.length === 0) {
+            emptyRow.style.display = '';
+            if (paginationContainer) {
+                paginationContainer.classList.add('hidden');
+            }
+            if (noResultsRow) {
+                noResultsRow.style.display = 'none';
+            }
+            return;
+        }
+
+        if (emptyRow) {
+            emptyRow.style.display = 'none';
+        }
+
+        if (filteredRows.length === 0) {
+            if (noResultsRow) {
+                noResultsRow.style.display = '';
+            }
+            if (paginationContainer) {
+                paginationContainer.classList.add('hidden');
+            }
+            return;
+        }
+
+        if (noResultsRow) {
+            noResultsRow.style.display = 'none';
+        }
+
+        if (paginationContainer) {
+            paginationContainer.classList.remove('hidden');
+        }
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        filteredRows.forEach((row, index) => {
+            if (index >= start && index < end) {
+                row.style.display = '';
+            }
+        });
+
+        const currentEnd = end > filteredRows.length ? filteredRows.length : end;
+        const pageInfo = document.getElementById('pageInfo');
+        if (pageInfo) {
+            pageInfo.innerHTML = `${start + 1} - ${currentEnd} trong số <span class="text-primary">${filteredRows.length}</span> sân`;
+        }
+
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+
+        if (btnPrev) {
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.className = currentPage === 1
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        if (btnNext) {
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.className = currentPage === totalPages
+                ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed border-none bg-transparent'
+                : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer border-none bg-transparent';
+        }
+
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        if (!pageNumbersContainer) {
+            return;
+        }
+
+        pageNumbersContainer.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.type = 'button';
+            btn.onclick = () => {
+                currentPage = i;
+                displayRows();
+            };
+
+            if (i === currentPage) {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-white bg-orange-600 font-bold text-sm shadow-md border-none cursor-pointer';
+            } else {
+                btn.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 font-bold text-sm transition-colors cursor-pointer border-none bg-transparent';
+            }
+            pageNumbersContainer.appendChild(btn);
+        }
+
+        if (totalPages <= 1 && paginationContainer) {
+            paginationContainer.classList.add('hidden');
+        }
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        displayRows();
+    }
+
+    function changeFieldStatus(facId, fieldId, newStatus) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+        fetch('/owner/facilities/' + facId + '/fields/' + fieldId + '/status?status=' + newStatus, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            }
+        }).then(res => {
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Không thể cập nhật trạng thái');
+            }
+        }).catch(() => {
+            alert('Lỗi mạng khi cập nhật trạng thái');
+        });
+    }
+
+    if (allRows.length > 0) {
+        displayRows();
+    }
+</script>
+
+</body>
+</html>

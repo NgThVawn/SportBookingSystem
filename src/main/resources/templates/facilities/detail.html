@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${facility.name + ' — Arena Kinetic'}">Chi tiết cơ sở — Arena Kinetic</title>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <link th:href="@{/css/app.css}" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#d33a11",
+                        "surface": "#f4f5f7",
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .timeline-wrapper {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+        }
+
+        .timeline-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .timeline-wrapper::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+
+        .timeline-row {
+            display: grid;
+            border-bottom: 1px solid #f1f5f9;
+            background: white;
+            width: max-content;
+            min-width: 100%;
+        }
+
+        .timeline-row:last-child {
+            border-bottom: none;
+        }
+
+        .time-cell {
+            height: 48px;
+            border-right: 1px solid #f8fafc;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .time-header {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .time-cell.available:hover {
+            background-color: #ffedd5;
+        }
+
+        .time-cell.occupied {
+            background-color: #e53e3e;
+            cursor: not-allowed;
+        }
+
+        .time-cell.blocked {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .time-cell.selected {
+            background-color: #d33a11;
+            box-shadow: inset 0 0 0 1px #9b2c0c;
+            z-index: 10;
+        }
+
+        .time-cell.in-range {
+            background-color: #fed7aa;
+            box-shadow: inset 0 1px 0 #fbd38d, inset 0 -1px 0 #fbd38d;
+        }
+
+        .time-cell.available.ghost-range {
+            background-color: #ffedd5;
+            opacity: 0.7;
+        }
+
+        /* --- CSS CHO SLIDER --- */
+        .carousel-inner {
+            transition: transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-surface font-body text-slate-800 antialiased">
+
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <main class="pt-24 pb-12 px-4 md:px-6 max-w-7xl mx-auto">
+
+        <header class="relative w-full h-[350px] md:h-[450px] rounded-[1.5rem] overflow-hidden mb-8 shadow-sm">
+
+            <div id="carouselInner" class="carousel-inner flex w-full h-full">
+
+                <th:block th:if="${facility.images != null and not #lists.isEmpty(facility.images)}">
+                    <img th:each="img : ${facility.images}" class="w-full h-full object-cover shrink-0 block"
+                        th:src="${img.imageUrl}" alt="Facility Image" />
+                </th:block>
+
+                <th:block th:unless="${facility.images != null and not #lists.isEmpty(facility.images)}">
+                    <img class="w-full h-full object-cover shrink-0 block"
+                        th:src="${facility.primaryImageUrl != null ? facility.primaryImageUrl : '/images/default-facility.jpg'}"
+                        alt="Facility Image" />
+                </th:block>
+
+            </div>
+
+            <button id="prevBtn"
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors border-none cursor-pointer z-20">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <button id="nextBtn"
+                class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors border-none cursor-pointer z-20">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+
+            <div id="carouselDots" class="absolute bottom-32 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            </div>
+
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-8 pointer-events-none z-10">
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <span
+                        class="bg-primary px-4 py-1.5 rounded-full text-white font-label text-xs font-bold uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                        <span class="material-symbols-outlined text-[14px]">verified</span> Đối tác chính thức
+                    </span>
+                    <span
+                        class="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-label text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg">
+                        <span class="material-symbols-outlined text-[14px] text-yellow-400"
+                            style="font-variation-settings: 'FILL' 1;">star</span>
+                        <span
+                            th:text="${facility.avgRating != null ? #numbers.formatDecimal(facility.avgRating, 1, 'NONE', 1, 'POINT') : '0.0'}">5.0</span>
+                    </span>
+                </div>
+                <h1 class="font-headline text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-tight mb-2"
+                    th:text="${facility.name}">TÊN SÂN ĐẤU</h1>
+                <p class="text-white/90 font-body text-sm flex items-center gap-2 m-0">
+                    <span class="material-symbols-outlined text-[16px] text-green-400">location_on</span>
+                    <span th:text="${facility.address + ', ' + facility.district + ', ' + facility.city}">Địa chỉ
+                        sân</span>
+                </p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <div class="lg:col-span-8 space-y-6">
+
+                <section class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-sm">
+                    <h2 class="font-headline text-xl font-bold mb-4 flex items-center gap-3 text-slate-900">
+                        <span class="w-1.5 h-6 bg-primary rounded"></span> Thông tin cơ sở
+                    </h2>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6"
+                        th:text="${facility.description} ?: 'Tận hưởng trải nghiệm thi đấu chuyên nghiệp tại hệ thống sân của chúng tôi. Kích thước sân tiêu chuẩn giúp những pha bóng trở nên mượt mà hơn.'">
+                    </p>
+
+                    <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
+                        <p class="text-xs text-slate-500 m-0">Dịch vụ đi kèm sẽ hiển thị sau khi bạn chọn khung giờ và
+                            loại sân bên dưới.</p>
+                    </div>
+                </section>
+
+                <section class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <h2 class="font-headline text-xl font-bold flex items-center gap-3 text-slate-900 m-0">
+                            <span class="w-1.5 h-6 bg-primary rounded"></span> Đặt lịch thi đấu
+                        </h2>
+
+                        <div class="flex gap-4 font-body text-[10px] font-bold uppercase tracking-wide">
+                            <div class="flex items-center gap-1.5 text-slate-500"><span
+                                    class="w-3 h-3 rounded-sm border border-slate-200"></span> Trống</div>
+                            <div class="flex items-center gap-1.5 text-slate-700"><span
+                                    class="w-3 h-3 rounded-sm bg-red-600"></span> Đã đặt</div>
+                            <div class="flex items-center gap-1.5 text-slate-700"><span
+                                    class="w-3 h-3 rounded-sm bg-gray-400"></span> Khóa</div>
+                            <div class="flex items-center gap-1.5 text-slate-700"><span
+                                    class="w-3 h-3 rounded-sm bg-primary"></span> Đang chọn</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <input type="date" id="bookingDate"
+                            class="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer"
+                            th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+                    </div>
+
+                    <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                        <span class="material-symbols-outlined text-amber-500">info</span>
+                        <p class="text-sm font-medium text-amber-800 m-0"><strong>Lưu ý:</strong> Thời gian đặt sân tối
+                            thiểu là <strong>1 giờ</strong> (tương đương chọn 2 ô liên tiếp trên biểu đồ).</p>
+                    </div>
+
+                    <div class="timeline-wrapper relative" id="timelineContainer">
+                        <div class="text-center py-10 text-slate-400 font-bold animate-pulse" id="loadingTimeline">
+                            Đang tải lịch sân...
+                        </div>
+                        <div id="timelineContent" class="hidden overflow-x-visible">
+                            <div class="timeline-row bg-slate-50 sticky top-0 z-20" id="timeHeaderRow">
+                                <div
+                                    class="bg-slate-100 p-3 font-bold text-xs flex items-center justify-center border-r border-slate-200 sticky left-0 z-30 font-body text-slate-500">
+                                    Sân</div>
+                            </div>
+                            <div id="fieldsContainer"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <button type="button" id="resetSelectionBtn"
+                            class="hidden px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors font-body mx-auto cursor-pointer border-none">
+                            Hủy chọn
+                        </button>
+                    </div>
+
+                    <div id="servicePanel"
+                        class="mt-6 p-4 rounded-xl bg-slate-900 text-white border border-slate-800 hidden">
+                        <div class="flex items-center justify-between gap-3 mb-3">
+                            <p class="text-[11px] font-body uppercase tracking-wider text-slate-300 m-0">Chọn dịch vụ đi
+                                kèm</p>
+                            <span class="text-[10px] text-slate-400">Hiển thị theo sân đã chọn</span>
+                        </div>
+
+                        <div id="commonServiceWrap" class="mb-3 hidden">
+                            <p class="text-[10px] uppercase tracking-wider text-cyan-300 mb-2 font-bold">Tất cả loại sân
+                            </p>
+                            <div id="commonServiceList" class="space-y-2"></div>
+                        </div>
+
+                        <div id="specificServiceWrap" class="hidden">
+                            <p class="text-[10px] uppercase tracking-wider text-amber-300 mb-2 font-bold">Dịch vụ theo
+                                loại sân</p>
+                            <div id="specificServiceList" class="space-y-2"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="reviews" class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-sm">
+                    <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                        <h2 class="font-headline text-xl font-bold flex items-center gap-3 text-slate-900 m-0">
+                            <span class="w-1.5 h-6 bg-amber-500 rounded"></span> Đánh giá từ khách hàng
+                        </h2>
+                        <div
+                            class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1.5 border border-amber-100">
+                            <span class="material-symbols-outlined text-[18px]"
+                                style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span th:text="${facility.avgRating + ' / 5.0'}">5.0 / 5.0</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+
+                        <div th:if="${#lists.isEmpty(reviews)}"
+                            class="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <div
+                                class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                <span class="material-symbols-outlined text-4xl text-slate-300">reviews</span>
+                            </div>
+                            <p class="text-slate-500 font-medium m-0">Chưa có đánh giá nào cho cơ sở này.</p>
+                            <p class="text-xs text-slate-400 mt-1">Khách hàng có thể để lại nhận xét sau khi trải nghiệm
+                                tại sân.</p>
+                        </div>
+
+                        <div th:each="r : ${reviews}" class="flex gap-4">
+
+                            <div
+                                class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 text-slate-400 overflow-hidden">
+                                <img th:if="${r.user != null and r.user.avatarUrl != null}" th:src="${r.user.avatarUrl}"
+                                    class="w-full h-full object-cover" alt="Avatar" />
+
+                                <span th:unless="${r.user != null and r.user.avatarUrl != null}"
+                                    class="material-symbols-outlined text-[24px]">person</span>
+                            </div>
+
+                            <div class="flex-grow bg-slate-50 p-4 rounded-2xl rounded-tl-none border border-slate-100">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="font-bold text-slate-800 text-sm m-0"
+                                            th:text="${r.user != null ? (r.user.fullName != null ? r.user.fullName : r.user.email) : 'Khách hàng'}">
+                                            Tên User
+                                        </h4>
+                                        <span class="text-slate-300 text-xs">•</span>
+                                        <span class="text-[10px] text-slate-400 font-label tracking-widest uppercase"
+                                            th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}">12/10/2026</span>
+                                    </div>
+                                    <div class="flex text-amber-400 text-[14px]">
+                                        <span th:each="i : ${#numbers.sequence(1, r.rating)}"
+                                            class="material-symbols-outlined"
+                                            style="font-variation-settings: 'FILL' 1;">star</span>
+                                        <span th:if="${r.rating < 5}"
+                                            th:each="i : ${#numbers.sequence(r.rating + 1, 5)}"
+                                            class="material-symbols-outlined text-slate-200"
+                                            style="font-variation-settings: 'FILL' 1;">star</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-slate-600 leading-relaxed m-0" th:text="${r.comment}">Nội dung
+                                    bình luận...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="lg:col-span-4 space-y-6 sticky top-24 mb-12">
+
+                <div class="bg-white p-6 rounded-[1.5rem] shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-headline font-bold text-sm flex items-center gap-2 uppercase text-slate-900">
+                            <span class="material-symbols-outlined text-primary text-[20px]">map</span> Vị trí
+                        </h3>
+                        <a th:if="${facility.latitude != null and facility.longitude != null}"
+                            th:href="@{'https://www.google.com/maps/dir/?api=1&destination=' + ${facility.latitude} + ',' + ${facility.longitude}}"
+                            target="_blank"
+                            class="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 text-decoration-none bg-blue-50 px-2 py-1 rounded">
+                            Chỉ đường
+                        </a>
+                    </div>
+
+                    <div class="w-full h-40 rounded-xl overflow-hidden bg-slate-100 relative mb-3">
+                        <th:block th:if="${facility.latitude != null and facility.longitude != null}">
+                            <iframe class="absolute inset-0 w-full h-full" style="border:0;" allowfullscreen=""
+                                loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                                th:src="@{'https://maps.google.com/maps?q=' + ${facility.latitude} + ',' + ${facility.longitude} + '&hl=vi&z=15&output=embed'}">
+                            </iframe>
+                        </th:block>
+                        <div th:unless="${facility.latitude != null and facility.longitude != null}"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                            <span class="material-symbols-outlined text-3xl text-slate-300 mb-1">location_off</span>
+                            <p class="text-xs text-slate-500 font-bold">Chưa cập nhật bản đồ</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 font-medium m-0 leading-relaxed"
+                        th:text="${facility.address + ', ' + facility.district + ', ' + facility.city}"></p>
+                </div>
+
+                <div class="bg-[#222222] text-white p-6 rounded-[1.5rem] shadow-xl">
+                    <h3 class="font-headline text-sm font-black mb-5 uppercase tracking-wide text-white">Chi tiết thanh
+                        toán</h3>
+
+                    <div id="emptyBookingState" class="py-6 text-center text-slate-400">
+                        <span class="material-symbols-outlined text-[32px] mb-2 opacity-50">ads_click</span>
+                        <p class="text-xs font-body leading-relaxed">Hãy chọn khung giờ trống<br />trên biểu đồ để xem
+                            giá</p>
+                    </div>
+
+                    <div id="activeBookingState" class="hidden">
+                        <div class="space-y-3 mb-6 font-body text-xs text-slate-300 border-b border-white/10 pb-4">
+                            <div class="flex justify-between items-center">
+                                <span>Sân chọn</span>
+                                <span class="font-bold text-white" id="summaryFieldName">--</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Thời gian</span>
+                                <span class="font-bold text-white" id="summaryTime">--:-- đến --:--</span>
+                            </div>
+
+                            <div id="priceSegments" class="space-y-3 pt-3 border-t border-white/10"></div>
+                        </div>
+
+                        <div class="mb-6">
+                            <p class="text-[10px] font-body uppercase text-slate-400 mb-1">Tổng cộng</p>
+                            <p class="text-3xl font-headline font-black text-white" id="totalPrice">0₫</p>
+                            <p class="m-0 mt-1 text-[11px] text-slate-400" id="extraSummary">(bao gồm dịch vụ: 0đ)</p>
+                        </div>
+
+                        <div class="mb-6 border border-white/10 rounded-xl p-3 bg-white/5"
+                            id="selectedServiceSummaryWrap">
+                            <p class="m-0 mb-2 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Dịch vụ đã
+                                chọn</p>
+                            <div id="selectedServiceSummary" class="space-y-2 text-[11px] text-slate-200">
+                                <p class="m-0 text-slate-400">Chưa chọn dịch vụ.</p>
+                            </div>
+                        </div>
+
+                        <a id="bookBtn" href="#"
+                            class="w-full py-3.5 bg-[#d33a11] hover:bg-[#b02f00] rounded-lg font-headline text-sm font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 text-white text-decoration-none">
+                            XÁC NHẬN ĐẶT SÂN <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+                    </div>
+
+                    <p class="text-[9px] text-center text-slate-500 mt-4 font-body">Hỗ trợ thanh toán VNPay & Tiền mặt
+                    </p>
+                </div>
+
+            </aside>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <div id="facilityConfig" class="hidden" th:data-id="${facility.id}" th:data-open="${facility.openTime}"
+        th:data-close="${facility.closeTime}">
+    </div>
+    <div id="fieldDataContainer" class="hidden">
+        <div th:each="f : ${fields}" th:if="${f.status != null and f.status.name() == 'OPEN'}" class="field-item-data"
+            th:data-id="${f.id}" th:data-name="${f.name}"
+            th:data-sport="${f.sportType != null ? f.sportType.displayName : ''}">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // --- 1. LOGIC CAROUSEL (ẢNH TRƯỢT) ---
+            const inner = document.getElementById('carouselInner');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const dotsCon = document.getElementById('carouselDots');
+
+            const images = inner.querySelectorAll('img');
+            const totalImages = images.length;
+            let currentIndex = 0;
+            let autoPlayInterval;
+
+            // Chỉ khởi tạo slider nếu có nhiều hơn 1 ảnh
+            if (totalImages > 1) {
+                // Tạo các dấu chấm
+                for (let i = 0; i < totalImages; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all ${i === 0 ? 'bg-primary w-4' : 'bg-white/50'}`;
+                    dot.addEventListener('click', () => goToSlide(i));
+                    dotsCon.appendChild(dot);
+                }
+
+                function goToSlide(index) {
+                    currentIndex = index;
+                    inner.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+                    // Cập nhật giao diện dấu chấm
+                    const dots = dotsCon.children;
+                    for (let i = 0; i < dots.length; i++) {
+                        if (i === currentIndex) {
+                            dots[i].className = 'w-4 h-2 rounded-full cursor-pointer transition-all bg-primary';
+                        } else {
+                            dots[i].className = 'w-2 h-2 rounded-full cursor-pointer transition-all bg-white/50';
+                        }
+                    }
+                    resetAutoPlay();
+                }
+
+                nextBtn.addEventListener('click', () => {
+                    const nextIndex = (currentIndex + 1) % totalImages;
+                    goToSlide(nextIndex);
+                });
+
+                prevBtn.addEventListener('click', () => {
+                    const prevIndex = (currentIndex - 1 + totalImages) % totalImages;
+                    goToSlide(prevIndex);
+                });
+
+                // Tự động lướt sau 5s
+                function resetAutoPlay() {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = setInterval(() => {
+                        const nextIndex = (currentIndex + 1) % totalImages;
+                        goToSlide(nextIndex);
+                    }, 5000);
+                }
+                resetAutoPlay();
+            } else {
+                // Nếu chỉ có 1 ảnh, giấu mấy nút bấm đi
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+
+
+            // --- 2. LOGIC TIMELINE CHỌN GIỜ (GIỮ NGUYÊN) ---
+            const dateInput = document.getElementById('bookingDate');
+            const configEl = document.getElementById('facilityConfig');
+            const openTimeStr = configEl.getAttribute('data-open');
+            const closeTimeStr = configEl.getAttribute('data-close');
+
+            const openFields = Array.from(document.querySelectorAll('.field-item-data')).map(el => ({
+                id: el.getAttribute('data-id'),
+                name: el.getAttribute('data-name'),
+                sportType: el.getAttribute('data-sport')
+            }));
+
+            const loadingEl = document.getElementById('loadingTimeline');
+            const contentEl = document.getElementById('timelineContent');
+            const headerRow = document.getElementById('timeHeaderRow');
+            const fieldsCon = document.getElementById('fieldsContainer');
+            const resetBtn = document.getElementById('resetSelectionBtn');
+
+            const emptyState = document.getElementById('emptyBookingState');
+            const activeState = document.getElementById('activeBookingState');
+            const lblFieldName = document.getElementById('summaryFieldName');
+            const lblTime = document.getElementById('summaryTime');
+            const priceSegEl = document.getElementById('priceSegments');
+            const totalPriceEl = document.getElementById('totalPrice');
+            const bookBtn = document.getElementById('bookBtn');
+            const servicePanel = document.getElementById('servicePanel');
+            const commonServiceWrap = document.getElementById('commonServiceWrap');
+            const specificServiceWrap = document.getElementById('specificServiceWrap');
+            const commonServiceList = document.getElementById('commonServiceList');
+            const specificServiceList = document.getElementById('specificServiceList');
+
+            let fieldsData = [];
+            let selectedFieldId = null;
+            let selectedStartMin = null;
+            let selectedEndMin = null;
+            let selectionStep = 0;
+            let baseBookingPrice = 0;
+            let currentServices = [];
+            const selectedExtras = new Map();
+
+            if (!dateInput.value) { dateInput.value = new Date().toISOString().split('T')[0]; }
+
+            const facStartMin = toMinutes(openTimeStr);
+            const facEndMin = toMinutes(closeTimeStr);
+            const totalSlots = (facEndMin - facStartMin) / 30;
+            const gridColsTemplate = `80px repeat(${totalSlots}, minmax(40px, 1fr))`;
+
+            let headerHtml = '<div class="bg-white p-3 font-bold text-xs flex items-center justify-center border-r border-slate-200 sticky left-0 z-30 text-slate-500 font-body">Sân</div>';
+            for (let m = facStartMin; m < facEndMin; m += 30) {
+                headerHtml += `<div class="time-header">${toHHMM(m)}</div>`;
+            }
+            headerRow.innerHTML = headerHtml;
+            headerRow.style.gridTemplateColumns = gridColsTemplate;
+
+            dateInput.addEventListener('change', loadAllFieldsData);
+            resetBtn.addEventListener('click', resetSelection);
+
+            async function loadAllFieldsData() {
+                if (openFields.length === 0) {
+                    loadingEl.innerText = "Cơ sở này hiện không có sân hoạt động.";
+                    return;
+                }
+                loadingEl.classList.remove('hidden');
+                contentEl.classList.add('hidden');
+                resetSelection();
+                fieldsData = [];
+
+                try {
+                    const date = dateInput.value;
+                    const promises = openFields.map(f => fetch(`/api/v1/fields/${f.id}/availability?date=${date}`).then(r => r.json()));
+                    const results = await Promise.all(promises);
+
+                    results.forEach((res, index) => {
+                        if (res.data) fieldsData.push({ fieldInfo: openFields[index], availability: res.data });
+                    });
+
+                    renderGanttChart();
+                    loadingEl.classList.add('hidden');
+                    contentEl.classList.remove('hidden');
+                } catch (e) {
+                    console.error(e);
+                    loadingEl.innerText = "Lỗi tải dữ liệu. Vui lòng F5 lại trang.";
+                }
+            }
+
+            function renderGanttChart() {
+                let html = '';
+                fieldsData.forEach(item => {
+                    const field = item.fieldInfo;
+                    const occ = item.availability.occupied;
+
+                    html += `<div class="timeline-row group" data-field-id="${field.id}" style="grid-template-columns: ${gridColsTemplate};">`;
+                    html += `<div class="bg-white group-hover:bg-slate-50 p-2 font-bold text-xs flex flex-col justify-center border-r border-slate-100 sticky left-0 z-10 text-slate-800 text-center">
+                            <span class="truncate w-16 mx-auto" title="${field.name}">${field.name}</span>
+                         </div>`;
+
+                    for (let m = facStartMin; m < facEndMin; m += 30) {
+                        const segEnd = m + 30;
+                        const type = getSegmentType(m, segEnd, occ);
+                        html += `<div class="time-cell ${type}" data-field-id="${field.id}" data-start-min="${m}" data-end-min="${segEnd}"></div>`;
+                    }
+                    html += `</div>`;
+                });
+
+                fieldsCon.innerHTML = html;
+                document.querySelectorAll('.time-cell.available').forEach(cell => {
+                    cell.addEventListener('click', handleCellClick);
+                    cell.addEventListener('mouseenter', handleCellHover);
+                });
+            }
+
+            function handleCellClick(e) {
+                const cell = e.target;
+                const fid = cell.getAttribute('data-field-id');
+                const sm = parseInt(cell.getAttribute('data-start-min'));
+                const em = parseInt(cell.getAttribute('data-end-min'));
+
+                if (selectionStep === 0 || selectedFieldId !== fid || selectionStep === 2) {
+                    selectedFieldId = fid; selectedStartMin = sm; selectedEndMin = em; selectionStep = 1;
+                } else if (selectionStep === 1) {
+                    if (sm < selectedStartMin) { selectedStartMin = sm; selectedEndMin = em; selectionStep = 1; }
+                    else { selectedEndMin = em; selectionStep = 2; }
+                }
+
+                if (hasConflict(selectedFieldId, selectedStartMin, selectedEndMin)) {
+                    alert("Khoảng giờ bị vướng lịch. Vui lòng chọn lại!");
+                    selectedStartMin = sm; selectedEndMin = em; selectionStep = 1;
+                }
+
+                updateGridUI(); updateSidebarUI();
+            }
+
+            function handleCellHover(e) {
+                if (selectionStep !== 1) return;
+                const cell = e.target;
+                const fid = cell.getAttribute('data-field-id');
+                if (fid !== selectedFieldId) return;
+
+                const hoverMin = parseInt(cell.getAttribute('data-start-min'));
+                document.querySelectorAll('.ghost-range').forEach(c => c.classList.remove('ghost-range'));
+
+                if (hoverMin > selectedStartMin) {
+                    document.querySelectorAll(`.time-cell[data-field-id="${fid}"]`).forEach(c => {
+                        const csm = parseInt(c.getAttribute('data-start-min'));
+                        if (csm > selectedStartMin && csm <= hoverMin) {
+                            if (c.classList.contains('available')) c.classList.add('ghost-range');
+                        }
+                    });
+                }
+            }
+
+            function updateGridUI() {
+                document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected', 'in-range', 'ghost-range'));
+                if (selectedStartMin !== null && selectedEndMin !== null) {
+                    resetBtn.classList.remove('hidden');
+                    document.querySelectorAll(`.time-cell[data-field-id="${selectedFieldId}"]`).forEach(c => {
+                        const sm = parseInt(c.getAttribute('data-start-min'));
+                        const em = parseInt(c.getAttribute('data-end-min'));
+                        if (sm >= selectedStartMin && em <= selectedEndMin) c.classList.add('selected');
+                    });
+                } else { resetBtn.classList.add('hidden'); }
+            }
+
+            async function updateSidebarUI() {
+                if (selectedStartMin === null) {
+                    servicePanel.classList.add('hidden');
+                    commonServiceWrap.classList.add('hidden');
+                    specificServiceWrap.classList.add('hidden');
+                    commonServiceList.innerHTML = '';
+                    specificServiceList.innerHTML = '';
+                    baseBookingPrice = 0;
+                    currentServices = [];
+                    selectedExtras.clear();
+                    updateTotalWithExtras();
+
+                    // [ĐÃ SỬA] Reset lại trạng thái và chữ của nút Đặt sân về mặc định
+                    bookBtn.classList.add('opacity-50', 'pointer-events-none');
+                    bookBtn.innerHTML = 'XÁC NHẬN ĐẶT SÂN <span class="material-symbols-outlined text-[18px]">arrow_forward</span>';
+
+                    emptyState.classList.remove('hidden'); activeState.classList.add('hidden'); return;
+                }
+
+                emptyState.classList.add('hidden'); activeState.classList.remove('hidden');
+                const fInfo = openFields.find(f => f.id === selectedFieldId);
+                lblFieldName.innerText = fInfo.name;
+
+                const startStr = toHHMM(selectedStartMin); const endStr = toHHMM(selectedEndMin);
+                lblTime.innerText = `${startStr} - ${endStr}`;
+
+                // Khóa nút trong lúc chờ load dữ liệu
+                bookBtn.classList.add('opacity-50', 'pointer-events-none');
+
+                try {
+                    const date = dateInput.value;
+                    const res = await fetch(`/api/v1/fields/${selectedFieldId}/price?date=${date}&start=${startStr}&end=${endStr}`);
+                    const json = await res.json();
+
+                    if (json.data) {
+                        baseBookingPrice = Number(json.data.totalPrice || 0);
+                        let phtml = '';
+                        json.data.segments.forEach(s => {
+                            phtml += `<div class="flex justify-between items-center">
+                                    <span>${s.timeRange} <span class="text-[10px] opacity-70">(${s.ruleName})</span></span>
+                                    <span class="font-bold text-white">${fmt(s.subtotal)}đ</span>
+                                  </div>`;
+                        });
+                        priceSegEl.innerHTML = phtml;
+                        updateTotalWithExtras();
+
+                        const durationMinutes = selectedEndMin - selectedStartMin;
+
+                        if (durationMinutes < 60) {
+                            // Nếu chưa đủ 60 phút (mới chọn 1 ô): Khóa nút và đổi chữ
+                            bookBtn.classList.add('opacity-50', 'pointer-events-none');
+                            bookBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">warning</span> CHỌN TỐI THIỂU 1 GIỜ';
+                        } else {
+                            // Nếu đã đủ từ 60 phút trở lên: Mở khóa nút và cho phép đặt
+                            bookBtn.classList.remove('opacity-50', 'pointer-events-none');
+                            bookBtn.innerHTML = 'XÁC NHẬN ĐẶT SÂN <span class="material-symbols-outlined text-[18px]">arrow_forward</span>';
+                        }
+                    }
+
+                    const serviceRes = await fetch(`/api/v1/fields/${selectedFieldId}/services`);
+                    const serviceJson = await serviceRes.json();
+                    renderServicePanel(serviceJson.data || []);
+                } catch (e) {
+                    console.error(e);
+                    priceSegEl.innerHTML = '<div class="text-red-400">Lỗi tính tiền.</div>';
+                    servicePanel.classList.add('hidden');
+                }
+            }
+
+            function renderServicePanel(services) {
+                currentServices = Array.isArray(services) ? services : [];
+
+                const activeIds = new Set(currentServices.map(s => String(s.id)));
+                Array.from(selectedExtras.keys()).forEach(id => {
+                    if (!activeIds.has(String(id))) {
+                        selectedExtras.delete(id);
+                    }
+                });
+
+                commonServiceList.innerHTML = '';
+                specificServiceList.innerHTML = '';
+
+                const common = currentServices.filter(s => s.scope === 'COMMON');
+                const specific = currentServices.filter(s => s.scope === 'SPORT_SPECIFIC');
+
+                common.forEach(s => commonServiceList.appendChild(renderServiceItem(s)));
+                specific.forEach(s => specificServiceList.appendChild(renderServiceItem(s)));
+
+                commonServiceWrap.classList.toggle('hidden', common.length === 0);
+                specificServiceWrap.classList.toggle('hidden', specific.length === 0);
+                servicePanel.classList.toggle('hidden', currentServices.length === 0);
+
+                updateBookLink();
+                updateTotalWithExtras();
+            }
+
+            function renderServiceItem(service) {
+                // Tạo thẻ Wrapper bọc ngoài cùng (để chứa item và dòng báo lỗi ở dưới)
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex flex-col gap-1';
+
+                // Thẻ Item chính (chứa tên, giá, nút bấm)
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between gap-3 bg-white/10 rounded-lg px-3 py-2 transition-all border border-transparent';
+
+                const left = document.createElement('div');
+                left.className = 'min-w-0 flex-1';
+
+                const name = document.createElement('p');
+                name.className = 'm-0 text-xs font-bold text-white truncate';
+                name.innerText = service.name;
+
+                const price = document.createElement('p');
+                price.className = 'm-0 text-[11px] font-semibold text-slate-300';
+                price.innerText = `${fmt(service.price)}đ/${service.unit}`;
+
+                left.appendChild(name);
+                left.appendChild(price);
+
+                if (service.appliesToSportType) {
+                    const badge = document.createElement('span');
+                    badge.className = 'inline-flex mt-1 text-[10px] px-2 py-1 rounded-full bg-amber-200/20 text-amber-200 font-bold';
+                    badge.innerText = service.appliesToSportType;
+                    left.appendChild(badge);
+                }
+
+                const controls = document.createElement('div');
+                controls.className = 'flex items-center gap-2 shrink-0 ml-2';
+
+                const decBtn = document.createElement('button');
+                decBtn.type = 'button';
+                decBtn.className = 'w-6 h-6 rounded bg-white/15 hover:bg-white/25 text-white border-none cursor-pointer transition-all';
+                decBtn.innerText = '-';
+
+                const qtyLabel = document.createElement('span');
+                qtyLabel.className = 'text-xs font-bold min-w-[18px] text-center text-white';
+                qtyLabel.innerText = String(selectedExtras.get(service.id) || 0);
+
+                const incBtn = document.createElement('button');
+                incBtn.type = 'button';
+                incBtn.className = 'w-6 h-6 rounded bg-white/15 hover:bg-white/25 text-white border-none cursor-pointer transition-all';
+                incBtn.innerText = '+';
+
+                // Lấy số lượng tồn (Nếu API chưa kịp trả về stock thì mặc định là 999 để ko bị lỗi)
+                const maxStock = (service.stock !== undefined && service.stock !== null) ? service.stock : 999;
+
+                // Thẻ text báo lỗi (Mặc định ẩn)
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'text-[10px] text-red-400 font-medium m-0 px-2 hidden flex items-center gap-1';
+                errorMsg.innerHTML = `<span class="material-symbols-outlined text-[12px]">info</span> Chỉ còn tối đa ${maxStock} ${service.unit}`;
+
+                // SỰ KIỆN NÚT TRỪ (-)
+                decBtn.addEventListener('click', () => {
+                    const curr = Number(selectedExtras.get(service.id) || 0);
+                    const next = Math.max(0, curr - 1);
+
+                    if (next === 0) selectedExtras.delete(service.id);
+                    else selectedExtras.set(service.id, next);
+
+                    qtyLabel.innerText = String(next);
+
+                    // Mở khóa lại nút (+) và ẩn lỗi nếu số lượng đã giảm xuống dưới tồn kho
+                    if (next < maxStock) {
+                        errorMsg.classList.add('hidden');
+                        item.classList.remove('border-red-500/50', 'bg-red-500/10');
+                        incBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                    }
+
+                    updateBookLink();
+                    updateTotalWithExtras();
+                });
+
+                // SỰ KIỆN NÚT CỘNG (+)
+                incBtn.addEventListener('click', () => {
+                    const curr = Number(selectedExtras.get(service.id) || 0);
+                    const next = curr + 1;
+
+                    selectedExtras.set(service.id, next);
+                    qtyLabel.innerText = String(next);
+
+                    // Kiểm tra chặn giới hạn nếu chạm ngưỡng tồn kho
+                    if (next >= maxStock) {
+                        // Hiện dòng chữ báo lỗi
+                        errorMsg.classList.remove('hidden');
+                        // Đổi viền và nền div cho nổi bật
+                        item.classList.add('border-red-500/50', 'bg-red-500/10');
+                        // Khóa không cho bấm (+) nữa
+                        incBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                    }
+
+                    updateBookLink();
+                    updateTotalWithExtras();
+                });
+
+                // Kiểm tra trạng thái ngay lúc load (phòng khi user back lại trang, số lượng giữ nguyên ở ngưỡng max)
+                const currentInitialQty = Number(selectedExtras.get(service.id) || 0);
+                if (currentInitialQty >= maxStock && maxStock > 0) {
+                    errorMsg.classList.remove('hidden');
+                    item.classList.add('border-red-500/50', 'bg-red-500/10');
+                    incBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                }
+
+                controls.appendChild(decBtn);
+                controls.appendChild(qtyLabel);
+                controls.appendChild(incBtn);
+
+                item.appendChild(left);
+                item.appendChild(controls);
+
+                // Gom item và chữ lỗi vào chung 1 khối
+                wrapper.appendChild(item);
+                wrapper.appendChild(errorMsg);
+
+                return wrapper;
+            }
+
+            function updateBookLink() {
+                if (selectedStartMin === null || selectedEndMin === null || !selectedFieldId) return;
+
+                const date = dateInput.value;
+                const startStr = toHHMM(selectedStartMin);
+                const endStr = toHHMM(selectedEndMin);
+
+                const params = new URLSearchParams();
+                params.set('fieldId', String(selectedFieldId));
+                params.set('date', date);
+                params.set('start', startStr);
+                params.set('end', endStr);
+
+                let idx = 0;
+                selectedExtras.forEach((qty, serviceId) => {
+                    if (qty > 0) {
+                        params.set(`extraItems[${idx}].serviceId`, String(serviceId));
+                        params.set(`extraItems[${idx}].quantity`, String(qty));
+                        idx += 1;
+                    }
+                });
+
+                bookBtn.href = `/bookings/new?${params.toString()}`;
+            }
+
+            function updateTotalWithExtras() {
+                let extraTotal = 0;
+                const selectedServiceSummary = document.getElementById('selectedServiceSummary');
+                let summaryHtml = '';
+
+                selectedExtras.forEach((qty, serviceId) => {
+                    const service = currentServices.find(s => String(s.id) === String(serviceId));
+                    if (service) {
+                        const lineTotal = Number(service.price || 0) * Number(qty || 0);
+                        extraTotal += lineTotal;
+                        summaryHtml += `<div class="flex items-center justify-between gap-3">
+                                        <span>${service.name} x${qty}</span>
+                                        <span class="font-bold text-white">${fmt(lineTotal)}đ</span>
+                                    </div>`;
+                    }
+                });
+
+                if (selectedServiceSummary) {
+                    selectedServiceSummary.innerHTML = summaryHtml || '<p class="m-0 text-slate-400">Chưa chọn dịch vụ.</p>';
+                }
+
+                totalPriceEl.innerText = fmt(baseBookingPrice + extraTotal) + 'đ';
+                const extraSummary = document.getElementById('extraSummary');
+                extraSummary.innerText = `(bao gồm dịch vụ: ${fmt(extraTotal)}đ)`;
+            }
+
+            function resetSelection() {
+                selectedFieldId = null; selectedStartMin = null; selectedEndMin = null; selectionStep = 0;
+                updateGridUI(); updateSidebarUI();
+            }
+
+            function toMinutes(t) { if (!t) return 0; const parts = t.split(':'); return parseInt(parts[0]) * 60 + parseInt(parts[1]); }
+            function toHHMM(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+            function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+
+            function getSegmentType(start, end, occupiedArr) {
+                const selectedDate = dateInput.value;
+                const now = new Date();
+                const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+                if (selectedDate === todayStr) {
+                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    if (start <= currentMinutes) return 'blocked';
+                }
+
+                for (const o of occupiedArr) {
+                    const os = toMinutes(o.start), oe = toMinutes(o.end);
+                    if (start < oe && end > os) return o.type === 'BOOKING' ? 'occupied' : 'blocked';
+                }
+                return 'available';
+            }
+
+            function hasConflict(fid, startMin, endMin) {
+                const data = fieldsData.find(item => item.fieldInfo.id === fid);
+                if (!data) return true;
+
+                const selectedDate = dateInput.value;
+                const now = new Date();
+                const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                if (selectedDate === todayStr) {
+                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    if (startMin <= currentMinutes) return true;
+                }
+
+                for (const o of data.availability.occupied) {
+                    const os = toMinutes(o.start), oe = toMinutes(o.end);
+                    if (startMin < oe && endMin > os) return true;
+                }
+                return false;
+            }
+
+            setTimeout(loadAllFieldsData, 100);
+        });
+    </script>
+</body>
+
+</html>

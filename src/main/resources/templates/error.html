@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head><title th:text="${status + ' – ' + error}">Lỗi</title></head>
+<body>
+<th:block th:fragment="content">
+    <div class="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center">
+
+        <!-- Mã lỗi -->
+        <p class="text-8xl font-black font-headline text-primary mb-2"
+           th:text="${status}">500</p>
+
+        <!-- Tiêu đề theo từng mã lỗi -->
+        <h1 class="text-2xl font-bold font-headline text-zinc-900 mb-3">
+            <th:block th:if="${status == 403}">Bạn không có quyền truy cập trang này</th:block>
+            <th:block th:if="${status == 404}">Trang bạn tìm không tồn tại</th:block>
+            <th:block th:if="${status == 500}">Máy chủ gặp sự cố</th:block>
+            <th:block th:if="${status != 403 and status != 404 and status != 500}"
+                      th:text="${error}">Đã xảy ra lỗi</th:block>
+        </h1>
+
+        <!-- Mô tả theo từng mã lỗi -->
+        <p class="text-zinc-500 mb-8 max-w-md">
+            <th:block th:if="${status == 403}">
+                Trang này yêu cầu quyền đặc biệt. Nếu bạn cho rằng đây là nhầm lẫn,
+                hãy đăng nhập lại hoặc liên hệ quản trị viên.
+            </th:block>
+            <th:block th:if="${status == 404}">
+                Đường dẫn này đã bị xóa, thay đổi hoặc chưa từng tồn tại.
+                Hãy kiểm tra lại URL hoặc quay về trang chủ.
+            </th:block>
+            <th:block th:if="${status == 500}">
+                Đã xảy ra lỗi không mong muốn ở phía máy chủ.
+                Vui lòng thử lại sau ít phút.
+            </th:block>
+            <th:block th:if="${status != 403 and status != 404 and status != 500}"
+                      th:text="${message}">
+                Vui lòng thử lại hoặc quay về trang chủ.
+            </th:block>
+        </p>
+
+        <!-- Nút hành động -->
+        <div class="flex flex-wrap gap-3 justify-center">
+            <a href="javascript:history.back()"
+               class="px-6 py-2.5 rounded-xl border border-zinc-300 text-zinc-700 font-semibold font-headline hover:bg-zinc-100 transition-colors text-decoration-none">
+                Quay lại
+            </a>
+            <a th:href="@{/}"
+               class="kinetic-gradient text-white px-6 py-2.5 rounded-xl font-bold font-headline hover:shadow-lg hover:shadow-primary/30 transition-all text-decoration-none">
+                Về trang chủ
+            </a>
+        </div>
+
+    </div>
+</th:block>
+</body>
+</html>

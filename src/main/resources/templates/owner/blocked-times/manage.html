@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Chặn khung giờ | Arena Kinetic Owner</title>
+
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&amp;family=Inter:wght@100..900&amp;family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#191c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#b02f00",
+                        "surface": "#f8f9fa"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+        /* --- CSS CHO TIMELINE --- */
+        .timeline-wrapper {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+        }
+        .timeline-wrapper::-webkit-scrollbar { height: 6px; }
+        .timeline-wrapper::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+
+        .timeline-row {
+            display: grid;
+            border-bottom: 1px solid #f1f5f9;
+            background: white;
+            width: max-content;
+            min-width: 100%;
+        }
+        .timeline-row:last-child { border-bottom: none; }
+
+        .time-cell {
+            height: 48px;
+            border-right: 1px solid #f8fafc;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .time-header {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .time-cell.available:hover { background-color: #ffedd5; }
+        .time-cell.occupied {
+            background-color: #ef4444; /* Đỏ báo bận */
+            cursor: not-allowed;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);
+        }
+        .time-cell.blocked {
+            background-color: #9ca3af; /* Xám giờ quá khứ */
+            cursor: not-allowed;
+        }
+        .time-cell.selected { background-color: #ea580c; box-shadow: inset 0 0 0 1px #c2410c; z-index: 10;}
+        .time-cell.in-range { background-color: #fed7aa; box-shadow: inset 0 1px 0 #fbd38d, inset 0 -1px 0 #fbd38d; }
+        .time-cell.available.ghost-range { background-color: #ffedd5; opacity: 0.7;}
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<div th:replace="~{owner/fragments/owner_sidebar :: sidebar('facilities')}"></div>
+
+<main class="ml-64 min-h-screen relative flex flex-col">
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10 shrink-0">
+        <div class="flex items-center gap-2 text-sm font-medium">
+            <span class="text-slate-400">Arena Manager</span>
+            <span class="text-slate-300">/</span>
+            <a th:href="@{/owner/facilities}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none">Cơ sở</a>
+            <span class="text-slate-300">/</span>
+            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="text-slate-500 hover:text-primary transition-colors text-decoration-none" th:text="${facility.name}">Sân</a>
+            <span class="text-slate-300">/</span>
+            <span class="text-slate-800 font-bold">Chặn khung giờ</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <a th:href="@{/owner/facilities/{id}/fields(id=${facility.id})}" class="text-sm text-orange-600 font-bold hover:underline">← Quay lại danh sách sân</a>
+            <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-on-surface leading-none" th:text="${currentOwner != null && currentOwner.email != null ? currentOwner.email : #authentication.name}">email@example.com</p>
+                </div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold font-headline overflow-hidden ring-2 ring-orange-500/20">
+                    <img th:if="${currentOwner != null && currentOwner.avatarUrl != null}" th:src="${currentOwner.avatarUrl}" class="w-full h-full object-cover" alt="Avatar">
+                    <span th:unless="${currentOwner != null && currentOwner.avatarUrl != null}" th:text="${currentOwner != null && currentOwner.email != null ? #strings.substring(currentOwner.email, 0, 1).toUpperCase() : 'O'}"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="p-8 flex-1">
+        <div th:if="${success}" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="font-bold text-sm" th:text="${success}"></span>
+        </div>
+        <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-bold text-sm" th:text="${error}"></span>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+
+            <section class="xl:col-span-2 space-y-6">
+
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="font-headline font-black text-3xl text-slate-900 tracking-tight">Chặn khung giờ</h2>
+                        <p class="text-slate-500 text-sm mt-1">Sân: <span class="font-bold" th:text="${field.name}">Tên sân</span></p>
+                    </div>
+
+                    <form class="flex items-center gap-2" method="get" th:if="${!viewingAll}">
+                        <input type="date" name="date" class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-bold text-slate-700"
+                               th:value="${#temporals.format(selectedDate,'yyyy-MM-dd')}">
+                        <button class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors border-none cursor-pointer">Lọc ngày</button>
+                        <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times(fid=${facility.id},fldid=${field.id},all=true)}"
+                           class="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-colors text-decoration-none">Xem tất cả</a>
+                    </form>
+
+                    <div th:if="${viewingAll}" class="flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Đang xem tất cả</span>
+                        <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times(fid=${facility.id},fldid=${field.id},date=${#temporals.format(selectedDate,'yyyy-MM-dd')})}"
+                           class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors text-decoration-none">Trở về lọc theo ngày</a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 p-6 md:p-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <h3 class="font-headline font-bold text-lg text-slate-900 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-600">touch_app</span> Kéo chọn trên biểu đồ
+                        </h3>
+                        <div class="flex gap-4 font-body text-[10px] font-bold uppercase tracking-wide">
+                            <div class="flex items-center gap-1.5 text-slate-500"><span class="w-3 h-3 rounded-sm border border-slate-200 bg-white"></span> Trống</div>
+                            <div class="flex items-center gap-1.5 text-slate-700"><span class="w-3 h-3 rounded-sm bg-red-500"></span> Bận/Đã chặn</div>
+                            <div class="flex items-center gap-1.5 text-slate-700"><span class="w-3 h-3 rounded-sm bg-orange-600"></span> Đang chọn</div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-wrapper relative" id="timelineContainer">
+                        <div class="text-center py-10 text-slate-400 font-bold animate-pulse" id="loadingTimeline">
+                            Đang tải dữ liệu sân...
+                        </div>
+                        <div id="timelineContent" class="hidden overflow-x-visible">
+                            <div class="timeline-row bg-slate-50 sticky top-0 z-20" id="timeHeaderRow">
+                                <div class="bg-slate-100 p-3 font-bold text-xs flex items-center justify-center border-r border-slate-200 sticky left-0 z-30 font-body text-slate-500">Sân</div>
+                            </div>
+                            <div id="fieldsContainer"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <button type="button" id="resetSelectionBtn" class="hidden px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors cursor-pointer border-none uppercase tracking-widest font-label">
+                            Hủy chọn
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                            <tr class="bg-slate-50/50 border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500 font-bold font-label">
+                                <th th:if="${viewingAll}" class="px-6 py-4">Ngày</th>
+                                <th class="px-6 py-4">Khung giờ chặn</th>
+                                <th class="px-6 py-4">Lý do</th>
+                                <th class="px-6 py-4 text-right">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody class="text-sm font-medium text-slate-700 divide-y divide-slate-50">
+                            <tr th:if="${#lists.isEmpty(blocks)}">
+                                <td th:colspan="${viewingAll} ? 4 : 3" class="px-6 py-16 text-center text-slate-400">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <span class="material-symbols-outlined text-3xl text-slate-300">event_available</span>
+                                    </div>
+                                    <p class="text-base font-bold text-slate-600">Lịch hoàn toàn trống</p>
+                                    <p class="text-xs mt-1">Chưa có khung giờ nào bị chặn.</p>
+                                </td>
+                            </tr>
+
+                            <tr th:each="b : ${blocks}" class="hover:bg-slate-50/80 transition-colors">
+                                <td th:if="${viewingAll}" class="px-6 py-4 font-semibold text-slate-700" th:text="${#temporals.format(b.date, 'dd/MM/yyyy')}">01/01/2026</td>
+                                <td class="px-6 py-4 font-bold text-slate-900">
+                                    <span class="bg-red-50 text-red-700 px-2.5 py-1 rounded-md border border-red-100" th:text="${b.startTime + ' - ' + b.endTime}">00:00 - 00:00</span>
+                                </td>
+                                <td class="px-6 py-4 text-slate-500" th:text="${b.reason ?: '—'}">—</td>
+                                <td class="px-6 py-4 text-right">
+                                    <a th:href="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times/{id}/edit(fid=${facility.id},fldid=${field.id},id=${b.id},all=${viewingAll})}"
+                                       class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors text-decoration-none mr-2 inline-block">Sửa</a>
+                                    <form th:action="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times/{id}/delete(fid=${facility.id},fldid=${field.id},id=${b.id})}" method="post" class="m-0 inline-block" onsubmit="return confirm('Xác nhận BỎ CHẶN khung giờ này? Sân sẽ mở lại cho khách hàng đặt.')">
+                                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <input type="hidden" name="all" th:value="${viewingAll}"/>
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-red-50 hover:text-red-600 transition-colors border-none cursor-pointer">Bỏ chặn</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="space-y-4 sticky top-24">
+                <div class="bg-slate-900 p-6 md:p-8 rounded-[1.5rem] shadow-xl border border-slate-800 text-white relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/20 blur-[50px] rounded-full pointer-events-none"></div>
+
+                    <h3 class="font-headline font-black text-xl text-white mb-6 uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-4">
+                        <span class="material-symbols-outlined text-orange-500">lock_clock</span> Khóa giờ mới
+                    </h3>
+
+                    <form th:action="@{/owner/facilities/{fid}/fields/{fldid}/blocked-times/create(fid=${facility.id},fldid=${field.id})}" method="post" th:object="${newBlock}" class="space-y-5">
+                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="all" th:value="${viewingAll}"/>
+                        <input type="hidden" th:field="*{fieldId}" th:value="${field.id}">
+
+                        <div>
+                            <label class="block text-[10px] font-label font-bold uppercase text-slate-400 mb-1.5 tracking-widest">Ngày áp dụng</label>
+                            <input type="date" id="formDate" th:field="*{date}" class="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none font-bold"
+                                   th:value="${#temporals.format(selectedDate,'yyyy-MM-dd')}">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-label font-bold uppercase text-slate-400 mb-1.5 tracking-widest">Khóa Từ giờ</label>
+                                <input type="time" id="startTime" th:field="*{startTime}" readonly class="w-full bg-white/5 border border-white/10 text-orange-300 rounded-xl px-4 py-3 text-sm focus:outline-none font-black cursor-not-allowed text-center" placeholder="--:--">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-label font-bold uppercase text-slate-400 mb-1.5 tracking-widest">Đến giờ</label>
+                                <input type="time" id="endTime" th:field="*{endTime}" readonly class="w-full bg-white/5 border border-white/10 text-orange-300 rounded-xl px-4 py-3 text-sm focus:outline-none font-black cursor-not-allowed text-center" placeholder="--:--">
+                            </div>
+                        </div>
+
+                        <p class="text-[10px] text-orange-400/80 italic font-medium m-0">* Vui lòng dùng chuột kéo chọn giờ trên biểu đồ bên trái.</p>
+
+                        <div>
+                            <label class="block text-[10px] font-label font-bold uppercase text-slate-400 mb-1.5 tracking-widest">Lý do chặn (Tùy chọn)</label>
+                            <input th:field="*{reason}" class="w-full bg-white border border-slate-200 text-slate-900 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none font-medium placeholder:text-slate-400" placeholder="VD: Bảo trì sân, Quét dọn...">
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="w-full py-4 mt-2 bg-orange-600 text-white font-black font-headline uppercase tracking-widest text-sm rounded-xl hover:bg-orange-500 shadow-lg shadow-orange-600/30 transition-all border-none cursor-not-allowed opacity-50" disabled>
+                            Xác nhận khóa giờ
+                        </button>
+                    </form>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<div id="facilityConfig" class="hidden"
+     th:data-fldid="${field.id}"
+     th:data-name="${field.name}"
+     th:data-open="${facility.openTime}"
+     th:data-close="${facility.closeTime}">
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateInput = document.getElementById('formDate'); // Input date trong form tạo
+
+        const configEl = document.getElementById('facilityConfig');
+        const fieldId = configEl.getAttribute('data-fldid');
+        const fieldName = configEl.getAttribute('data-name');
+        const openTimeStr = configEl.getAttribute('data-open');
+        const closeTimeStr = configEl.getAttribute('data-close');
+
+        const loadingEl = document.getElementById('loadingTimeline');
+        const contentEl = document.getElementById('timelineContent');
+        const headerRow = document.getElementById('timeHeaderRow');
+        const fieldsCon = document.getElementById('fieldsContainer');
+        const resetBtn  = document.getElementById('resetSelectionBtn');
+
+        // Input Form Liên kết
+        const formStartTime = document.getElementById('startTime');
+        const formEndTime   = document.getElementById('endTime');
+        const submitBtn     = document.getElementById('submitBtn');
+
+        let fieldAvailability = null;
+        let selectedStartMin = null;
+        let selectedEndMin = null;
+        let selectionStep = 0;
+
+        if(!dateInput.value) { dateInput.value = new Date().toISOString().split('T')[0]; }
+
+        const facStartMin = toMinutes(openTimeStr);
+        const facEndMin = toMinutes(closeTimeStr);
+        const totalSlots = (facEndMin - facStartMin) / 30;
+        const gridColsTemplate = `80px repeat(${totalSlots}, minmax(40px, 1fr))`;
+
+        let headerHtml = '<div class="bg-white p-3 font-bold text-xs flex items-center justify-center border-r border-slate-200 sticky left-0 z-30 text-slate-500 font-body">Sân</div>';
+        for(let m = facStartMin; m < facEndMin; m += 30) {
+            headerHtml += `<div class="time-header">${toHHMM(m)}</div>`;
+        }
+        headerRow.innerHTML = headerHtml;
+        headerRow.style.gridTemplateColumns = gridColsTemplate;
+
+        // Khi đổi ngày trong form thì load lại Timeline
+        dateInput.addEventListener('change', loadTimelineData);
+        resetBtn.addEventListener('click', resetSelection);
+
+        async function loadTimelineData() {
+            loadingEl.classList.remove('hidden');
+            contentEl.classList.add('hidden');
+            resetSelection();
+            fieldAvailability = null;
+
+            try {
+                const date = dateInput.value;
+                // Fetch API giống hệt bên đặt sân để xem giờ nào rảnh
+                const res = await fetch(`/api/v1/fields/${fieldId}/availability?date=${date}`);
+                const json = await res.json();
+
+                if(json.data) {
+                    fieldAvailability = json.data;
+                }
+                renderGanttChart();
+                loadingEl.classList.add('hidden');
+                contentEl.classList.remove('hidden');
+            } catch (e) {
+                console.error(e);
+                loadingEl.innerText = "Lỗi tải dữ liệu. Vui lòng F5 lại trang.";
+            }
+        }
+
+        function renderGanttChart() {
+            if(!fieldAvailability) return;
+            const occ = fieldAvailability.occupied;
+
+            let html = `<div class="timeline-row group" data-field-id="${fieldId}" style="grid-template-columns: ${gridColsTemplate};">`;
+            html += `<div class="bg-white group-hover:bg-slate-50 p-2 font-bold text-xs flex flex-col justify-center border-r border-slate-100 sticky left-0 z-10 text-slate-800 text-center">
+                        <span class="truncate w-16 mx-auto" title="${fieldName}">${fieldName}</span>
+                     </div>`;
+
+            for(let m = facStartMin; m < facEndMin; m += 30) {
+                const segEnd = m + 30;
+                const type = getSegmentType(m, segEnd, occ);
+                html += `<div class="time-cell ${type}" data-field-id="${fieldId}" data-start-min="${m}" data-end-min="${segEnd}"></div>`;
+            }
+            html += `</div>`;
+
+            fieldsCon.innerHTML = html;
+
+            // Lắng nghe sự kiện click/kéo trên Timeline
+            document.querySelectorAll('.time-cell.available').forEach(cell => {
+                cell.addEventListener('click', handleCellClick);
+                cell.addEventListener('mouseenter', handleCellHover);
+            });
+        }
+
+        function handleCellClick(e) {
+            const sm = parseInt(e.target.getAttribute('data-start-min'));
+            const em = parseInt(e.target.getAttribute('data-end-min'));
+
+            if (selectionStep === 0 || selectionStep === 2) {
+                selectedStartMin = sm; selectedEndMin = em; selectionStep = 1;
+            } else if (selectionStep === 1) {
+                if (sm < selectedStartMin) {
+                    selectedStartMin = sm; selectedEndMin = em; selectionStep = 1;
+                } else {
+                    selectedEndMin = em; selectionStep = 2;
+                }
+            }
+
+            if (hasConflict(selectedStartMin, selectedEndMin)) {
+                alert("Bạn không thể chọn đè lên giờ đã bị Khóa hoặc giờ Khách đã đặt!");
+                selectedStartMin = sm; selectedEndMin = em; selectionStep = 1;
+            }
+
+            updateGridUI();
+            updateFormInputs();
+        }
+
+        function handleCellHover(e) {
+            if(selectionStep !== 1) return;
+            const hoverMin = parseInt(e.target.getAttribute('data-start-min'));
+
+            document.querySelectorAll('.ghost-range').forEach(c => c.classList.remove('ghost-range'));
+
+            if(hoverMin > selectedStartMin) {
+                document.querySelectorAll(`.time-cell`).forEach(c => {
+                    const csm = parseInt(c.getAttribute('data-start-min'));
+                    if(csm > selectedStartMin && csm <= hoverMin) {
+                        if(c.classList.contains('available')) c.classList.add('ghost-range');
+                    }
+                });
+            }
+        }
+
+        function updateGridUI() {
+            document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected', 'in-range', 'ghost-range'));
+            if(selectedStartMin !== null && selectedEndMin !== null) {
+                resetBtn.classList.remove('hidden');
+                document.querySelectorAll(`.time-cell`).forEach(c => {
+                    const sm = parseInt(c.getAttribute('data-start-min'));
+                    const em = parseInt(c.getAttribute('data-end-min'));
+                    if(sm >= selectedStartMin && em <= selectedEndMin) c.classList.add('selected');
+                });
+            } else { resetBtn.classList.add('hidden'); }
+        }
+
+        function updateFormInputs() {
+            if(selectedStartMin !== null && selectedEndMin !== null) {
+                formStartTime.value = toHHMM(selectedStartMin);
+                formEndTime.value = toHHMM(selectedEndMin);
+                // Bật nút Submit
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('cursor-not-allowed', 'opacity-50');
+            } else {
+                formStartTime.value = '';
+                formEndTime.value = '';
+                // Tắt nút Submit
+                submitBtn.disabled = true;
+                submitBtn.classList.add('cursor-not-allowed', 'opacity-50');
+            }
+        }
+
+        function resetSelection() {
+            selectedStartMin = null; selectedEndMin = null; selectionStep = 0;
+            updateGridUI(); updateFormInputs();
+        }
+
+        function toMinutes(t) { if(!t) return 0; const parts = t.split(':'); return parseInt(parts[0])*60 + parseInt(parts[1]); }
+        function toHHMM(m) { return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); }
+
+        function getSegmentType(start, end, occupiedArr) {
+            const selectedDate = dateInput.value;
+            const now = new Date();
+            const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+            if (selectedDate === todayStr) {
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                if (start <= currentMinutes) return 'blocked'; // Giờ quá khứ
+            }
+
+            for (const o of occupiedArr) {
+                const os = toMinutes(o.start), oe = toMinutes(o.end);
+                if (start < oe && end > os) return 'occupied'; // Đã bị chiếm (bởi Booking hoặc Blocked)
+            }
+            return 'available';
+        }
+
+        function hasConflict(startMin, endMin) {
+            if(!fieldAvailability) return true;
+
+            const selectedDate = dateInput.value;
+            const now = new Date();
+            const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+            if (selectedDate === todayStr) {
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                if (startMin <= currentMinutes) return true;
+            }
+
+            for (const o of fieldAvailability.occupied) {
+                const os = toMinutes(o.start), oe = toMinutes(o.end);
+                if (startMin < oe && endMin > os) return true;
+            }
+            return false;
+        }
+
+        // Tự động load dữ liệu ngay khi vào trang
+        setTimeout(loadTimelineData, 100);
+    })();
+</script>

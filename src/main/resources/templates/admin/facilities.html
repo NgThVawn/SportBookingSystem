@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html class="light" lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hệ thống Quản trị - Duyệt Cơ Sở</title>
+    <link th:href="@{/css/app.css}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&family=Lexend:wght@100..900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#101827",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f5f7fb",
+                        "primary": "#b02f00",
+                        "surface": "#f3f6fb",
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Lexend"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="bg-surface font-body text-on-surface antialiased">
+
+    <div th:replace="~{admin/fragments/admin_sidebar :: sidebar('facilities')}"></div>
+
+    <main class="ml-64 min-h-screen relative">
+        <header
+            class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 shadow-sm border-b border-slate-200/10">
+            <div>
+                <h2 class="font-headline tracking-tight font-bold text-xl text-on-surface">Duyệt Cơ Sở</h2>
+                <p class="text-xs text-slate-500 font-label uppercase tracking-wider">Quản lý trạng thái toàn hệ thống
+                </p>
+            </div>
+            <div
+                class="flex items-center gap-3 px-4 py-2 rounded-full bg-orange-50 text-orange-700 text-sm font-semibold">
+                <span class="material-symbols-outlined text-[18px]"
+                    style="font-variation-settings: 'FILL' 1;">stadium</span>
+                <span th:text="${facilities.totalElements != null ? facilities.totalElements + ' cơ sở' : '0 cơ sở'}">0
+                    cơ sở</span>
+            </div>
+        </header>
+
+        <div class="p-8 space-y-6">
+
+            <div th:if="${successMsg}"
+                class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 font-medium"
+                th:text="${successMsg}"></div>
+            <div th:if="${errorMsg}"
+                class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 font-medium"
+                th:text="${errorMsg}"></div>
+
+            <section class="bg-surface-container-lowest rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-xs">
+                            <tr>
+                                <th class="px-5 py-4 text-left">Ảnh</th>
+                                <th class="px-5 py-4 text-left">Thông tin Cơ sở</th>
+                                <th class="px-5 py-4 text-left">Chủ sở hữu</th>
+                                <th class="px-5 py-4 text-left">Liên hệ & Giờ mở cửa</th>
+                                <th class="px-5 py-4 text-left">Trạng thái</th>
+                                <th class="px-5 py-4 text-left">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr th:each="f : ${facilities.content}"
+                                class="align-top hover:bg-slate-50/70 transition-colors">
+                                <td class="px-5 py-4 w-[120px]">
+                                    <img th:src="${f.getPrimaryImageUrl() != null ? f.getPrimaryImageUrl() : 'https://via.placeholder.com/100x70?text=No+Image'}"
+                                        class="w-[100px] h-[70px] object-cover rounded-xl bg-slate-200"
+                                        alt="Facility Image">
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    <strong class="block text-[15px] font-bold text-on-surface"
+                                        th:text="${f.name != null ? f.name : 'N/A'}"></strong>
+                                    <small class="text-slate-500"
+                                        th:text="${(f.address != null ? f.address : '') + ', ' + (f.city != null ? f.city : '')}"></small>
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    <div th:if="${f.owner != null}">
+                                        <span class="block font-semibold text-on-surface"
+                                            th:text="${f.owner.fullName}"></span>
+                                        <span class="text-slate-500 italic text-xs" th:text="${f.owner.email}"></span>
+                                    </div>
+                                    <div th:unless="${f.owner != null}">
+                                        <span class="font-semibold text-slate-500">Hệ thống / N/A</span>
+                                    </div>
+                                </td>
+
+                                <td class="px-5 py-4 text-slate-600 space-y-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-[16px] text-slate-400">call</span>
+                                        <span th:text="${f.phone != null ? f.phone : 'N/A'}"></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span
+                                            class="material-symbols-outlined text-[16px] text-slate-400">schedule</span>
+                                        <span
+                                            th:text="${(f.openTime != null ? f.openTime : '??') + ' - ' + (f.closeTime != null ? f.closeTime : '??')}"></span>
+                                    </div>
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    <span
+                                        th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL}"
+                                        class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700">CHỜ
+                                        DUYỆT</span>
+                                    <span th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).OPEN}"
+                                        class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">ĐANG
+                                        MỞ</span>
+                                    <span th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}"
+                                        class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white">BỊ
+                                        KHÓA</span>
+                                    <span
+                                        th:if="${f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).OPEN and f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL and f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}"
+                                        class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600"
+                                        th:text="${f.status != null ? f.status.displayName : 'KHÁC'}"></span>
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    <form th:action="@{/admin/facilities/{id}/status(id=${f.id})}" method="post"
+                                        class="m-0">
+                                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}"
+                                            th:value="${_csrf.token}" />
+
+                                        <select name="status" onchange="this.form.submit()"
+                                            class="rounded-lg border border-slate-200 bg-white pl-3 pr-10 py-2 text-sm font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 cursor-pointer min-w-[260px] whitespace-nowrap">
+
+                                            <th:block
+                                                th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL}">
+                                                <option value="PENDING_APPROVAL" selected disabled>Đang chờ duyệt
+                                                </option>
+                                                <option value="OPEN">Duyệt (Cho phép hoạt động)</option>
+                                                <option value="BLOCKED">Từ chối & Khóa cơ sở</option>
+                                            </th:block>
+
+                                            <th:block
+                                                th:if="${f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).PENDING_APPROVAL and f.status != T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}">
+                                                <option th:value="${f.status.name()}" selected
+                                                    th:text="'Giữ nguyên: ' + ${f.status.displayName}"></option>
+                                                <option value="BLOCKED">Vi phạm & Khóa cơ sở</option>
+                                            </th:block>
+
+                                            <th:block
+                                                th:if="${f.status == T(J2EE.SportBooingSystem.enums.FacilityStatus).BLOCKED}">
+                                                <option value="BLOCKED" selected disabled>Đang bị khóa</option>
+                                                <option value="OPEN">Mở khóa cơ sở</option>
+                                            </th:block>
+
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <nav th:if="${facilities.totalPages > 1}" class="mt-10 flex items-center justify-center gap-2">
+                <a th:href="@{/admin/facilities(page=${facilities.number - 1})}"
+                    th:classappend="${facilities.first} ? 'opacity-30 pointer-events-none' : 'hover:bg-zinc-100'"
+                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors text-decoration-none">
+                    <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </a>
+
+                <th:block th:each="i : ${#numbers.sequence(0, facilities.totalPages - 1)}">
+                    <th:block
+                        th:if="${i == 0 or i == facilities.totalPages - 1 or (i >= facilities.number - 1 and i <= facilities.number + 1)}">
+                        <a th:href="@{/admin/facilities(page=${i})}"
+                            th:classappend="${i == facilities.number} ? 'bg-primary text-white border-primary font-black' : 'bg-white text-zinc-700 border-zinc-200 hover:border-primary hover:text-primary'"
+                            class="w-10 h-10 flex items-center justify-center rounded-xl border text-sm font-bold font-label transition-colors text-decoration-none"
+                            th:text="${i + 1}">1</a>
+                    </th:block>
+                    <span th:if="${i == 1 and facilities.number > 2}" class="text-zinc-400 px-1">…</span>
+                    <span th:if="${i == facilities.totalPages - 2 and facilities.number < facilities.totalPages - 3}"
+                        class="text-zinc-400 px-1">…</span>
+                </th:block>
+
+                <a th:href="@{/admin/facilities(page=${facilities.number + 1})}"
+                    th:classappend="${facilities.last} ? 'opacity-30 pointer-events-none' : 'hover:bg-zinc-100'"
+                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors text-decoration-none">
+                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </a>
+            </nav>
+        </div>
+    </main>
+
+</body>
+
+</html>

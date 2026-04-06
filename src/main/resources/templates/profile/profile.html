@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Hồ sơ cá nhân | Arena Kinetic</title>
+</head>
+<body>
+
+<div th:fragment="content" class="w-full">
+    <main class="max-w-7xl mx-auto px-4 md:px-6">
+
+        <div th:if="${param.updated}"
+             class="mb-6 mt-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 rounded-r-xl shadow-sm flex items-center justify-between animate-slide-down">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+                <span class="font-bold font-headline uppercase tracking-tight text-sm">Cập nhật thông tin thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+
+        <section class="mb-12">
+            <div class="relative h-48 md:h-64 w-full rounded-2xl overflow-hidden mb-[-4rem]">
+                <img class="w-full h-full object-cover"
+                     src="https://images.pexels.com/photos/33456923/pexels-photo-33456923.jpeg" alt="Cover"/>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+            </div>
+
+            <div class="relative z-10 px-4 md:px-8 flex flex-col md:flex-row items-end gap-6">
+                <div class="p-1.5 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl group cursor-pointer relative"
+                     onclick="document.getElementById('avatarInput').click()">
+                    <div class="w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden relative">
+                        <img id="avatarPreview" class="w-full h-full object-cover transition-all group-hover:brightness-50"
+                             th:src="${user.avatarUrl != null ? user.avatarUrl : '/images/default-avatar.png'}" alt="Avatar"/>
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="material-symbols-outlined text-white text-4xl">photo_camera</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 pb-2">
+                    <h1 class="text-3xl md:text-4xl font-black font-headline tracking-tighter text-white md:text-on-surface uppercase italic"
+                        th:text="${user.fullName}">MINH NGUYỄN</h1>
+                    <p class="text-slate-300 md:text-slate-500 font-label flex items-center gap-2 font-bold uppercase tracking-widest text-xs">
+                        <span class="material-symbols-outlined text-sm text-primary" style="font-variation-settings: 'FILL' 1">verified</span>
+                        Thành viên chính thức
+                    </p>
+                </div>
+
+                <div class="hidden md:flex gap-4 pb-2">
+                    <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/30 flex flex-col items-center min-w-[100px]">
+                        <span class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Giờ chơi</span>
+                        <span class="text-2xl font-black font-headline text-primary italic" 
+                            th:text="|${totalHours != null ? totalHours : 0}h|">0h</span>
+                    </div>
+                    
+                    <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/30 flex flex-col items-center min-w-[100px]">
+                        <span class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Đã đặt</span>
+                        <span class="text-2xl font-black font-headline text-primary italic" 
+                            th:text="${totalBookings != null ? totalBookings : 0}">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <aside class="md:col-span-3">
+                <div class="bg-surface-container-low p-2 rounded-2xl space-y-1">
+                    <a th:href="@{/profile}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-on-primary font-headline font-bold transition-all no-underline shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span> Hồ sơ cá nhân
+                    </a>
+                    <a th:href="@{/bookings}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-white transition-all font-headline font-bold no-underline">
+                        <span class="material-symbols-outlined">calendar_today</span> Lịch sử đặt sân
+                    </a>
+                     <a th:href="@{/profile/favorites}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-white transition-all font-headline font-bold no-underline">
+                        <span class="material-symbols-outlined">favorite</span>
+                        Danh sách yêu thích
+                    </a>
+                    <a th:href="@{/profile/notifications}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-white transition-all font-headline font-bold no-underline">
+                        <span class="material-symbols-outlined">notifications</span> Thông báo
+                    </a>
+
+                    <a th:href="@{/profile/security}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-white transition-all font-headline font-bold no-underline">
+                        <span class="material-symbols-outlined">security</span>
+                        Bảo mật
+                    </a>
+
+                    <div class="pt-4 mt-4 border-t border-outline-variant/20">
+                        <form th:action="@{/auth/logout}" method="post" class="m-0">
+                            <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all font-headline font-bold border-none bg-transparent cursor-pointer">
+                                <span class="material-symbols-outlined">logout</span> Đăng xuất
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="md:col-span-9 space-y-8">
+
+                <div class="bg-surface-container-lowest p-8 md:p-10 rounded-2xl shadow-sm border border-outline-variant/20">
+                    <h2 class="text-xl font-black font-headline mb-8 text-on-surface uppercase italic tracking-tight flex items-center gap-2">
+                        <span class="w-8 h-1 bg-primary"></span> Thông tin chi tiết
+                    </h2>
+
+                    <form th:action="@{/profile/update}" method="post" enctype="multipart/form-data" class="space-y-8">
+                        <input type="file" id="avatarInput" name="avatar" class="hidden" accept="image/*" onchange="previewImage(this)">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Họ tên</label>
+                                <input name="fullName" th:value="${user.fullName}" class="w-full px-4 py-4 bg-surface-container-highest border-none focus:ring-2 focus:ring-primary rounded-xl transition-all font-bold text-on-surface" type="text"/>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Email</label>
+                                <input th:value="${user.email}" readonly class="w-full px-4 py-4 bg-zinc-100 text-slate-400 border-none rounded-xl font-medium cursor-not-allowed" type="email"/>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Số điện thoại</label>
+                                <input name="phone" th:value="${user.phone}" class="w-full px-4 py-4 bg-surface-container-highest border-none focus:ring-2 focus:ring-primary rounded-xl transition-all font-bold text-on-surface" type="tel"/>
+                            </div>
+
+                        </div>
+
+                        <div class="pt-6 flex justify-end">
+                            <button class="bg-primary px-10 py-4 text-on-primary font-headline font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95" type="submit">
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatarPreview').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Tìm Sân — Arena Kinetic</title>
+</head>
+<body>
+<th:block th:fragment="content">
+
+    <section class="bg-zinc-950 pt-28 pb-10 px-6 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5"
+             style="background-image: repeating-linear-gradient(0deg,transparent,transparent 40px,#fff 40px,#fff 41px),
+                repeating-linear-gradient(90deg,transparent,transparent 40px,#fff 40px,#fff 41px)">
+        </div>
+        <div class="max-w-screen-xl mx-auto relative z-10">
+            <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest font-label mb-3">
+                Arena Kinetic / Tìm sân
+            </p>
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <h1 class="text-5xl font-black font-headline italic text-white tracking-tighter uppercase leading-none">
+                    TÌM SÂN<br><span class="text-primary-container">GẦN BẠN</span>
+                </h1>
+                <p class="text-zinc-400 font-body text-sm max-w-xs">
+                <span class="text-white font-bold"
+                      th:text="${facilities.totalElements}">0</span>
+                    cơ sở đang hoạt động trên toàn quốc
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div class="sticky top-[79px] z-40 bg-white/95 backdrop-blur-xl border-b border-zinc-200 shadow-sm">
+        <div class="max-w-screen-xl mx-auto px-6 py-4">
+
+            <form th:action="@{/facilities}" method="get" id="filterForm">
+
+                <input type="hidden" name="sport" th:if="${selectedSport != null}" th:value="${selectedSport.name()}" />
+
+                <div class="flex flex-wrap lg:flex-nowrap items-center gap-3">
+
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-100 rounded-xl flex-1 min-w-[160px] relative" id="city-search-wrapper">
+                        <span class="material-symbols-outlined text-zinc-400 text-[20px]">location_on</span>
+                        <div class="flex flex-col w-full">
+                            <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest font-label">Khu vực</span>
+                            <input type="text" name="city" id="city-search-input"
+                                   class="bg-transparent border-none p-0 text-sm font-semibold text-zinc-800 focus:ring-0 outline-none w-full placeholder:text-zinc-400"
+                                   placeholder="Thành phố, quận..."
+                                   th:value="${selectedCity}"
+                                   autocomplete="off"/>
+                        </div>
+
+                        <ul id="city-search-dropdown"
+                            class="absolute left-0 top-full mt-2 w-full bg-white rounded-xl shadow-lg z-50 overflow-y-auto hidden"
+                            style="border: 1px solid #e4e4e7; max-height: 260px; min-width: 240px;">
+                        </ul>
+                    </div>
+
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-100 rounded-xl flex-1 min-w-[160px]">
+                        <span class="material-symbols-outlined text-zinc-400 text-[20px]">search</span>
+                        <div class="flex flex-col w-full">
+                            <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest font-label">Tên / Địa chỉ</span>
+                            <input type="text" name="name"
+                                   class="bg-transparent border-none p-0 text-sm font-semibold text-zinc-800 focus:ring-0 outline-none w-full placeholder:text-zinc-400"
+                                   placeholder="Tên, địa chỉ..."
+                                   th:value="${searchName}"/>
+                        </div>
+                    </div>
+
+                    <label class="flex items-center gap-3 px-4 py-2.5 bg-zinc-100 rounded-xl flex-1 min-w-[160px] cursor-pointer hover:bg-red-50 transition-all border border-transparent group select-none"
+                           th:classappend="${favoritesOnly != null and favoritesOnly} ? '!bg-red-50 !border-red-200 shadow-inner' : ''">
+                        <input type="checkbox" name="favoritesOnly" value="true" class="hidden"
+                               th:checked="${favoritesOnly != null and favoritesOnly}"
+                               onchange="this.form.submit()">
+                        <span class="material-symbols-outlined text-[24px] transition-colors"
+                              th:classappend="${favoritesOnly != null and favoritesOnly} ? 'text-red-500' : 'text-zinc-400 group-hover:text-red-400'"
+                              th:style="${favoritesOnly != null and favoritesOnly} ? 'font-variation-settings: \'FILL\' 1' : 'font-variation-settings: \'FILL\' 0'">
+                        favorite
+                    </span>
+                        <div class="flex flex-col">
+                        <span class="text-[9px] font-bold uppercase tracking-widest font-label transition-colors"
+                              th:classappend="${favoritesOnly != null and favoritesOnly} ? 'text-red-400' : 'text-zinc-400 group-hover:text-red-400'">Bộ lọc</span>
+                            <span class="text-sm font-semibold transition-colors"
+                                  th:classappend="${favoritesOnly != null and favoritesOnly} ? 'text-red-600' : 'text-zinc-800'">Cơ sở yêu thích</span>
+                        </div>
+                    </label>
+
+                    <div class="flex gap-2">
+                        <button type="submit"
+                                class="kinetic-gradient text-white px-6 py-3 rounded-xl font-bold font-headline text-sm flex items-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 whitespace-nowrap border-none cursor-pointer">
+                            <span class="material-symbols-outlined text-[18px]">search</span>
+                            TÌM SÂN
+                        </button>
+                        <a th:href="@{/facilities}"
+                           class="w-12 h-12 flex items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-colors text-decoration-none"
+                           title="Xóa bộ lọc">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-label whitespace-nowrap mr-1">Lọc nhanh:</span>
+
+                    <a th:href="@{/facilities(city=${selectedCity}, name=${searchName}, favoritesOnly=${favoritesOnly})}"
+                       th:classappend="${selectedSport == null} ? 'bg-primary text-white border-primary shadow-sm shadow-primary/30' : 'bg-white text-zinc-600 border-zinc-200 hover:border-primary hover:text-primary'"
+                       class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold font-label whitespace-nowrap transition-all text-decoration-none">
+                        <span class="material-symbols-outlined text-[14px]">apps</span>
+                        Tất cả
+                    </a>
+
+                    <th:block th:each="s : ${sportTypes}">
+                        <a th:href="@{/facilities(city=${selectedCity}, name=${searchName}, sport=${s.name()}, favoritesOnly=${favoritesOnly})}"
+                           th:classappend="${selectedSport == s} ? 'bg-primary text-white border-primary shadow-sm shadow-primary/30' : 'bg-white text-zinc-600 border-zinc-200 hover:border-primary hover:text-primary'"
+                           class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold font-label whitespace-nowrap transition-all sport-chip text-decoration-none"
+                           th:data-sport="${s.name()}">
+                            <span class="sport-chip-icon material-symbols-outlined text-[14px]"></span>
+                            <span th:text="${s.displayName}">Môn</span>
+                        </a>
+                    </th:block>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="max-w-screen-xl mx-auto px-6 py-8">
+
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div class="flex items-center gap-3 flex-wrap">
+                <p class="text-zinc-800 font-bold font-headline m-0">
+                    <span class="text-primary" th:text="${facilities.totalElements}">0</span>
+                    <span> cơ sở</span>
+                    <span th:if="${selectedCity != null and !#strings.isEmpty(selectedCity)}"
+                          class="text-zinc-500 font-normal">
+                    tại <span class="text-zinc-800 font-bold" th:text="${selectedCity}"></span>
+                </span>
+                </p>
+
+                <div class="flex gap-2 flex-wrap">
+                <span th:if="${searchName != null and !#strings.isEmpty(searchName)}"
+                      class="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold font-label">
+                    <span class="material-symbols-outlined text-[12px]">search</span>
+                    <span th:text="${searchName}"></span>
+                </span>
+                    <span th:if="${selectedSport != null}"
+                          class="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold font-label">
+                    <span class="material-symbols-outlined text-[12px]">sports</span>
+                    <span th:text="${selectedSport.displayName}"></span>
+                </span>
+                    <span th:if="${favoritesOnly != null and favoritesOnly}"
+                          class="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold font-label">
+                    <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">favorite</span>
+                    Sân đã tim
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${!facilities.isEmpty()}"
+             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div th:each="f : ${facilities.content}"
+                 class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-zinc-100 hover:-translate-y-1 flex flex-col">
+
+                <div class="relative overflow-hidden aspect-[16/10] bg-zinc-200">
+                    <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                         th:src="${f.primaryImageUrl != null ? f.primaryImageUrl : 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800&auto=format&fit=crop'}"
+                         th:alt="${f.name}"/>
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    <div class="absolute top-3 left-3">
+                    <span class="flex items-center gap-1 bg-white/95 backdrop-blur-sm text-zinc-900 px-2.5 py-1 rounded-full text-xs font-bold font-label shadow-sm">
+                        <span class="material-symbols-outlined text-amber-500 text-[14px]" style="font-variation-settings:'FILL' 1">star</span>
+                        <span th:text="${f.avgRating != null and f.avgRating > 0 ? f.avgRating : 'Mới'}">5.0</span>
+                    </span>
+                    </div>
+
+                    <div class="absolute top-3 right-3">
+                        <button th:if="${#authorization.expression('isAuthenticated()')}"
+                                class="fav-btn w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border-none cursor-pointer"
+                                th:data-id="${f.id}"
+                                th:data-fav="${favoriteFacilityIds != null and favoriteFacilityIds.contains(f.id)}"
+                                type="button">
+                        <span class="material-symbols-outlined text-[20px] transition-colors duration-200 text-red-500"
+                              th:style="${favoriteFacilityIds != null and favoriteFacilityIds.contains(f.id)} ? 'font-variation-settings: \'FILL\' 1' : 'font-variation-settings: \'FILL\' 0'">
+                            favorite
+                        </span>
+                        </button>
+                        <a th:unless="${#authorization.expression('isAuthenticated()')}"
+                           th:href="@{/auth/login}"
+                           class="w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center hover:scale-110 transition-transform text-decoration-none">
+                            <span class="material-symbols-outlined text-[20px] text-red-500" style="font-variation-settings: 'FILL' 0">favorite</span>
+                        </a>
+                    </div>
+                    <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span class="flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-label font-bold">
+                        <span class="material-symbols-outlined text-[13px]">schedule</span>
+                        <span th:text="${f.openTime + ' – ' + f.closeTime}">06:00 – 22:00</span>
+                    </span>
+                        <span class="flex items-center gap-1 bg-green-500/90 text-white px-2.5 py-1 rounded-full text-xs font-label font-bold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                        Đang mở
+                    </span>
+                    </div>
+                </div>
+
+                <div class="p-5 flex flex-col flex-1">
+
+                    <div class="mb-3">
+                        <h3 class="font-headline font-black text-zinc-900 text-lg leading-tight tracking-tight uppercase mb-1 line-clamp-1"
+                            th:text="${f.name}">Tên cơ sở</h3>
+                        <p class="flex items-center gap-1 text-zinc-500 text-sm m-0">
+                            <span class="material-symbols-outlined text-[15px] shrink-0">location_on</span>
+                            <span class="truncate"
+                                  th:text="${f.address + (f.district != null and !#strings.isEmpty(f.district) ? ', ' + f.district : '') + ', ' + f.city}">Địa chỉ</span>
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        <th:block th:each="sport : ${f.uniqueSportTypes}">
+                        <span class="flex items-center gap-1 px-2.5 py-1 bg-orange-50 text-primary rounded-lg text-[11px] font-bold font-label border border-orange-100 sport-tag"
+                              th:data-sport="${sport.name()}">
+                            <span class="sport-tag-icon material-symbols-outlined text-[12px]"></span>
+                            <span th:text="${sport.displayName}">Môn</span>
+                        </span>
+                        </th:block>
+                        <span th:if="${f.openFieldCount == 0}"
+                              class="px-2.5 py-1 bg-zinc-100 text-zinc-400 rounded-lg text-[11px] font-label">
+                        Chưa có sân
+                    </span>
+                    </div>
+
+                    <div class="flex items-center gap-3 mt-auto pt-3 mb-3 border-t border-zinc-100 text-xs font-bold font-label">
+                    <span class="flex items-center gap-1 text-zinc-500">
+                        <span class="material-symbols-outlined text-[14px]">grid_on</span>
+                        <span th:text="|${f.openFieldCount} sân|">0 sân</span>
+                    </span>
+                        <span th:if="${f.minPricePerHour != null}" class="flex items-center gap-1 text-primary">
+                        <span class="material-symbols-outlined text-[14px]">payments</span>
+                        <span th:text="|Từ ${#numbers.formatDecimal(f.minPricePerHour, 1, 'POINT', 0, 'COMMA')}đ/h|"></span>
+                    </span>
+                        <span th:if="${f.reviewCount != null and f.reviewCount > 0}"
+                              class="flex items-center gap-1 text-zinc-500 ml-auto">
+                        <span class="material-symbols-outlined text-amber-400 text-[14px]"
+                              style="font-variation-settings:'FILL' 1">star</span>
+                        <span th:text="|${f.avgRating} (${f.reviewCount})|"></span>
+                    </span>
+                    </div>
+
+                    <a th:href="@{/facilities/{id}(id=${f.id})}"
+                       class="mt-auto flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-zinc-900 text-white text-sm font-bold font-headline hover:bg-primary transition-colors duration-200 group/btn text-decoration-none border-none">
+                        <span>XEM &amp; ĐẶT SÂN</span>
+                        <span class="material-symbols-outlined text-[16px] transition-transform duration-200 group-hover/btn:translate-x-1">arrow_forward</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${facilities.isEmpty()}"
+             class="flex flex-col items-center justify-center py-24 text-center">
+            <div class="w-20 h-20 rounded-2xl bg-zinc-100 flex items-center justify-center mb-6">
+                <span class="material-symbols-outlined text-[40px] text-zinc-300">stadium</span>
+            </div>
+            <h3 class="text-2xl font-black font-headline text-zinc-800 uppercase italic mb-2">
+                Không tìm thấy cơ sở
+            </h3>
+            <p class="text-zinc-400 font-body mb-6 max-w-sm">
+                Không có cơ sở nào phù hợp với bộ lọc hiện tại. Hãy thử điều chỉnh tiêu chí tìm kiếm.
+            </p>
+            <a th:href="@{/facilities}"
+               class="kinetic-gradient text-white px-6 py-3 rounded-xl font-bold font-headline text-sm hover:shadow-lg hover:shadow-primary/20 transition-all text-decoration-none">
+                Xem tất cả cơ sở
+            </a>
+        </div>
+
+        <nav th:if="${facilities.totalPages > 1}" class="mt-10 flex items-center justify-center gap-2">
+
+            <a th:href="@{/facilities(page=${facilities.number - 1}, city=${selectedCity}, sport=${selectedSport}, name=${searchName}, favoritesOnly=${favoritesOnly})}"
+               th:classappend="${facilities.first} ? 'opacity-30 pointer-events-none' : 'hover:bg-zinc-100'"
+               class="w-10 h-10 flex items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors text-decoration-none">
+                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+            </a>
+
+            <th:block th:each="i : ${#numbers.sequence(0, facilities.totalPages - 1)}">
+                <th:block th:if="${i == 0 or i == facilities.totalPages - 1
+                               or (i >= facilities.number - 1 and i <= facilities.number + 1)}">
+                    <a th:href="@{/facilities(page=${i}, city=${selectedCity}, sport=${selectedSport}, name=${searchName}, favoritesOnly=${favoritesOnly})}"
+                       th:classappend="${i == facilities.number} ? 'bg-primary text-white border-primary font-black' : 'bg-white text-zinc-700 border-zinc-200 hover:border-primary hover:text-primary'"
+                       class="w-10 h-10 flex items-center justify-center rounded-xl border text-sm font-bold font-label transition-colors text-decoration-none"
+                       th:text="${i + 1}">1</a>
+                </th:block>
+                <span th:if="${i == 1 and facilities.number > 2}"
+                      class="text-zinc-400 px-1">…</span>
+                <span th:if="${i == facilities.totalPages - 2 and facilities.number < facilities.totalPages - 3}"
+                      class="text-zinc-400 px-1">…</span>
+            </th:block>
+
+            <a th:href="@{/facilities(page=${facilities.number + 1}, city=${selectedCity}, sport=${selectedSport}, name=${searchName}, favoritesOnly=${favoritesOnly})}"
+               th:classappend="${facilities.last} ? 'opacity-30 pointer-events-none' : 'hover:bg-zinc-100'"
+               class="w-10 h-10 flex items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors text-decoration-none">
+                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <script th:inline="javascript">
+        (function () {
+            const SPORT_ICONS = {
+                FOOTBALL:   'sports_soccer',
+                TENNIS:     'sports_tennis',
+                BADMINTON:  'sports',
+                BASKETBALL: 'sports_basketball',
+                VOLLEYBALL: 'sports_volleyball',
+                PICKLEBALL: 'sports_tennis',
+                DEFAULT:    'sports'
+            };
+
+            function applyIcon(el, sport) {
+                el.textContent = SPORT_ICONS[sport] || SPORT_ICONS.DEFAULT;
+            }
+
+            document.querySelectorAll('.sport-chip[data-sport]').forEach(chip => {
+                const icon = chip.querySelector('.sport-chip-icon');
+                if (icon) applyIcon(icon, chip.dataset.sport);
+            });
+
+            document.querySelectorAll('.sport-tag[data-sport]').forEach(tag => {
+                const icon = tag.querySelector('.sport-tag-icon');
+                if (icon) applyIcon(icon, tag.dataset.sport);
+            });
+
+            // Logic nút tim sân
+            document.querySelectorAll('.fav-btn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const id   = btn.dataset.id;
+                    const icon = btn.querySelector('.material-symbols-outlined');
+                    const isFav = btn.dataset.fav === 'true';
+
+                    btn.dataset.fav = (!isFav).toString();
+                    if (!isFav) {
+                        icon.style.fontVariationSettings = "'FILL' 1";
+                        btn.classList.add('scale-125');
+                        setTimeout(() => btn.classList.remove('scale-125'), 200);
+                    } else {
+                        icon.style.fontVariationSettings = "'FILL' 0";
+                    }
+
+                    try {
+                        const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+                        const res = await fetch(`/api/v1/favorites/toggle/${id}`, {
+                            method: 'POST',
+                            headers: headers
+                        });
+
+                        if (res.status === 401 || res.status === 403) {
+                            alert("Vui lòng đăng nhập để lưu sân yêu thích!");
+                            window.location.href = "/auth/login";
+                            return;
+                        }
+
+                        if (!res.ok) throw new Error();
+
+                        const json = await res.json();
+                        const serverFav = json.data?.isFavorite ?? !isFav;
+                        btn.dataset.fav = serverFav.toString();
+                        icon.style.fontVariationSettings = serverFav ? "'FILL' 1" : "'FILL' 0";
+                    } catch {
+                        btn.dataset.fav = isFav.toString();
+                        icon.style.fontVariationSettings = isFav ? "'FILL' 1" : "'FILL' 0";
+                    }
+                });
+            });
+
+            const cards = document.querySelectorAll('.grid > div');
+            cards.forEach((card, i) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 60 + i * 60);
+            });
+
+            // ── City autocomplete ──────────────────────────────────────
+            const cityInput    = document.getElementById('city-search-input');
+            const cityDropdown = document.getElementById('city-search-dropdown');
+            const cityWrapper  = document.getElementById('city-search-wrapper');
+
+            if (cityInput) {
+                let provinces = [];
+
+                fetch('https://provinces.open-api.vn/api/?depth=1')
+                    .then(r => r.json())
+                    .then(data => { provinces = data; })
+                    .catch(() => {});
+
+                cityInput.addEventListener('input', () => {
+                    const q = cityInput.value.trim().toLowerCase();
+                    cityDropdown.innerHTML = '';
+
+                    if (!q) { cityDropdown.classList.add('hidden'); return; }
+
+                    const matches = provinces
+                        .filter(p => p.name.toLowerCase().includes(q))
+                        .slice(0, 8);
+
+                    if (!matches.length) { cityDropdown.classList.add('hidden'); return; }
+
+                    matches.forEach(p => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors';
+                        li.innerHTML = '<span class="material-symbols-outlined text-zinc-400 text-[16px]">location_on</span>' + p.name;
+                        li.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            cityInput.value = p.name;
+                            cityDropdown.classList.add('hidden');
+                        });
+                        cityDropdown.appendChild(li);
+                    });
+
+                    cityDropdown.classList.remove('hidden');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!cityWrapper.contains(e.target)) cityDropdown.classList.add('hidden');
+                });
+            }
+
+        })();
+    </script>
+</th:block>
+</body>
+</html>

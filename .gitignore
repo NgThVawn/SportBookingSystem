@@ -31,3 +31,32 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# File chứa secrets thật của máy local (DB password, API keys, OAuth2 secrets...)
+src/main/resources/application-local.properties
+
+# File .env (nếu dùng biến môi trường)
+.env
+.env.*
+!.env.example
+
+# ============================================================
+# User-uploaded files – không thuộc source code
+# ============================================================
+uploads/
+
+# ============================================================
+# Logs
+# ============================================================
+*.log
+logs/
+
+# Ignore image files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.webp
+*.svg
+*.avif

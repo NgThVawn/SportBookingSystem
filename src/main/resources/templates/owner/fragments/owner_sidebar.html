@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside th:fragment="sidebar(activeTab)" class="h-screen w-64 fixed left-0 top-0 z-50 bg-slate-950 flex flex-col py-6 shadow-2xl">
+
+    <div class="px-6 mb-8 flex items-center gap-3 shrink-0">
+        <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">bolt</span>
+        </div>
+        <div>
+            <h1 class="font-headline font-black text-white text-lg leading-tight uppercase tracking-tighter">Arena Manager</h1>
+            <p class="text-[10px] text-slate-500 font-label tracking-widest uppercase">Khu phức hợp Thể thao</p>
+        </div>
+    </div>
+
+    <nav class="flex-1 space-y-1 overflow-y-auto no-scrollbar pb-4">
+        <a th:href="@{/owner}"
+           class="mx-2 my-1 px-4 py-3 flex items-center gap-3 font-['Inter'] text-sm font-medium hover:translate-x-1 transition-all duration-300 rounded-lg text-decoration-none"
+           th:classappend="${activeTab == 'dashboard'} ? 'bg-orange-600 text-white shadow-[0_10px_20px_rgba(176,47,0,0.3)]' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'">
+            <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+            <span>Dashboard</span>
+        </a>
+
+        <a th:href="@{/owner/notifications}"
+           class="mx-2 my-1 px-4 py-3 flex items-center gap-3 font-['Inter'] text-sm font-medium hover:translate-x-1 transition-all duration-300 rounded-lg text-decoration-none"
+           th:classappend="${activeTab == 'notifications'} ? 'bg-orange-600 text-white shadow-[0_10px_20px_rgba(176,47,0,0.3)]' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'">
+            <div class="relative flex items-center justify-center">
+                <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                <span class="sidebar-notif-badge hidden absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+            </div>
+            <span>Thông báo</span>
+        </a>
+
+        <a th:href="@{/owner/bookings}"
+           class="mx-2 my-1 px-4 py-3 flex items-center gap-3 font-['Inter'] text-sm font-medium hover:translate-x-1 transition-all duration-300 rounded-lg text-decoration-none"
+           th:classappend="${activeTab == 'bookings'} ? 'bg-orange-600 text-white shadow-[0_10px_20px_rgba(176,47,0,0.3)]' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'">
+            <span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+            <span>Đơn đặt sân</span>
+        </a>
+
+        <a th:href="@{/owner/facilities}"
+           class="mx-2 my-1 px-4 py-3 flex items-center gap-3 font-['Inter'] text-sm font-medium hover:translate-x-1 transition-all duration-300 rounded-lg text-decoration-none"
+           th:classappend="${activeTab == 'facilities'} ? 'bg-orange-600 text-white shadow-[0_10px_20px_rgba(176,47,0,0.3)]' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'">
+            <span class="material-symbols-outlined" data-icon="stadium">stadium</span>
+            <span>Sân / Cơ sở</span>
+        </a>
+    </nav>
+
+    <div class="mt-auto px-4 pt-4 shrink-0 border-t border-slate-800">
+        <form th:action="@{/auth/logout}" method="post" class="m-0 w-full">
+            <button type="submit" class="w-full text-left text-slate-400 hover:text-red-400 px-4 py-2 flex items-center gap-3 text-sm transition-all bg-transparent border-none cursor-pointer font-['Inter']">
+                <span class="material-symbols-outlined" data-icon="logout">logout</span>
+                <span>Đăng xuất</span>
+            </button>
+        </form>
+    </div>
+
+    <div id="admin-notif-toast-container" style="position:fixed;top:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:360px"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 1. Fetch check thông báo cũ (phòng khi F5 trang)
+            try {
+                const res = await fetch('/api/notifications');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.some(n => !n.read)) {
+                        document.querySelectorAll('.sidebar-notif-badge').forEach(el => el.classList.remove('hidden'));
+                    }
+                }
+            } catch (e) {}
+
+            // Lấy ID user hiện tại (hỗ trợ cả biến user hoặc currentUser)
+            const _currentUserId = /*[[${user?.id ?: currentUser?.id}]]*/ null;
+
+            // 2. Kết nối WebSocket đón thông báo mới
+            if (_currentUserId) {
+                const socket = new SockJS('/ws');
+                const stompClient = Stomp.over(socket);
+                stompClient.debug = null;
+
+                stompClient.connect({}, function () {
+                    stompClient.subscribe('/topic/notifications/user/' + _currentUserId, function (frame) {
+                        const notif = JSON.parse(frame.body);
+
+                        // Bật chấm đỏ
+                        document.querySelectorAll('.sidebar-notif-badge').forEach(el => el.classList.remove('hidden'));
+
+                        // Gọi hàm hiện Toast
+                        showAdminNotifToast(notif);
+                    });
+                });
+            }
+        });
+
+        function showAdminNotifToast(notif) {
+            const container = document.getElementById('admin-notif-toast-container');
+            if (!container) return;
+
+            const typeColors = {
+                FACILITY_APPROVED: '#22c55e', FACILITY_REJECTED: '#ef4444',
+                BOOKING_CONFIRMED: '#3b82f6', BOOKING_CANCELLED: '#f97316',
+                DEFAULT: '#b02f00'
+            };
+            const color = typeColors[notif.type] || typeColors.DEFAULT;
+
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                background:white;border-radius:12px;padding:14px 16px;
+                box-shadow:0 10px 40px rgba(0,0,0,0.1);border-left:4px solid ${color};
+                display:flex;flex-direction:column;gap:4px;animation:slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                cursor:pointer; font-family:'Inter', sans-serif;`;
+
+            toast.innerHTML = `
+                <div style="font-weight:700;font-size:14px;color:#0f172a">${escapeHtml(notif.title)}</div>
+                <div style="font-size:13px;color:#64748b;line-height:1.5">${escapeHtml(notif.message)}</div>
+            `;
+
+            if (notif.link) toast.addEventListener('click', () => window.location.href = notif.link);
+
+            container.prepend(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.4s ease';
+                setTimeout(() => toast.remove(), 400);
+            }, 6000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(text || ''));
+            return div.innerHTML;
+        }
+        /*]]>*/
+    </script>
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</aside>
+
+</body>
+</html>
